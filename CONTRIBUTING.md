@@ -1,5 +1,5 @@
-Contributing to RasCAL-
-==========================
+Contributing to RasCAL-2
+========================
 Everyone is welcome to contribute to the RasCAL2 project by either opening an issue (please check that the 
 issue has not been reported already) or submitting a pull request.
 
@@ -18,7 +18,7 @@ created to isolate dependencies. For Windows, first download and install [Micros
 
 And finally create a separate branch to begin work
 
-    git checkout -b new-feature
+    git switch -c new-feature
 
 Once complete submit a [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) via GitHub. 
 Ensure to rebase your branch to include the latest changes on your branch and resolve possible merge conflicts.
@@ -43,8 +43,10 @@ For information on other coverage report formats, see https://pytest-cov.readthe
 
 Documentation
 -------------
-The documentation will be hosted on GitHub pages.
+* The documentation will be hosted on GitHub pages.
+* It will be written in reStructuredText format and built via Sphinx.
 
 Style guidelines
 ----------------
 * Docstrings should be written in the numpydoc format.
+* `ruff format` must be used to format code.
