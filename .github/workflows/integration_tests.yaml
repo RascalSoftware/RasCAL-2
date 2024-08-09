@@ -2,11 +2,12 @@
 name: Integration tests
 on:
   pull_request_review:
-    types: [approved]
+    types: [submitted]
   workflow_dispatch:  # <-- can be triggered manually!
 
 jobs:
   integration-tests:
+    if: github.event.review.state == 'approved'
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-13]
