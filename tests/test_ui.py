@@ -1,5 +1,7 @@
 import sys
+
 import pytest
+
 from rascal2.ui.view import MainWindowView
 
 
@@ -25,6 +27,7 @@ def make_main_window(request):
 
         request.addfinalizer(cleanup)
         return window
+
     return make
 
 

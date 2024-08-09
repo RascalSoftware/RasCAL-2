@@ -1,9 +1,10 @@
-from PyQt6 import QtCore
 import RATapi as RAT
+from PyQt6 import QtCore
 
 
 class MainWindowModel(QtCore.QObject):
     """Manages project data and communicates to view via signals"""
+
     def __init__(self):
         super().__init__()
 
@@ -11,7 +12,7 @@ class MainWindowModel(QtCore.QObject):
         self.results = None
         self.controls = None
 
-        self.save_path = ''
+        self.save_path = ""
 
     def createProject(self, name: str, save_path: str):
         """Creates a new RAT project and controls object.

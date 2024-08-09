@@ -1,4 +1,3 @@
-import pytest
 from rascal2.ui.model import MainWindowModel
 
 

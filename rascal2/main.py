@@ -1,7 +1,9 @@
 import multiprocessing
 import sys
-from PyQt6 import QtWidgets, QtGui
-from rascal2.config import path_for, handle_scaling
+
+from PyQt6 import QtGui, QtWidgets
+
+from rascal2.config import handle_scaling, path_for
 from rascal2.ui.view import MainWindowView
 
 
@@ -16,7 +18,7 @@ def ui_execute():
     handle_scaling()
     # TODO: Setup stylesheets
     app = QtWidgets.QApplication(sys.argv[:1])
-    app.setWindowIcon(QtGui.QIcon(path_for('logo.png')))
+    app.setWindowIcon(QtGui.QIcon(path_for("logo.png")))
 
     window = MainWindowView()
     window.show()
@@ -30,5 +32,5 @@ def main():
     sys.exit(exit_code)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

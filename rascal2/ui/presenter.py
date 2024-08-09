@@ -9,6 +9,7 @@ class MainWindowPresenter:
     view : MainWindow
         main window view instance.
     """
+
     def __init__(self, view):
         self.view = view
         self.model = MainWindowModel()
