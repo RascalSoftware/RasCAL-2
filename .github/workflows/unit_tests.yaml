@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   ruff:
     runs-on: ubuntu-latest
@@ -37,14 +41,7 @@ jobs:
         uses: ./.github/actions/linux
         with:
           pytest-options: '-m "not slow"'
-      - name: Install and run tests (MacOS)
-        if: runner.os == 'macos'
-        uses: ./.github/actions/macos
-        with:
-          pytest-options: '-m "not slow"'
-      - name: Install and run tests (Windows)
-        if: runner.os == 'windows'
-        uses: ./.github/actions/windows
-        with:
-          pytest-options: '-m "not slow"'
+      - name: Install and run tests (MacOS/Windows)
+        if: runner.os != 'linux'
+        uses: ./.github/actions/windows-mac
 
