@@ -35,4 +35,4 @@ jobs:
       - name: Install RasCAL2
         run: pip install .
       - name: Run pytest
-        run: pytest -s tests/ -m "not slow" --cov=rascal2 --cov-report=term
+        run: python3 -m pytest -s tests/ -m "not slow" --cov=rascal2 --cov-report=term

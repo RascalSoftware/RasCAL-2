@@ -24,4 +24,4 @@ jobs:
           pip install -r requirements-dev.txt
           pip install .
       - name: Run pytest
-        run: pytest -s tests/ --cov=rascal2 --cov-report=term
+        run: python3 -m pytest -s tests/ --cov=rascal2 --cov-report=term
