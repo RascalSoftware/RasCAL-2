@@ -15,4 +15,4 @@ runs:
     run: pip install .
   - name: 
     shell: bash -l {0}
-    run:  pytest -s tests/ ${{ inputs.pytest-options }} --cov=rascal2 --cov-report=term
+    run:  xvfb-run pytest -s tests/ ${{ inputs.pytest-options }} --cov=rascal2 --cov-report=term
