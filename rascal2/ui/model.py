@@ -44,6 +44,7 @@ class FitSettingsModel(QtCore.QAbstractTableModel):
         self.controls = controls
         self.undo_stack = undo_stack
         self.set_procedure(self.controls.procedure)
+        self.editable = True
 
     def columnCount(self, parent=None):
         return 1
@@ -71,7 +72,9 @@ class FitSettingsModel(QtCore.QAbstractTableModel):
         return True
 
     def flags(self, index):
-        return QtCore.Qt.ItemFlag.ItemIsEditable | super().flags(index)
+        if self.editable:
+            return QtCore.Qt.ItemFlag.ItemIsEditable | super().flags(index)
+        return super().flags(index)
     
     def set_procedure(self, procedure: Procedures):
         self.beginResetModel()
