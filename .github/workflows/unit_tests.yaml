@@ -34,19 +34,19 @@ jobs:
           auto-activate-base: false
       - name: Install and run tests (Linux)
         shell: bash -l {0}
-        if: runner.os = 'ubuntu-latest'
+        if: runner.os == 'ubuntu-latest'
         run: |
           sudo apt update
           sudo apt install xvfb libqt5x11extras5 libgl1-mesa-glx '^libxcb.*-dev'
           pip install . 
           xvfb-run pytest -s tests/ -m "not slow" --cov=rascal2 --cov-report=term
       - name: Install and run tests (MacOS)
-        if: runner.os = 'macos-13'
+        if: runner.os == 'macos-13'
         run: |
           pip install .
           pytest -s tests/ -m "not slow" --cov=rascal2 --cov-report=term
       - name: Install and run tests (Windows)
-        if: runner.os = 'windows-latest'
+        if: runner.os == 'windows-latest'
         run: |
           pip install .
           pytest -s tests/ -m "not slow" --cov=rascal2 --cov-report=term
