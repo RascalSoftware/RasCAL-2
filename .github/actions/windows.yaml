@@ -1,0 +1,11 @@
+inputs:
+  pytest-options:
+    description: "Extra options to pass to Pytest"
+    default: ''
+runs:
+  using: "composite"
+  steps:
+  - name: Install RasCAL2
+    run:  pip install .
+  - name: Run Pytest
+    run:  pytest -s tests/ ${{ inputs.pytest-options }} --cov=rascal2 --cov-report=term
