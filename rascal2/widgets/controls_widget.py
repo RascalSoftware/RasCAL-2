@@ -1,18 +1,21 @@
 """Widget for setting up the Controls class."""
+from enum import Enum
+
 from RATapi import Controls
 from RATapi.controls import fields, common_fields
 from RATapi.utils.enums import Procedures
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QComboBox, QLabel, QPushButton, QStackedWidget
+from PyQt6.QtCore import QModelIndex, Qt
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QComboBox, QLabel, QPushButton, QTableView, QStyledItemDelegate, QCheckBox
+from PyQt6.QtGui import QUndoStack
 
-
-def create_param_setter(param):
-    return QLabel(param)
+from rascal2.ui.model import FitSettingsModel
+from rascal2.core.commands import editControls
 
 
 class MainWindowModel:
     #TODO: Remove once #11 merged
     def __init__(self):
-        self.controls = Controls()
+        self.controls = Controls(procedure='dream')
 
 
 class ControlsWidget(QWidget):
@@ -20,17 +23,23 @@ class ControlsWidget(QWidget):
     def __init__(self, model):
         super().__init__()
         self.model = model
+        self.undo_stack = QUndoStack(self)
         self.controls = self.model.controls
-        self.fit_settings = QStackedWidget()
-        for procedure in Procedures:
-            self.fit_settings.addWidget(FitSettingsWidget(procedure.value))
 
+        self.fit_settings = QTableView()
+        self.fit_settings_model = FitSettingsModel(self.controls, self.undo_stack)
+        self.fit_settings.setModel(self.fit_settings_model)
+        self.fit_settings.horizontalHeader().setVisible(False)
+        self.fit_settings.verticalHeader().setVisible(True)
+
+        self.run_button = QPushButton(text="Run")
+        self.run_button.setStyleSheet('background-color: green;')
         procedure_selector = QHBoxLayout()
         procedure_selector.addWidget(QLabel("Procedure:"))
         procedure_dropdown = QComboBox()
         procedure_dropdown.addItems([p.value for p in Procedures])
         procedure_dropdown.setCurrentText(self.controls.procedure)
-        procedure_dropdown.currentTextChanged.connect(self.set_fit_settings)
+        procedure_dropdown.currentTextChanged.connect(self.set_procedure)
         procedure_selector.addWidget(procedure_dropdown)
         self.fit_settings_button = QPushButton()
         self.fit_settings_button.setCheckable(True)
@@ -38,6 +47,7 @@ class ControlsWidget(QWidget):
         self.fit_settings_button.toggle()  # to set true by default
 
         procedure_box = QVBoxLayout()
+        procedure_box.addWidget(self.run_button)
         procedure_box.addLayout(procedure_selector)
         procedure_box.addWidget(self.fit_settings_button)
 
@@ -47,7 +57,6 @@ class ControlsWidget(QWidget):
 
         self.setLayout(widget_layout)
 
-
     def toggle_fit_settings(self, toggled):
         if toggled:
             self.fit_settings.show()
@@ -56,25 +65,10 @@ class ControlsWidget(QWidget):
             self.fit_settings.hide()
             self.fit_settings_button.setText("Show fit settings")
 
-    def set_fit_settings(self, procedure):
-        self.fit_settings.setCurrentIndex([p.value for p in Procedures].index(procedure))
+    def set_procedure(self, procedure):
+        self.fit_settings_model.set_procedure(procedure)
+        self.update()
 
-class FitSettingsWidget(QWidget):
-    def __init__(self, procedure):
-        super().__init__()
-        fit_settings_box = QVBoxLayout()
-        fit_settings_box.addWidget(QLabel("Fit settings"))
-        fit_settings = (f for f in fields[procedure] if f not in common_fields)
-        for fit_setting in fit_settings:
-            setting_label = QLabel(fit_setting)
-            setting_value = create_param_setter(fit_setting)
-            setting_row = QHBoxLayout()
-            setting_row.addWidget(setting_label)
-            setting_row.addWidget(setting_value)
-
-            fit_settings_box.addLayout(setting_row)
-
-        self.setLayout(fit_settings_box)
 
 from PyQt6.QtWidgets import QApplication, QMainWindow
 class MainWindow(QMainWindow):
