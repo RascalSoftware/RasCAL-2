@@ -21,9 +21,12 @@ jobs:
           environment-file: environment.yaml
           auto-activate-base: false
           python-version: ${{ matrix.version }}  # this overwrites python version in environment.yaml
-      - name: Install RasCAL2
-        shell: bash -l {0}
-        run: pip install .
-      - name: Run pytest
-        shell: bash -l {0}
-        run: pytest -s tests/ -m "not slow" --cov=rascal2 --cov-report=term
+      - name: Install and run tests (Linux)
+        if: runner.os == 'linux'
+        uses: ./.github/actions/linux
+      - name: Install and run tests (MacOS)
+        if: runner.os == 'macos'
+        uses: ./.github/actions/macos
+      - name: Install and run tests (Windows)
+        if: runner.os == 'windows'
+        uses: ./.github/actions/windows
