@@ -33,6 +33,8 @@ jobs:
           environment-file: environment.yaml
           auto-activate-base: false
       - name: Install RasCAL2
+        shell: bash -l {0}
         run: pip install .
       - name: Run pytest
-        run: conda run pytest -s tests/ -m "not slow" --cov=rascal2 --cov-report=term
+        shell: bash -l {0}
+        run: pytest -s tests/ -m "not slow" --cov=rascal2 --cov-report=term

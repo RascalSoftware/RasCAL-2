@@ -14,14 +14,16 @@ jobs:
         python-version: [3.10, 3.11, 3.12]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Set up Python version ${{ matrix.version }}
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4      
+      - name: Set up Conda environment from environment.yaml
+        uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: ${{ matrix.version }}
-      - name: Install package and requirements
-        run: |
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-          pip install .
+          environment-file: environment.yaml
+          auto-activate-base: false
+          python-version: ${{ matrix.version }}  # this overwrites python version in environment.yaml
+      - name: Install RasCAL2
+        shell: bash -l {0}
+        run: pip install .
       - name: Run pytest
-        run: conda run pytest -s tests/ -m "not slow" --cov=rascal2 --cov-report=term
+        shell: bash -l {0}
+        run: pytest -s tests/ -m "not slow" --cov=rascal2 --cov-report=term
