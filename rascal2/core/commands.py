@@ -2,8 +2,6 @@
 
 from PyQt6 import QtGui
 
-from rascal2.dialogs import ErrorDialog
-
 
 class editControls(QtGui.QUndoCommand):
     """Command for editing the Controls object."""

@@ -14,6 +14,7 @@ class MainWindowPresenter:
         self.view = view
         self.model = MainWindowModel()
         self.title = self.view.windowTitle()
+        self.undo_stack = self.view.undo_stack
 
     def create_project(self, name: str, save_path: str):
         """Creates a new RAT project and controls object then initialise UI.
