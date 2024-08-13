@@ -1,10 +1,13 @@
+import warnings
 
+from pydantic_core import ValidationError
 import RATapi as RAT
 from PyQt6 import QtCore
 from RATapi.controls import common_fields, fields
 from RATapi.utils.enums import Procedures
 
 from rascal2.core.commands import editControls
+from rascal2.dialogs import ErrorDialog
 
 
 class MainWindowModel(QtCore.QObject):
@@ -65,13 +68,25 @@ class FitSettingsModel(QtCore.QAbstractTableModel):
     def setData(self, index, value, role):
         i = index.row()
         fit_setting = self.fit_settings[i]
-        self.undo_stack.push(editControls(self.controls, fit_setting, value))
-        self.dataChanged.emit(index, index, [])
-        return True
+        # we have to check validation in advance because PyQt doesn't return
+        # the exception, it just falls over in C++
+        # also doing it this way stops bad changes being pushed onto the stack
+        if role == QtCore.Qt.ItemDataRole.EditRole:
+            try:
+                with warnings.catch_warnings():  # warning is erroneous...
+                    warnings.simplefilter("ignore")
+                    self.controls.model_validate({fit_setting: value})
+            except ValidationError as err:
+                dlg = ErrorDialog(err)
+                dlg.exec()
+                return False
+            self.undo_stack.push(editControls(self.controls, fit_setting, value))
+            self.dataChanged.emit(index, index, [])
+            return True
 
     def flags(self, index):
         if self.editable:
-            return QtCore.Qt.ItemFlag.ItemIsEditable | super().flags(index)
+            return QtCore.Qt.ItemFlag.ItemIsEditable | QtCore.Qt.ItemFlag.ItemIsUserCheckable | super().flags(index)
         return super().flags(index)
 
     def set_procedure(self, procedure: Procedures):

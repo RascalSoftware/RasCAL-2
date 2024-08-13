@@ -1,6 +1,5 @@
 """File for Qt commands."""
 
-from pydantic_core import ValidationError
 from PyQt6 import QtGui
 
 from rascal2.dialogs import ErrorDialog
@@ -19,8 +18,7 @@ class editControls(QtGui.QUndoCommand):
         setattr(self.controls, self.attr, self.value)
 
     def redo(self):
-        try:
-            setattr(self.controls, self.attr, self.value)
-        except ValidationError as err:
-            dlg = ErrorDialog(err)
-            dlg.exec()
+        setattr(self.controls, self.attr, self.value)
+
+    def text(self):
+        return f"Set control {self.attr} to {self.value}"

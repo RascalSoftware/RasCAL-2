@@ -1,7 +1,7 @@
 """Widget for setting up the Controls class."""
+from enum import Enum
 
-from PyQt6 import QtGui, QtWidgets
-from RATapi import Controls
+from PyQt6 import QtGui, QtWidgets, QtCore
 from RATapi.utils.enums import Procedures
 
 from rascal2.config import path_for
@@ -9,12 +9,6 @@ from rascal2.ui.model import FitSettingsModel
 
 PLAY_BUTTON = QtGui.QIcon(path_for("play.png"))
 STOP_BUTTON = QtGui.QIcon(path_for("stop.png"))
-
-
-class MainWindowModel:
-    # TODO: Remove once #11 merged
-    def __init__(self):
-        self.controls = Controls()
 
 
 class ControlsWidget(QtWidgets.QWidget):
@@ -29,6 +23,7 @@ class ControlsWidget(QtWidgets.QWidget):
         self.fit_settings = QtWidgets.QTableView()
         self.fit_settings_model = FitSettingsModel(self.controls, self.undo_stack)
         self.fit_settings.setModel(self.fit_settings_model)
+        self.set_procedure(self.controls.procedure)
         self.fit_settings.horizontalHeader().setVisible(False)
         self.fit_settings.horizontalHeader().setStretchLastSection(True)
         self.fit_settings.verticalHeader().setVisible(True)
@@ -87,4 +82,33 @@ class ControlsWidget(QtWidgets.QWidget):
 
     def set_procedure(self, procedure):
         self.fit_settings_model.set_procedure(procedure)
+        for i, setting in enumerate(self.fit_settings_model.fit_settings):
+            value = getattr(self.controls, setting)
+            if isinstance(value, Enum):
+                self.fit_settings.setItemDelegateForRow(i, EnumDelegate(self, value))
+            elif isinstance(value, bool):
+                self.fit_settings.setItemDelegateForRow(i, BoolDelegate(self))
+            else:
+                self.fit_settings.setItemDelegateForRow(i, QtWidgets.QStyledItemDelegate(self))
         self.update()
+
+
+class EnumDelegate(QtWidgets.QStyledItemDelegate):
+    """Item delegate for Enums."""
+    def __init__(self, parent, enum):
+        super().__init__(parent)
+        self.enum = type(enum)
+
+    def createEditor(self, parent, option, index):
+        combobox = QtWidgets.QComboBox(parent)
+        combobox.addItems(e.value for e in self.enum)
+        return combobox
+
+
+class BoolDelegate(QtWidgets.QStyledItemDelegate):
+    """Item delegate for bools."""
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def createEditor(self, parent, option, index):
+        return QtWidgets.QCheckBox(parent)
