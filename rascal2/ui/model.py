@@ -1,13 +1,10 @@
-from typing import Any
 
 import RATapi as RAT
-from RATapi.controls import fields, common_fields
+from PyQt6 import QtCore
+from RATapi.controls import common_fields, fields
 from RATapi.utils.enums import Procedures
-from PyQt6 import QtCore, QtGui
-from pydantic_core import ValidationError
 
 from rascal2.core.commands import editControls
-from rascal2.dialogs import ErrorDialog
 
 
 class MainWindowModel(QtCore.QObject):
@@ -39,6 +36,7 @@ class MainWindowModel(QtCore.QObject):
 
 class FitSettingsModel(QtCore.QAbstractTableModel):
     """Model for Controls fit settings."""
+
     def __init__(self, controls, undo_stack):
         super().__init__()
         self.controls = controls
@@ -56,7 +54,7 @@ class FitSettingsModel(QtCore.QAbstractTableModel):
         if role == QtCore.Qt.ItemDataRole.DisplayRole and orientation == QtCore.Qt.Orientation.Vertical:
             return self.fit_settings[section]
         return None
-    
+
     def data(self, index, role=QtCore.Qt.ItemDataRole.DisplayRole):
         i = index.row()
         fit_setting = self.fit_settings[i]
@@ -75,7 +73,7 @@ class FitSettingsModel(QtCore.QAbstractTableModel):
         if self.editable:
             return QtCore.Qt.ItemFlag.ItemIsEditable | super().flags(index)
         return super().flags(index)
-    
+
     def set_procedure(self, procedure: Procedures):
         self.beginResetModel()
         # don't bother with the undo stack because the underlying data values are still saved

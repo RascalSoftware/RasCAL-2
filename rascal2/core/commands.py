@@ -1,11 +1,14 @@
 """File for Qt commands."""
-from PyQt6.QtGui import QUndoCommand
+
 from pydantic_core import ValidationError
+from PyQt6 import QtGui
 
 from rascal2.dialogs import ErrorDialog
 
-class editControls(QUndoCommand):
-    """Class for """
+
+class editControls(QtGui.QUndoCommand):
+    """Command for editing the Controls object."""
+
     def __init__(self, controls, attr, value):
         super().__init__()
         self.controls = controls
@@ -21,5 +24,3 @@ class editControls(QUndoCommand):
         except ValidationError as err:
             dlg = ErrorDialog(err)
             dlg.exec()
-
-
