@@ -2,15 +2,16 @@
 
 from enum import Enum
 
-from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtGui, QtWidgets
 from RATapi.utils.enums import Procedures
 
 from rascal2.config import path_for
 from rascal2.widgets.controls.model import FitSettingsModel
-
+from rascal2.widgets.delegates import BoolDelegate, EnumDelegate
 
 PLAY_BUTTON = QtGui.QIcon(path_for("play.png"))
 STOP_BUTTON = QtGui.QIcon(path_for("stop.png"))
+
 
 class ControlsWidget(QtWidgets.QWidget):
     """Widget for editing the Controls object."""
@@ -23,7 +24,7 @@ class ControlsWidget(QtWidgets.QWidget):
         self.fit_settings = QtWidgets.QTableView()
         self.fit_settings_model = FitSettingsModel(self.presenter)
         self.fit_settings.setModel(self.fit_settings_model)
-        self.set_procedure(init_procedure)  
+        self.set_procedure(init_procedure)
 
         self.fit_settings.horizontalHeader().setVisible(False)
         self.fit_settings.horizontalHeader().setStretchLastSection(True)
@@ -35,6 +36,12 @@ class ControlsWidget(QtWidgets.QWidget):
         self.run_button.setStyleSheet("background-color: green;")
         self.run_button.setCheckable(True)
         self.run_button.toggled.connect(self.toggle_run_button)
+
+        chi_box = QtWidgets.QHBoxLayout()
+        self.chi_squared = QtWidgets.QLineEdit("1.060")  # TODO hook this up when we can actually run... issue #9
+        self.chi_squared.setReadOnly(True)
+        chi_box.addWidget(QtWidgets.QLabel("Current chi-squared:"))
+        chi_box.addWidget(self.chi_squared)
 
         procedure_selector = QtWidgets.QHBoxLayout()
         procedure_selector.addWidget(QtWidgets.QLabel("Procedure:"))
@@ -49,9 +56,13 @@ class ControlsWidget(QtWidgets.QWidget):
         self.fit_settings_button.toggle()  # to set true by default
 
         procedure_box = QtWidgets.QVBoxLayout()
-        procedure_box.addWidget(self.run_button)
-        procedure_box.addLayout(procedure_selector)
-        procedure_box.addWidget(self.fit_settings_button)
+        procedure_box_buttons = QtWidgets.QVBoxLayout()
+        procedure_box_buttons.addWidget(self.run_button)
+        procedure_box_buttons.addLayout(procedure_selector)
+        procedure_box_buttons.addWidget(self.fit_settings_button)
+        procedure_box_buttons.setSpacing(20)
+        procedure_box.addLayout(chi_box)
+        procedure_box.addLayout(procedure_box_buttons)
 
         widget_layout = QtWidgets.QHBoxLayout()
         widget_layout.addLayout(procedure_box)
@@ -75,6 +86,9 @@ class ControlsWidget(QtWidgets.QWidget):
             self.run_button.setStyleSheet("background-color: red;")
             self.run_button.setIcon(STOP_BUTTON)
             # TODO some functional stuff... issue #9
+            # self.presenter.run() etc.
+            # presenter should send a signal when run is completed,
+            # which then toggles the button back
         else:
             self.fit_settings.setEnabled(True)
             self.procedure_dropdown.setEnabled(True)
@@ -82,11 +96,14 @@ class ControlsWidget(QtWidgets.QWidget):
             self.run_button.setStyleSheet("background-color: green;")
             self.run_button.setIcon(PLAY_BUTTON)
             # TODO some functional stuff... issue #9
+            # self.presenter.run() etc.
 
     def set_procedure(self, procedure):
         self.fit_settings_model.set_procedure(procedure)
         for i in range(0, len(self.fit_settings_model.fit_settings)):
             index = self.fit_settings_model.createIndex(i, 0)
+
+            # set correct delegates for cells
             setting_datatype = self.fit_settings_model.datatypes[i]
             if issubclass(setting_datatype, Enum):
                 self.fit_settings.setItemDelegateForRow(i, EnumDelegate(self, setting_datatype))
@@ -97,41 +114,5 @@ class ControlsWidget(QtWidgets.QWidget):
             else:
                 self.fit_settings.setItemDelegateForRow(i, QtWidgets.QStyledItemDelegate(self))
                 self.fit_settings.closePersistentEditor(index)
+
         self.update()
-
-
-class EnumDelegate(QtWidgets.QStyledItemDelegate):
-    """Item delegate for Enums."""
-
-    def __init__(self, parent, enum):
-        super().__init__(parent)
-        self.enum = enum
-
-    def createEditor(self, parent, option, index):
-        combobox = QtWidgets.QComboBox(parent)
-        combobox.addItems(str(e.value) for e in self.enum)
-        return combobox
-
-    def setEditorData(self, editor: QtWidgets.QCheckBox, index):
-        data = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
-        editor.setCurrentText(data)
-
-
-class BoolDelegate(QtWidgets.QStyledItemDelegate):
-    """Item delegate for bools."""
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent = parent
-
-    def createEditor(self, parent, option, index):
-        checkbox = QtWidgets.QCheckBox(parent)
-        # fill in background as otherwise you can see the original View text underneath
-        checkbox.setAutoFillBackground(True)
-        checkbox.setBackgroundRole(QtGui.QPalette.ColorRole.Base)
-        return checkbox
-
-    def setEditorData(self, editor: QtWidgets.QCheckBox, index):
-        data = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
-        data = data == "True"  # data from model is given as a string
-        editor.setChecked(data)

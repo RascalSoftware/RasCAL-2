@@ -2,11 +2,10 @@ import warnings
 
 from pydantic_core import ValidationError
 from PyQt6 import QtCore
-from RATapi.controls import common_fields, fields
+from RATapi.controls import fields
 from RATapi.utils.enums import Procedures
 
 from rascal2.core.commands import editControls
-from rascal2.dialogs import ErrorDialog
 
 
 class FitSettingsModel(QtCore.QAbstractTableModel):
@@ -50,12 +49,10 @@ class FitSettingsModel(QtCore.QAbstractTableModel):
                     warnings.simplefilter("ignore")
                     self.controls.model_validate({fit_setting: value})
             except ValidationError as err:
-                dlg = ErrorDialog(err)
-                dlg.exec()
+                self.presenter.throwErrorDialog(err)
                 return False
             self.undo_stack.push(editControls(self.controls, fit_setting, value))
             self.dataChanged.emit(index, index, [])
-            print(self.controls)
             return True
 
     def flags(self, index):
@@ -64,10 +61,17 @@ class FitSettingsModel(QtCore.QAbstractTableModel):
         return super().flags(index)
 
     def set_procedure(self, procedure: Procedures):
+        """Change the fit settings visible when the procedure is changed.
+
+        Parameters
+        ----------
+        procedure : Procedures
+            The procedure that has been requested.
+
+        """
         self.beginResetModel()
         # don't bother with the undo stack because the underlying data values are still saved
         self.controls.procedure = procedure
-        self.fit_settings = [f for f in fields[procedure] if f not in common_fields]
-        self.datatypes = [type(getattr(self.controls, f)) for f in fields[procedure] if f not in common_fields]
+        self.fit_settings = [f for f in fields[procedure] if f != "procedure"]
+        self.datatypes = [type(getattr(self.controls, f)) for f in self.fit_settings]
         self.endResetModel()
-
