@@ -33,3 +33,14 @@ class MainWindowPresenter:
         # https://github.com/RascalSoftware/RasCAL-2/issues/15
         self.view.init_settings_and_log(save_path)
         self.view.setup_mdi()
+
+    def throwErrorDialog(self, error: Exception):
+        """Produce an error dialog from an Exception.
+
+        Parameters
+        ----------
+        error : Exception
+            The exception passed to the Presenter.
+
+        """
+        self.view.createErrorDialog(error)

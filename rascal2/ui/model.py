@@ -1,4 +1,3 @@
-
 import RATapi as RAT
 from PyQt6 import QtCore
 
