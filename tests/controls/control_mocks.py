@@ -12,6 +12,7 @@ class MockWindowModel:
 
 class MockUndoStack:
     """A mock Undo stack."""
+
     def __init__(self):
         self.stack = []
 
