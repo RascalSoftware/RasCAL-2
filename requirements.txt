@@ -2,4 +2,4 @@ PyInstaller==6.9.0
 PyQt6==6.7.0
 PyQt6-Qt6==6.7.2
 RATapi==0.0.0.dev1
-pydantic_core==2.21.0
+pydantic_core==2.20.0
