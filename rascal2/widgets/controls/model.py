@@ -61,7 +61,7 @@ class FitSettingsModel(QtCore.QAbstractTableModel):
         return super().flags(index)
 
     def set_procedure(self, procedure: Procedures):
-        """Change the fit settings visible when the procedure is changed.
+        """Change the visible fit settings when the procedure is changed.
 
         Parameters
         ----------
