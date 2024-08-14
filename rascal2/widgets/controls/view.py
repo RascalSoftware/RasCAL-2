@@ -9,9 +9,6 @@ from rascal2.config import path_for
 from rascal2.widgets.controls.model import FitSettingsModel
 from rascal2.widgets.delegates import BoolDelegate, EnumDelegate
 
-PLAY_BUTTON = QtGui.QIcon(path_for("play.png"))
-STOP_BUTTON = QtGui.QIcon(path_for("stop.png"))
-
 
 class ControlsWidget(QtWidgets.QWidget):
     """Widget for editing the Controls object."""
@@ -32,7 +29,9 @@ class ControlsWidget(QtWidgets.QWidget):
         self.fit_settings.setShowGrid(False)
         self.fit_settings.setSelectionMode(self.fit_settings.SelectionMode.SingleSelection)
 
-        self.run_button = QtWidgets.QPushButton(icon=PLAY_BUTTON, text="Run")
+        self.play_icon = QtGui.QIcon(path_for("play.png"))
+        self.stop_icon = QtGui.QIcon(path_for("stop.png"))
+        self.run_button = QtWidgets.QPushButton(icon=self.play_icon, text="Run")
         self.run_button.setStyleSheet("background-color: green;")
         self.run_button.setCheckable(True)
         self.run_button.toggled.connect(self.toggle_run_button)
@@ -84,7 +83,7 @@ class ControlsWidget(QtWidgets.QWidget):
             self.procedure_dropdown.setEnabled(False)
             self.run_button.setText("Stop")
             self.run_button.setStyleSheet("background-color: red;")
-            self.run_button.setIcon(STOP_BUTTON)
+            self.run_button.setIcon(self.stop_icon)
             # TODO some functional stuff... issue #9
             # self.presenter.run() etc.
             # presenter should send a signal when run is completed,
@@ -94,9 +93,7 @@ class ControlsWidget(QtWidgets.QWidget):
             self.procedure_dropdown.setEnabled(True)
             self.run_button.setText("Run")
             self.run_button.setStyleSheet("background-color: green;")
-            self.run_button.setIcon(PLAY_BUTTON)
-            # TODO some functional stuff... issue #9
-            # self.presenter.run() etc.
+            self.run_button.setIcon(self.play_icon)
 
     def set_procedure(self, procedure):
         self.fit_settings_model.set_procedure(procedure)

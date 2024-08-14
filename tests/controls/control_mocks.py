@@ -11,6 +11,7 @@ class MockWindowModel:
 
 
 class MockUndoStack:
+    """A mock Undo stack."""
     def __init__(self):
         self.stack = []
 
@@ -19,7 +20,7 @@ class MockUndoStack:
 
 
 class MockPresenter:
-    """A mock Presenter hooked into the model."""
+    """A mock Presenter."""
 
     def __init__(self, procedure):
         self.undo_stack = MockUndoStack()
