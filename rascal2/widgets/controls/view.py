@@ -235,28 +235,5 @@ class FitSettingsWidget(QtWidgets.QWidget):
 
         return set_model_data
 
-
-class ValidatedInputDelegate(QtWidgets.QStyledItemDelegate):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent = parent
-
-    def createEditor(self, parent, option, index):
-        model = index.model()
-        name = model.headerData(index.row(), QtCore.Qt.Orientation.Vertical, QtCore.Qt.ItemDataRole.DisplayRole)
-        field_info = model.controls.model_fields[name]
-        return ValidatedInputWidget(name, field_info, parent)
-
-    def setEditorData(self, editor: ValidatedInputWidget, index):
-        data = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
-        editor.change_editor_data(data)
-
-    def setModelData(self, editor: ValidatedInputWidget, model, index):
-        data = editor.editor_data()
-        result = model.setData(index, data, QtCore.Qt.ItemDataRole.EditRole)
-        if result is False:
-            editor.set_validation_text(str(model.last_validation_error))
-
-
 def set_constraints(widget, field_info) -> None:
     pass
