@@ -1,13 +1,14 @@
 """Widget for setting up the Controls class."""
 
 from enum import Enum
+from typing import Callable
 
-from PyQt6 import QtGui, QtWidgets
+from pydantic.fields import FieldInfo
+from PyQt6 import QtCore, QtGui, QtWidgets
 from RATapi.utils.enums import Procedures
 
 from rascal2.config import path_for
 from rascal2.widgets.controls.model import FitSettingsModel
-from rascal2.widgets.delegates import BoolDelegate, EnumDelegate
 
 
 class ControlsWidget(QtWidgets.QWidget):
@@ -16,20 +17,22 @@ class ControlsWidget(QtWidgets.QWidget):
     def __init__(self, presenter):
         super().__init__()
         self.presenter = presenter
-        init_procedure = self.presenter.model.controls.procedure  # to set to whatever initial procedure is saved
 
         # create fit settings view and setup connection to model
-        self.fit_settings = QtWidgets.QTableView()
-        self.fit_settings_model = FitSettingsModel(self.presenter)
-        self.fit_settings.setModel(self.fit_settings_model)
-        self.set_procedure(init_procedure)
+        fit_settings_model = FitSettingsModel(self.presenter)
+        self.fit_settings_layout = QtWidgets.QStackedLayout()
+        for procedure in Procedures:
+            fit_set = FitSettingsWidget(self, procedure, fit_settings_model)
+            self.fit_settings_layout.addWidget(fit_set)
 
-        # aesthetics of fit settings table
-        self.fit_settings.horizontalHeader().setVisible(False)
-        self.fit_settings.horizontalHeader().setStretchLastSection(True)
-        self.fit_settings.verticalHeader().setVisible(True)
-        self.fit_settings.setShowGrid(False)
-        self.fit_settings.setSelectionMode(self.fit_settings.SelectionMode.SingleSelection)
+        fit_settings_widget = QtWidgets.QWidget()
+        fit_settings_widget.setLayout(self.fit_settings_layout)
+        self.fit_settings = QtWidgets.QScrollArea()
+        self.fit_settings.setWidget(fit_settings_widget)
+
+        # set initial procedure to whatever is in the Controls object
+        init_procedure = [p.value for p in Procedures].index(self.presenter.model.controls.procedure)
+        self.set_procedure(init_procedure)
 
         # create run button
         self.play_icon = QtGui.QIcon(path_for("play.png"))
@@ -51,8 +54,8 @@ class ControlsWidget(QtWidgets.QWidget):
         procedure_selector.addWidget(QtWidgets.QLabel("Procedure:"))
         self.procedure_dropdown = QtWidgets.QComboBox()
         self.procedure_dropdown.addItems([p.value for p in Procedures])
-        self.procedure_dropdown.setCurrentText(init_procedure)
-        self.procedure_dropdown.currentTextChanged.connect(self.set_procedure)
+        self.procedure_dropdown.setCurrentIndex(init_procedure)
+        self.procedure_dropdown.currentIndexChanged.connect(self.set_procedure)
         procedure_selector.addWidget(self.procedure_dropdown)
 
         # create button to hide/show fit settings
@@ -119,29 +122,141 @@ class ControlsWidget(QtWidgets.QWidget):
             self.run_button.setStyleSheet("background-color: green;")
             self.run_button.setIcon(self.play_icon)
 
-    def set_procedure(self, procedure: Procedures):
+    def set_procedure(self, index: int):
         """Change the Controls procedure and update the table.
 
         Parameters
         ----------
-        procedure : Procedures
-            The procedure to which Controls is changed.
+        index : int
+            The index of the procedure to change to.
 
         """
-        self.fit_settings_model.set_procedure(procedure)
-        for i in range(0, len(self.fit_settings_model.fit_settings)):
-            index = self.fit_settings_model.createIndex(i, 0)
+        self.fit_settings_layout.setCurrentIndex(index)
 
-            # set correct delegates for cells
-            setting_datatype = self.fit_settings_model.datatypes[i]
-            if issubclass(setting_datatype, Enum):
-                self.fit_settings.setItemDelegateForRow(i, EnumDelegate(self, setting_datatype))
-                self.fit_settings.openPersistentEditor(index)
-            elif setting_datatype is bool:
-                self.fit_settings.setItemDelegateForRow(i, BoolDelegate(self))
-                self.fit_settings.openPersistentEditor(index)
+
+class ValidatedInputWidget(QtWidgets.QWidget):
+    """Number input for Pydantic field with validation."""
+
+    def __init__(self, name: str, field_info: FieldInfo, parent=None):
+        super().__init__(parent=parent)
+        layout = QtWidgets.QGridLayout()
+        layout.addWidget(QtWidgets.QLabel(name), 0, 0)
+        self.name = name
+
+        # editor_data and change_editor_data are set to the getter and setter
+        # methods for the actual editor inside the widget
+        self.editor_data: Callable
+        self.change_editor_data: Callable
+        self.edited_signal: QtCore.pyqtSignal
+
+        if isinstance(field_info.annotation, int):
+            self.value_box = QtWidgets.QSpinBox(self)
+            set_constraints(self.value_box, field_info)
+            self.editor_data = self.value_box.value
+            self.change_editor_data = self.value_box.setValue
+            self.edited_signal = self.value_box.valueChanged
+        elif isinstance(field_info.annotation, float):
+            self.value_box = QtWidgets.QDoubleSpinBox(self)
+            set_constraints(self.value_box, field_info)
+            self.editor_data = self.value_box.value
+            self.change_editor_data = self.value_box.setValue
+            self.edited_signal = self.value_box.valueChanged
+        elif issubclass(field_info.annotation, Enum):
+            self.value_box = QtWidgets.QComboBox(self)
+            self.value_box.addItems(str(e.value) for e in field_info.annotation)
+            self.editor_data = self.value_box.currentText
+            self.change_editor_data = self.value_box.setCurrentText
+            self.edited_signal = self.value_box.currentTextChanged
+        elif isinstance(field_info.annotation, bool):
+            self.value_box = QtWidgets.QCheckBox(self)
+            self.editor_data = self.value_box.isChecked
+            self.change_editor_data = self.value_box.setChecked
+            self.edited_signal = self.value_box.checkStateChanged
+        else:
+            self.value_box = QtWidgets.QLineEdit(self)
+            self.editor_data = self.value_box.text
+            self.change_editor_data = self.value_box.setText
+            self.edited_signal = self.value_box.textChanged
+
+        layout.addWidget(self.value_box, 0, 1)
+
+        self.validation_box = QtWidgets.QLabel()
+        self.validation_box.setStyleSheet("QLabel { color : red; }")
+        self.validation_box.font().setPointSize(10)
+        self.validation_box.setFixedHeight(10)
+        layout.addWidget(self.validation_box, 1, 1)
+
+        self.setLayout(layout)
+
+    def set_validation_text(self, msg: str):
+        """Put a message in the validation box."""
+        self.validation_box.setText(msg)
+
+
+class FitSettingsWidget(QtWidgets.QWidget):
+    def __init__(self, parent, procedure: Procedures, model: FitSettingsModel):
+        super().__init__(parent)
+        self.model = model
+        self.rows = {}
+        self.datasetter = {}
+        self.visible_settings = self.model.get_procedure_settings(procedure)
+
+        layout = QtWidgets.QVBoxLayout()
+        for setting in self.visible_settings:
+            field_info = self.model.model_fields[setting]
+            self.rows[setting] = ValidatedInputWidget(setting, field_info)
+            self.datasetter[setting] = self.create_model_data_setter(setting)
+            self.rows[setting].edited_signal.connect(self.datasetter[setting])
+            self.update_data(setting)
+            layout.addWidget(self.rows[setting])
+
+        self.setLayout(layout)
+
+    def update_data(self, setting):
+        self.rows[setting].change_editor_data(self.model.data(setting))
+
+    def create_model_data_setter(self, setting: str) -> Callable:
+        """Create a model data setter for the fit setting given by an integer.
+
+        Parameters
+        ----------
+        s: str
+            The setting to which the setter connects.
+
+        """
+
+        def set_model_data():
+            value = self.rows[setting].editor_data()
+            result = self.model.setData(setting, value)
+            if result is False:
+                self.rows[setting].set_validation_text(self.model.last_validation_error.errors()[0]["msg"])
             else:
-                self.fit_settings.setItemDelegateForRow(i, QtWidgets.QStyledItemDelegate(self))
-                self.fit_settings.closePersistentEditor(index)
+                self.rows[setting].set_validation_text("")
 
-        self.update()
+        return set_model_data
+
+
+class ValidatedInputDelegate(QtWidgets.QStyledItemDelegate):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+
+    def createEditor(self, parent, option, index):
+        model = index.model()
+        name = model.headerData(index.row(), QtCore.Qt.Orientation.Vertical, QtCore.Qt.ItemDataRole.DisplayRole)
+        field_info = model.controls.model_fields[name]
+        return ValidatedInputWidget(name, field_info, parent)
+
+    def setEditorData(self, editor: ValidatedInputWidget, index):
+        data = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
+        editor.change_editor_data(data)
+
+    def setModelData(self, editor: ValidatedInputWidget, model, index):
+        data = editor.editor_data()
+        result = model.setData(index, data, QtCore.Qt.ItemDataRole.EditRole)
+        if result is False:
+            editor.set_validation_text(str(model.last_validation_error))
+
+
+def set_constraints(widget, field_info) -> None:
+    pass
