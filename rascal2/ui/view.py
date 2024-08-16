@@ -37,7 +37,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         # project: NO ISSUE YET
         self.plotting_widget = QtWidgets.QWidget()
         self.terminal_widget = QtWidgets.QWidget()
-        self.controls_widget = ControlsWidget(self.presenter)
+        self.controls_widget = ControlsWidget(self)
         self.project_widget = QtWidgets.QWidget()
 
         self.create_actions()

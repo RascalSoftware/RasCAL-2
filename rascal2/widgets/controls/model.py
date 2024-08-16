@@ -1,6 +1,6 @@
 import warnings
 
-from pydantic_core import ValidationError
+from pydantic import ValidationError
 from RATapi.controls import fields
 
 from rascal2.core.commands import editControls
@@ -20,7 +20,7 @@ class FitSettingsModel:
 
     def data(self, setting):
         value = getattr(self.controls, setting)
-        return str(value)
+        return value
 
     def setData(self, setting, value) -> bool:
         # we have to check validation in advance because PyQt doesn't return
@@ -38,4 +38,4 @@ class FitSettingsModel:
         return True
 
     def get_procedure_settings(self, procedure):
-        return [f for f in fields.get(procedure, []) if procedure != "procedure"]
+        return [f for f in fields.get(procedure, []) if f != "procedure"]
