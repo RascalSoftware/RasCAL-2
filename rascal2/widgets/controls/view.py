@@ -3,6 +3,7 @@
 from typing import Callable
 
 from PyQt6 import QtCore, QtGui, QtWidgets
+from RATapi.controls import common_fields
 from RATapi.utils.enums import Procedures
 
 from rascal2.config import path_for
@@ -162,6 +163,10 @@ class ControlsWidget(QtWidgets.QWidget):
         self.fit_settings_layout.setCurrentIndex(index)
         procedure = [p.value for p in Procedures][index]
         self.fit_settings_model.setData("procedure", procedure)
+        # synchronise common fields between procedures
+        for field in common_fields:
+            if field not in ["procedure", "resampleParams"]:  # FIXME remove resampleparams when merged
+                self.fit_settings_layout.currentWidget().update_data(field)
 
 
 class FitSettingsWidget(QtWidgets.QScrollArea):
