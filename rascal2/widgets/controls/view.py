@@ -6,8 +6,8 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from RATapi.utils.enums import Procedures
 
 from rascal2.config import path_for
-from rascal2.widgets.inputs import ValidatedInputWidget
 from rascal2.widgets.controls.model import FitSettingsModel
+from rascal2.widgets.inputs import ValidatedInputWidget
 
 
 class ControlsWidget(QtWidgets.QWidget):
@@ -50,7 +50,8 @@ class ControlsWidget(QtWidgets.QWidget):
         self.validation_label.setStyleSheet("color : red")
         self.validation_label.font().setPointSize(10)
         self.validation_label.setWordWrap(True)
-        self.validation_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Maximum)
+        self.validation_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Expanding)
+        self.validation_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignVCenter)
 
         # create box containing chi-squared value
         chi_layout = QtWidgets.QHBoxLayout()
@@ -82,7 +83,10 @@ class ControlsWidget(QtWidgets.QWidget):
         buttons_layout.addLayout(procedure_layout)
         buttons_layout.addWidget(self.fit_settings_button)
         buttons_layout.setSpacing(20)
+        buttons_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignVCenter)
+        procedure_box.addSpacing(20)
         procedure_box.addLayout(chi_layout)
+        procedure_box.addSpacing(50)
         procedure_box.addLayout(buttons_layout)
         procedure_box.addWidget(self.validation_label)
 
@@ -120,13 +124,18 @@ class ControlsWidget(QtWidgets.QWidget):
         if toggled:
             invalid_inputs = self.fit_settings_layout.currentWidget().get_invalid_inputs()
             if invalid_inputs:
-                self.validation_label.setText("Could not run due to invalid inputs:\n  "
-                                                f"{"\n  ".join(invalid_inputs)}\n"
-                                                "Fix these inputs and try again.\n"
-                                                "See fit settings for more details.\n")
+                # can use an f-string in Python 3.12 and up for the fit settings,
+                # but below that you cannot put '\n' in an f-string
+                # so we use this method for compatibility
+                self.validation_label.setText(
+                    "Could not run due to invalid fit settings:\n    "
+                    + "\n    ".join(invalid_inputs)
+                    + "\nFix these inputs and try again.\n"
+                    "See fit settings for more details.\n"
+                )
                 self.run_button.toggle()
                 return
-
+            self.validation_label.setText("")
             self.fit_settings.setEnabled(False)
             self.procedure_dropdown.setEnabled(False)
             self.run_button.setEnabled(False)
@@ -140,9 +149,6 @@ class ControlsWidget(QtWidgets.QWidget):
             self.procedure_dropdown.setEnabled(True)
             self.run_button.setEnabled(True)
             self.stop_button.setEnabled(False)
-
-    def clear_validation_label(self):
-        self.validation_label.setText("")
 
     def set_procedure(self, index: int):
         """Change the Controls procedure and update the table.
@@ -165,6 +171,7 @@ class FitSettingsWidget(QtWidgets.QScrollArea):
         self.rows = {}
         self.datasetter = {}
         self.visible_settings = self.model.get_procedure_settings(procedure)
+        self.visible_settings.remove("resampleParams")  # FIXME remove when merged - just for testing
 
         layout = QtWidgets.QGridLayout()
         layout.setContentsMargins(10, 10, 10, 10)
