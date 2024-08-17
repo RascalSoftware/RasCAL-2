@@ -24,7 +24,7 @@ class ValidatedInputWidget(QtWidgets.QWidget):
         # widget, getter, setter and change signal for different datatypes
         editor_types = {
             int: (QtWidgets.QSpinBox, "value", "setValue", "valueChanged"),
-            float: (QtWidgets.QDoubleSpinBox, "value", "setValue", "valueChanged"),
+            float: (AdaptiveDoubleSpinBox, "value", "setValue", "valueChanged"),
             bool: (QtWidgets.QCheckBox, "isChecked", "setChecked", "checkStateChanged"),
         }
         defaults = (QtWidgets.QLineEdit, "text", "setText", "textChanged")
@@ -41,8 +41,27 @@ class ValidatedInputWidget(QtWidgets.QWidget):
             self.editor_data = getattr(self.editor, getter)
             self.change_editor_data = getattr(self.editor, setter)
             self.edited_signal = getattr(self.editor, signal)
-        if isinstance(self.editor, (QtWidgets.QSpinBox, QtWidgets.QDoubleSpinBox)):
-            set_constraints(self.editor, field_info)
+        if isinstance(self.editor, QtWidgets.QSpinBox):
+            for item in field_info.metadata:
+                if hasattr(item, "ge"):
+                    self.editor.setMinimum(item.ge)
+                if hasattr(item, "gt"):
+                    self.editor.setMinimum(item.gt + 1)
+                if hasattr(item, "le"):
+                    self.editor.setMaximum(item.le)
+                if hasattr(item, "lt"):
+                    self.editor.setMaximum(item.lt - 1)
+        elif isinstance(self.editor, AdaptiveDoubleSpinBox):
+            for item in field_info.metadata:
+                for attr in ["ge", "gt"]:
+                    if hasattr(item, attr):
+                        self.editor.setMinimum(getattr(item, attr))
+                for attr in ["le", "lt"]:
+                    if hasattr(item, attr):
+                        self.editor.setMaximum(getattr(item, attr))
+            if hasattr(field_info, "default") and field_info.default > 0:
+                # set default decimals to order of magnitude of default value
+                self.editor.setDecimals(-floor(log10(abs(field_info.default))))
 
         layout.addWidget(self.editor)
 
@@ -74,19 +93,15 @@ class ValidatedInputWidget(QtWidgets.QWidget):
             self.input_is_valid = True
 
 
-def set_constraints(widget: QtWidgets.QSpinBox | QtWidgets.QDoubleSpinBox, field_info) -> None:
-    metadata = field_info.metadata
-    if isinstance(widget, QtWidgets.QDoubleSpinBox):
-        widget.setStepType(widget.StepType.AdaptiveDecimalStepType)
-        if hasattr(field_info, "default") and field_info.default > 0:
-            # set decimals to order of magnitude of default value
-            widget.setDecimals(-floor(log10(abs(field_info.default))))
-    for item in metadata:
-        # using a 'guessing attributes' method rather than importing the annotation classes
-        # which would add a dependency since they're from the annotated_types package
-        for attr in ["ge", "gt"]:
-            if hasattr(item, attr):
-                widget.setMinimum(getattr(item, attr))
-        for attr in ["le", "lt"]:
-            if hasattr(item, attr):
-                widget.setMaximum(getattr(item, attr))
+class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
+    """A double spinbox which adapts to given numbers of decimals."""
+
+    def __init__(self, parent):
+        super().__init__()
+        self.setStepType(self.StepType.AdaptiveDecimalStepType)
+
+    def validate(self, input, pos):
+        print(input)
+        if len(input.split(".")[-1]) != self.decimals():
+            self.setDecimals(len(input.split(".")[-1]))
+        return super().validate(input, pos)
