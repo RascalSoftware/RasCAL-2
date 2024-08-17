@@ -1,6 +1,6 @@
 """Widget for validated user inputs."""
-
 from enum import Enum
+from math import floor, log10
 from typing import Callable
 
 from pydantic.fields import FieldInfo
@@ -77,7 +77,10 @@ class ValidatedInputWidget(QtWidgets.QWidget):
 def set_constraints(widget: QtWidgets.QSpinBox | QtWidgets.QDoubleSpinBox, field_info) -> None:
     metadata = field_info.metadata
     if isinstance(widget, QtWidgets.QDoubleSpinBox):
-        widget.setSingleStep(0.1)
+        widget.setStepType(widget.StepType.AdaptiveDecimalStepType)
+        if hasattr(field_info, "default") and field_info.default > 0:
+            # set decimals to order of magnitude of default value
+            widget.setDecimals(-floor(log10(abs(field_info.default))))
     for item in metadata:
         # using a 'guessing attributes' method rather than importing the annotation classes
         # which would add a dependency since they're from the annotated_types package

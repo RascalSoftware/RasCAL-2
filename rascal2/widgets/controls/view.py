@@ -203,6 +203,7 @@ class FitSettingsWidget(QtWidgets.QScrollArea):
     def update_data(self, setting):
         try:
             self.rows[setting].change_editor_data(self.model.data(setting))
+            # if double spinbox, adjust
         except TypeError:
             self.rows[setting].change_editor_data(str(self.model.data(setting)))
 
