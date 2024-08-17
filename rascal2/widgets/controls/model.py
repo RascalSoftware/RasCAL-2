@@ -34,7 +34,6 @@ class FitSettingsModel:
             self.last_validation_error = err
             return False
         self.undo_stack.push(editControls(self.controls, setting, value))
-        print(self.controls)
         return True
 
     def get_procedure_settings(self, procedure):

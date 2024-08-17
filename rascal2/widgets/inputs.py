@@ -101,7 +101,6 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         self.setStepType(self.StepType.AdaptiveDecimalStepType)
 
     def validate(self, input, pos):
-        print(input)
         if len(input.split(".")[-1]) != self.decimals():
             self.setDecimals(len(input.split(".")[-1]))
         return super().validate(input, pos)
