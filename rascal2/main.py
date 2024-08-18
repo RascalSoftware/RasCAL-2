@@ -21,7 +21,7 @@ def ui_execute():
     app.setWindowIcon(QtGui.QIcon(path_for("logo.png")))
 
     window = MainWindowView()
-    window.show()
+    window.launchWindow()
     return app.exec()
 
 
