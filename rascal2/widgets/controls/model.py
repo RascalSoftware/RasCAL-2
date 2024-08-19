@@ -31,7 +31,7 @@ class FitSettingsModel:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             try:
-                    self.controls.model_validate({setting: value})
+                self.controls.model_validate({setting: value})
             except ValidationError as err:
                 self.last_validation_error = err
                 return False

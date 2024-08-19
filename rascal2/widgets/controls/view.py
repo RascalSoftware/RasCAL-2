@@ -202,10 +202,9 @@ class FitSettingsWidget(QtWidgets.QScrollArea):
 
     def update_data(self, setting):
         try:
-            self.rows[setting].change_editor_data(self.model.data(setting))
-            # if double spinbox, adjust
+            self.rows[setting].set_data(self.model.data(setting))
         except TypeError:
-            self.rows[setting].change_editor_data(str(self.model.data(setting)))
+            self.rows[setting].set_data(str(self.model.data(setting)))
 
     def create_model_data_setter(self, setting: str) -> Callable:
         """Create a model data setter for the fit setting given by an integer.
@@ -218,7 +217,7 @@ class FitSettingsWidget(QtWidgets.QScrollArea):
         """
 
         def set_model_data():
-            value = self.rows[setting].editor_data()
+            value = self.rows[setting].get_data()
             result = self.model.setData(setting, value)
             if result is False:
                 self.rows[setting].set_validation_text(self.model.last_validation_error.errors()[0]["msg"])
