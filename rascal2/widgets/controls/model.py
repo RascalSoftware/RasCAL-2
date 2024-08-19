@@ -26,15 +26,17 @@ class FitSettingsModel:
         # we have to check validation in advance because PyQt doesn't return
         # the exception, it just falls over in C++
         # also doing it this way stops bad changes being pushed onto the stack
-        try:
-            with warnings.catch_warnings():  # warning is erroneous...
-                warnings.simplefilter("ignore")
-                self.controls.model_validate({setting: value})
-        except ValidationError as err:
-            self.last_validation_error = err
-            return False
-        self.undo_stack.push(editControls(self.controls, setting, value))
-        return True
+        # also suppress warnings (we get warning for setting params not matching
+        # procedure on initialisation) to avoid clogging stdout
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            try:
+                    self.controls.model_validate({setting: value})
+            except ValidationError as err:
+                self.last_validation_error = err
+                return False
+            self.undo_stack.push(editControls(self.controls, setting, value))
+            return True
 
     def get_procedure_settings(self, procedure):
         return [f for f in fields.get(procedure, []) if f != "procedure"]
