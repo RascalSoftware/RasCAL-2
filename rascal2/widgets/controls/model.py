@@ -16,7 +16,7 @@ class FitSettingsModel:
         self.model_fields = self.controls.model_fields
         self.undo_stack = self.presenter.undo_stack
         self.editable = True
-        self.last_validation_error = ""
+        self.last_validation_error = None
 
     def data(self, setting):
         value = getattr(self.controls, setting)

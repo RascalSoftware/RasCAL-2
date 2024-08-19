@@ -24,8 +24,8 @@ class ValidatedInputWidget(QtWidgets.QWidget):
 
         # widget, getter, setter and change signal for different datatypes
         editor_types = {
-            int: (QtWidgets.QSpinBox, "value", "setValue", "valueChanged"),
-            float: (AdaptiveDoubleSpinBox, "value", "setValue", "valueChanged"),
+            int: (QtWidgets.QSpinBox, "value", "setValue", "editingFinished"),
+            float: (AdaptiveDoubleSpinBox, "value", "setValue", "editingFinished"),
             bool: (QtWidgets.QCheckBox, "isChecked", "setChecked", "checkStateChanged"),
         }
         defaults = (QtWidgets.QLineEdit, "text", "setText", "textChanged")
@@ -103,13 +103,17 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         self.setStepType(self.StepType.AdaptiveDecimalStepType)
         self.setKeyboardTracking(False)
 
+    def textFromValue(self, value):
+        return f"{value:.{self.decimals()}g}"
+
     def validate(self, input, pos):
         if "e" in input:
             try:
                 self.setDecimals(-int(input.split("e")[-1]))
-                self.setValue(float(input))
+                return (QtGui.QValidator.State.Acceptable, input, pos)
             except ValueError:
                 return (QtGui.QValidator.State.Intermediate, input, pos)
         if "." in input and len(input.split(".")[-1]) != self.decimals():
             self.setDecimals(len(input.split(".")[-1]))
+            return (QtGui.QValidator.State.Acceptable, input, pos)
         return super().validate(input, pos)
