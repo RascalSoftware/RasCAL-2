@@ -1,84 +1,69 @@
 """Test the Controls widget."""
 
-from enum import StrEnum
-
 import pytest
-from PyQt6 import QtCore, QtWidgets
+from pydantic.fields import FieldInfo
+from PyQt6 import QtWidgets
+from RATapi.controls import fields
 
-from rascal2.widgets import ControlsWidget
-from rascal2.widgets.delegates import BoolDelegate, EnumDelegate
-from tests.controls.control_mocks import MockPresenter
+from rascal2.widgets.controls.view import ControlsWidget, FitSettingsWidget
+from tests.controls.control_mocks import MockWindowView
 
 
-class MockTableModel(QtCore.QAbstractTableModel):
-    def __init__(self, presenter, dataset):
-        super().__init__()
+class MockValidationError:
+    """A mock of a ValidationError list."""
+
+    def errors(self):
+        return [{"msg": "Validation error!"}]
+
+
+class MockFitSettingsModel:
+    def __init__(self, presenter, dataset=None):
         if dataset is None:
-            dataset = ["data 1", "data 2", "data 3"]
+            dataset = {"setting 1": "data 1", "setting 2": "data 2", "setting 3": "data 3"}
+        dataset["resampleParams"] = "REMOVE WHEN resampleParams IS FIXED"
         self.fit_settings = dataset
-        self.headers = [f"Header {i}" for i in range(0, len(dataset))]
+        self.model_fields = {s: FieldInfo(annotation=type(dataset[s])) for s in self.fit_settings}
         self.presenter = presenter
-        self.procedure = "fry eggs"
+        self.allow_setting = True  # for testing setData rejection
+        self.last_validation_error = MockValidationError()
 
-    def columnCount(self, parent=None):
-        return 1
+    def data(self, setting):
+        return self.fit_settings[setting]
 
-    def rowCount(self, parent=None):
-        return 5
+    def setData(self, setting, value):
+        if self.allow_setting:
+            self.fit_settings[setting] = value
+            return True
+        return False
 
-    def headerData(self, section, orientation, role):
-        return self.headers[section]
-
-    def data(self, index, role=QtCore.Qt.ItemDataRole.DisplayRole):
-        return str(self.fit_settings[index.row()])
-
-    def setData(self, index, value, role):
-        self.data[index.row()] = value
-        return True
-
-    def set_procedure(self, procedure):
-        self.procedure = procedure
-        self.datatypes = [type(f) for f in self.fit_settings]
+    def get_procedure_settings(self, procedure):
+        return list(self.fit_settings.keys())
 
 
-# can't call this "TestEnum" or pytest tries to collect it as a test class
-class MyEnum(StrEnum):
-    val_1 = "value 1"
-    val_2 = "value 2"
-    val_3 = "value 3"
+view = MockWindowView()
 
 
 @pytest.fixture
-def widget():
-    def _widget(data=None):
-        widget = ControlsWidget(MockPresenter("calculate"))
-        widget.fit_settings_model = MockTableModel(widget.presenter, data)
-        widget.set_procedure("fry eggs")  # reset procedure to setup mock table model
+def controls_widget() -> ControlsWidget:
+    def _widget():
+        widget = ControlsWidget(view)
         return widget
 
     return _widget
 
 
-@pytest.mark.parametrize(
-    "data", [[1, 3, 5], [13.0, False, True, True, 6], [True, MyEnum("value 2"), 55.0, MyEnum("value 1")]]
-)
-def test_delegate_types(widget, data):
-    """Test that the correct delegate types are given to each entry in the table."""
-    wg = widget(data)
-    for i in range(0, len(data)):
-        if isinstance(data[i], bool):
-            delegate = BoolDelegate
-        elif isinstance(data[i], StrEnum):
-            delegate = EnumDelegate
-        else:
-            delegate = QtWidgets.QStyledItemDelegate
+@pytest.fixture
+def fit_settings_widget() -> FitSettingsWidget:
+    def _widget(data=None):
+        widget = FitSettingsWidget(view, "", MockFitSettingsModel(data))
+        return widget
 
-        assert isinstance(wg.fit_settings.itemDelegateForRow(i), delegate)
+    return _widget
 
 
-def test_toggle_fit(widget):
+def test_toggle_fit(controls_widget):
     """Test that fit settings are hidden when the button is toggled."""
-    wg = widget()
+    wg = controls_widget()
     assert wg.fit_settings.isVisibleTo(wg)
     wg.fit_settings_button.toggle()
     assert not wg.fit_settings.isVisibleTo(wg)
@@ -86,14 +71,85 @@ def test_toggle_fit(widget):
     assert wg.fit_settings.isVisibleTo(wg)
 
 
-def test_toggle_run_disables(widget):
-    """Assert that Controls settings are disabled when the run button is pressed."""
-    wg = widget()
+def test_toggle_run_disables(controls_widget):
+    """Assert that Controls settings are disabled and Stop button enabled when the run button is pressed."""
+    wg = controls_widget()
     assert wg.fit_settings.isEnabled()
     assert wg.procedure_dropdown.isEnabled()
+    assert not wg.stop_button.isEnabled()
     wg.run_button.toggle()
     assert not wg.fit_settings.isEnabled()
     assert not wg.procedure_dropdown.isEnabled()
+    assert wg.stop_button.isEnabled()
     wg.run_button.toggle()
     assert wg.fit_settings.isEnabled()
     assert wg.procedure_dropdown.isEnabled()
+    assert not wg.stop_button.isEnabled()
+
+
+def test_stop_button_interrupts(controls_widget):
+    """Test that an interrupt signal is sent to the presenter when Stop is pressed."""
+    wg = controls_widget()
+    wg.run_button.toggle()
+    wg.stop_button.click()
+    assert wg.presenter.terminal_interrupted
+
+
+@pytest.mark.parametrize("procedure", ["calculate", "simplex", "de", "ns", "dream"])
+def test_procedure_select(controls_widget, procedure):
+    """Test that the procedure selector correctly changes the widget."""
+    wg = controls_widget()
+    wg.procedure_dropdown.setCurrentText(procedure)
+    current_fit_set = wg.fit_settings_layout.currentWidget()
+    for setting in fields[procedure]:
+        if setting not in ["procedure", "resampleParams"]:
+            assert setting in list(current_fit_set.rows.keys())
+
+
+def test_create_fit_settings(fit_settings_widget):
+    """Test that fit settings are correctly created from the model's dataset."""
+    wg = fit_settings_widget()
+    grid = wg.widget().layout()
+    for i in [1, 2, 3]:
+        assert grid.itemAtPosition(i - 1, 0).widget().text() == f"setting {i}"
+        assert grid.itemAtPosition(i - 1, 1).widget().get_data() == f"data {i}"
+
+
+def test_invalid_input(fit_settings_widget):
+    """Test that invalid inputs are propagated correctly."""
+    wg = fit_settings_widget()
+    wg.model.allow_setting = False
+    grid = wg.widget().layout()
+    entry = grid.itemAtPosition(0, 1).widget()
+
+    entry.set_data("bad data")
+
+    assert entry.validation_box.text() == "Validation error!"
+
+
+@pytest.mark.parametrize("entries", [(1, 3), [2], (1, 2), (1, 2, 3)])
+def test_invalid_data_run(controls_widget, fit_settings_widget, entries):
+    """Tests that the widget refuses to run if values have invalid data."""
+    wg = controls_widget()
+    fit_tab = fit_settings_widget()
+    fit_lay = QtWidgets.QStackedLayout()
+    fit_lay.addWidget(fit_tab)
+    fit_wg = QtWidgets.QWidget()
+    fit_wg.setLayout(fit_lay)
+
+    wg.fit_settings_layout = fit_lay
+    wg.fit_settings = fit_wg
+
+    fit_tab.model.allow_setting = False
+    grid = fit_tab.widget().layout()
+    for entry in entries:
+        entry = grid.itemAtPosition(entry - 1, 1).widget()
+        entry.set_data("bad data")
+
+    for entry in entries:
+        assert f"setting {entry}" in fit_tab.get_invalid_inputs()
+
+    wg.run_button.toggle()
+    assert not wg.stop_button.isEnabled()  # to assert run hasn't started
+    for entry in entries:
+        assert f"setting {entry}" in wg.validation_label.text()
