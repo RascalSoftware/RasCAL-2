@@ -111,8 +111,8 @@ def test_create_fit_settings(fit_settings_widget):
     wg = fit_settings_widget()
     grid = wg.widget().layout()
     for i in [1, 2, 3]:
-        assert grid.itemAtPosition(2*(i - 1), 0).widget().text() == f"setting {i}"
-        assert grid.itemAtPosition(2*(i - 1), 1).widget().get_data() == f"data {i}"
+        assert grid.itemAtPosition(2 * (i - 1), 0).widget().text() == f"setting {i}"
+        assert grid.itemAtPosition(2 * (i - 1), 1).widget().get_data() == f"data {i}"
 
 
 def test_invalid_input(fit_settings_widget):
@@ -144,7 +144,7 @@ def test_invalid_data_run(controls_widget, fit_settings_widget, entries):
     fit_tab.model.allow_setting = False
     grid = fit_tab.widget().layout()
     for entry in entries:
-        entry = grid.itemAtPosition(2*(entry - 1), 1).widget()
+        entry = grid.itemAtPosition(2 * (entry - 1), 1).widget()
         entry.set_data("bad data")
 
     for entry in entries:
