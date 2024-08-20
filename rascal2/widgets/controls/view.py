@@ -60,6 +60,7 @@ class ControlsWidget(QtWidgets.QWidget):
         self.chi_squared.setReadOnly(True)
         chi_layout.addWidget(QtWidgets.QLabel("Current chi-squared:"))
         chi_layout.addWidget(self.chi_squared)
+        chi_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
         # create dropdown to choose procedure
         procedure_layout = QtWidgets.QHBoxLayout()
@@ -81,15 +82,12 @@ class ControlsWidget(QtWidgets.QWidget):
         buttons_layout = QtWidgets.QVBoxLayout()
         buttons_layout.addWidget(self.run_button)
         buttons_layout.addWidget(self.stop_button)
-        buttons_layout.addLayout(procedure_layout)
-        buttons_layout.addWidget(self.fit_settings_button)
-        buttons_layout.setSpacing(20)
         buttons_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignVCenter)
-        procedure_box.addSpacing(20)
         procedure_box.addLayout(chi_layout)
-        procedure_box.addSpacing(50)
         procedure_box.addLayout(buttons_layout)
-        procedure_box.addWidget(self.validation_label)
+        procedure_box.addLayout(procedure_layout)
+        procedure_box.addWidget(self.fit_settings_button, alignment=QtCore.Qt.AlignmentFlag.AlignVCenter)
+        procedure_box.addWidget(self.validation_label, alignment=QtCore.Qt.AlignmentFlag.AlignVCenter)
 
         widget_layout = QtWidgets.QHBoxLayout()
         widget_layout.addLayout(procedure_box)
@@ -175,23 +173,28 @@ class FitSettingsWidget(QtWidgets.QScrollArea):
         self.model = model
         self.rows = {}
         self.datasetter = {}
+        self.val_labels = {}
         self.visible_settings = self.model.get_procedure_settings(procedure)
         self.visible_settings.remove("resampleParams")  # FIXME remove when merged - just for testing
 
         layout = QtWidgets.QGridLayout()
         layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(10)
         for i, setting in enumerate(self.visible_settings):
             field_info = self.model.model_fields[setting]
             self.rows[setting] = ValidatedInputWidget(field_info)
             self.datasetter[setting] = self.create_model_data_setter(setting)
             self.rows[setting].edited_signal.connect(self.datasetter[setting])
-            self.update_data(setting)
             label = QtWidgets.QLabel(setting)
-            label.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
-            label.setStyleSheet("padding : 0.5px")
-            layout.addWidget(label, i, 0)
-            layout.addWidget(self.rows[setting], i, 1)
+            label.setAlignment(QtCore.Qt.AlignmentFlag.AlignVCenter)
+            self.val_labels[setting] = QtWidgets.QLabel()
+            self.val_labels[setting].setStyleSheet("QLabel { color : red; }")
+            self.val_labels[setting].font().setPointSize(10)
+            self.val_labels[setting].setWordWrap(True)
+            self.val_labels[setting].setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+            self.update_data(setting)
+            layout.addWidget(label, 2 * i, 0)
+            layout.addWidget(self.rows[setting], 2 * i, 1)
+            layout.addWidget(self.val_labels[setting], 2 * i + 1, 1)
 
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         fit_settings = QtWidgets.QWidget(self)
@@ -220,9 +223,9 @@ class FitSettingsWidget(QtWidgets.QScrollArea):
             value = self.rows[setting].get_data()
             result = self.model.setData(setting, value)
             if result is False:
-                self.rows[setting].set_validation_text(self.model.last_validation_error.errors()[0]["msg"])
+                self.set_validation_text(setting, self.model.last_validation_error.errors()[0]["msg"])
             else:
-                self.rows[setting].set_validation_text("")
+                self.set_validation_text(setting, "")
 
         return set_model_data
 
@@ -235,4 +238,11 @@ class FitSettingsWidget(QtWidgets.QScrollArea):
             A list of setting names which are currently not valid.
 
         """
-        return [s for s in self.rows if not self.rows[s].input_is_valid]
+        return [s for s in self.val_labels if self.val_labels[s].text() != ""]
+
+    def set_validation_text(self, setting, text):
+        self.val_labels[setting].setText(text)
+        if text == "":
+            self.rows[setting].editor.setStyleSheet("")
+        else:
+            self.rows[setting].editor.setStyleSheet("color : red")

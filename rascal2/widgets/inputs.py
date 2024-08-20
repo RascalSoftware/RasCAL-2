@@ -9,13 +9,11 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 
 class ValidatedInputWidget(QtWidgets.QWidget):
-    """Number input for Pydantic field with validation."""
+    """Value input generated from Pydantic field info."""
 
     def __init__(self, field_info: FieldInfo, parent=None):
         super().__init__(parent=parent)
         layout = QtWidgets.QVBoxLayout()
-        self.input_is_valid = True
-
         # editor_data and change_editor_data are set to the getter and setter
         # methods for the actual editor inside the widget
         self.get_data: Callable
@@ -66,13 +64,6 @@ class ValidatedInputWidget(QtWidgets.QWidget):
                 self.editor.setDecimals(-floor(log10(abs(field_info.default))))
 
         layout.addWidget(self.editor)
-
-        self.validation_box = QtWidgets.QLabel()
-        self.validation_box.setStyleSheet("QLabel { color : red; }")
-        self.validation_box.font().setPointSize(10)
-        self.validation_box.setWordWrap(True)
-        layout.addWidget(self.validation_box)
-
         layout.setContentsMargins(5, 0, 0, 0)
 
         self.setLayout(layout)
