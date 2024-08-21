@@ -6,7 +6,7 @@ from rascal2.config import path_for, setup_logging, setup_settings
 from rascal2.core.settings import MDIGeometries, Settings
 from rascal2.dialogs.project_dialog import ProjectDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog
-from rascal2.widgets import ControlsWidget
+from rascal2.widgets import ControlsWidget, TerminalWidget
 from rascal2.widgets.startup_widget import StartUpWidget
 
 from .presenter import MainWindowPresenter
@@ -37,7 +37,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         # https://github.com/RascalSoftware/RasCAL-2/issues/7
         # project: NO ISSUE YET
         self.plotting_widget = QtWidgets.QWidget()
-        self.terminal_widget = QtWidgets.QWidget()
+        self.terminal_widget = TerminalWidget(self)
         self.controls_widget = ControlsWidget(self)
         self.project_widget = QtWidgets.QWidget()
 
@@ -163,6 +163,11 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.save_default_windows_action.setEnabled(False)
         self.disabled_elements.append(self.save_default_windows_action)
 
+        # Terminal menu actions
+        self.clear_terminal_action = QtGui.QAction("Clear Terminal", self)
+        self.clear_terminal_action.setStatusTip("Clear text in the terminal")
+        self.clear_terminal_action.triggered.connect(self.terminal_widget.clear)
+
     def create_menus(self):
         """Creates the main menu and sub menus"""
         self.main_menu = self.menuBar()
@@ -189,8 +194,11 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.windows_menu.setEnabled(False)
         self.disabled_elements.append(self.windows_menu)
 
-        self.help_menu = self.main_menu.addMenu("&Help")
-        self.help_menu.addAction(self.open_help_action)
+        terminal_menu = self.main_menu.addMenu("&Terminal")
+        terminal_menu.addAction(self.clear_terminal_action)
+
+        help_menu = self.main_menu.addMenu("&Help")
+        help_menu.addAction(self.open_help_action)
 
     def open_docs(self):
         """Opens the documentation"""

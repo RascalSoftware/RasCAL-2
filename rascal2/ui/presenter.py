@@ -1,5 +1,9 @@
 import warnings
+from contextlib import redirect_stdout
 from typing import Any
+
+import RATapi as RAT
+from PyQt6 import QtCore
 
 from rascal2.core import commands
 
@@ -74,4 +78,49 @@ class MainWindowPresenter:
         """Sends an interrupt signal to the terminal."""
         # TODO: stub for when issue #9 is resolved
         # https://github.com/RascalSoftware/RasCAL-2/issues/9
+        pass
+
+    def run(self):
+        """Run RAT."""
+        self.run_thread = QtCore.QThread(self.view)
+        self.runner = RATRunner(self.model.project, self.model.controls)
+        self.runner.moveToThread(self.run_thread)
+        self.runner.finished.connect(self.run_thread.quit)
+        self.runner.stdout_receiver.text_sent.connect(self.view.terminal_widget.append_text)
+        self.run_thread.started.connect(self.runner.run)
+        self.run_thread.start()
+
+
+class RATRunner(QtCore.QObject):
+    """Class to run RAT in a QThread."""
+
+    finished = QtCore.pyqtSignal()
+
+    def __init__(self, project, controls):
+        super().__init__()
+
+        self.project = project
+        self.controls = controls
+        self.stdout_receiver = StdoutReceiver()
+
+    def run(self):
+        """Run RAT with the given project and controls."""
+        # for testing as we currently do not have project and control creation
+        with redirect_stdout(self.stdout_receiver):
+            project, results = RAT.examples.domains_standard_layers()
+        self.finished.emit()
+
+
+class StdoutReceiver(QtCore.QObject):
+    """Class for redirecting stdout to a signal."""
+
+    text_sent = QtCore.pyqtSignal(str)
+
+    def __init__(self):
+        super().__init__()
+
+    def write(self, text):
+        self.text_sent.emit(text)
+
+    def flush(self):
         pass
