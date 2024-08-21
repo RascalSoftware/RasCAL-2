@@ -3,31 +3,28 @@
 from typing import Callable
 
 from PyQt6 import QtCore, QtGui, QtWidgets
-from RATapi.controls import common_fields
+from RATapi.controls import common_fields, fields
 from RATapi.utils.enums import Procedures
 
 from rascal2.config import path_for
-from rascal2.widgets.controls.model import FitSettingsModel
 from rascal2.widgets.inputs import ValidatedInputWidget
 
 
 class ControlsWidget(QtWidgets.QWidget):
-    """Widget for editing the Controls object."""
+    """Widget for editing the Controls window."""
 
     def __init__(self, parent):
         super().__init__(parent)
         self.presenter = parent.presenter
 
         # create fit settings view and setup connection to model
-        self.fit_settings_model = FitSettingsModel(self.presenter)
         self.fit_settings_layout = QtWidgets.QStackedLayout()
         for procedure in Procedures:
-            fit_set = FitSettingsWidget(self, procedure, self.fit_settings_model)
+            fit_set = FitSettingsWidget(self, procedure, self.presenter)
             self.fit_settings_layout.addWidget(fit_set)
 
         self.fit_settings = QtWidgets.QWidget()
         self.fit_settings.setLayout(self.fit_settings_layout)
-        self.fit_settings.setAutoFillBackground(True)
         self.fit_settings.setBackgroundRole(QtGui.QPalette.ColorRole.Base)
 
         # set initial procedure to whatever is in the Controls object
@@ -75,7 +72,7 @@ class ControlsWidget(QtWidgets.QWidget):
         self.fit_settings_button = QtWidgets.QPushButton()
         self.fit_settings_button.setCheckable(True)
         self.fit_settings_button.toggled.connect(self.toggle_fit_settings)
-        self.fit_settings_button.toggle()  # to set true by default
+        self.fit_settings_button.setChecked(True)
 
         # compose buttons & widget
         procedure_box = QtWidgets.QVBoxLayout()
@@ -132,7 +129,7 @@ class ControlsWidget(QtWidgets.QWidget):
                     + "\nFix these inputs and try again.\n"
                     "See fit settings for more details.\n"
                 )
-                self.run_button.toggle()
+                self.run_button.setChecked(False)
                 return
             self.validation_label.setText("")
             self.fit_settings.setEnabled(False)
@@ -160,27 +157,40 @@ class ControlsWidget(QtWidgets.QWidget):
         """
         self.fit_settings_layout.setCurrentIndex(index)
         procedure = [p.value for p in Procedures][index]
-        self.fit_settings_model.setData("procedure", procedure)
+        self.presenter.editControls("procedure", procedure)
         # synchronise common fields between procedures
         for field in common_fields:
             if field not in ["procedure", "resampleParams"]:  # FIXME remove resampleparams when merged
                 self.fit_settings_layout.currentWidget().update_data(field)
 
 
-class FitSettingsWidget(QtWidgets.QScrollArea):
-    def __init__(self, parent, procedure: Procedures, model: FitSettingsModel):
+class FitSettingsWidget(QtWidgets.QWidget):
+    """Widget containing the fit settings form.
+
+    Parameters
+    ----------
+    parent : QWidget
+        The parent widget of this widget.
+    procedure : Procedures
+        The procedure that this widget should get its settings from.
+    presenter : MainWindowPresenter
+        The RasCAL presenter.
+
+    """
+    def __init__(self, parent, procedure: Procedures, presenter):
         super().__init__(parent)
-        self.model = model
+        self.presenter = presenter
         self.rows = {}
         self.datasetter = {}
         self.val_labels = {}
-        self.visible_settings = self.model.get_procedure_settings(procedure)
+        self.visible_settings = [f for f in fields.get(procedure, []) if f != "procedure"]
         self.visible_settings.remove("resampleParams")  # FIXME remove when merged - just for testing
 
-        layout = QtWidgets.QGridLayout()
-        layout.setContentsMargins(10, 10, 10, 10)
+        settings_grid = QtWidgets.QGridLayout()
+        settings_grid.setContentsMargins(10, 10, 10, 10)
+        controls_fields = self.presenter.getControlsAttribute('model_fields')
         for i, setting in enumerate(self.visible_settings):
-            field_info = self.model.model_fields[setting]
+            field_info = controls_fields[setting]
             self.rows[setting] = ValidatedInputWidget(field_info)
             self.datasetter[setting] = self.create_model_data_setter(setting)
             self.rows[setting].edited_signal.connect(self.datasetter[setting])
@@ -192,22 +202,27 @@ class FitSettingsWidget(QtWidgets.QScrollArea):
             self.val_labels[setting].setWordWrap(True)
             self.val_labels[setting].setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
             self.update_data(setting)
-            layout.addWidget(label, 2 * i, 0)
-            layout.addWidget(self.rows[setting], 2 * i, 1)
-            layout.addWidget(self.val_labels[setting], 2 * i + 1, 1)
+            settings_grid.addWidget(label, 2 * i, 0)
+            settings_grid.addWidget(self.rows[setting], 2 * i, 1)
+            settings_grid.addWidget(self.val_labels[setting], 2 * i + 1, 1)
 
-        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+        settings_grid.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         fit_settings = QtWidgets.QWidget(self)
-        fit_settings.setLayout(layout)
+        fit_settings.setLayout(settings_grid)
+        
+        scroll_area = QtWidgets.QScrollArea(self)
+        scroll_area.setWidget(fit_settings)
+        scroll_area.setWidgetResizable(True)
+        widget_layout = QtWidgets.QVBoxLayout()
+        widget_layout.addWidget(scroll_area)
 
-        self.setWidget(fit_settings)
-        self.setWidgetResizable(True)
+        self.setLayout(widget_layout)
 
     def update_data(self, setting):
         try:
-            self.rows[setting].set_data(self.model.data(setting))
+            self.rows[setting].set_data(self.presenter.getControlsAttribute(setting))
         except TypeError:
-            self.rows[setting].set_data(str(self.model.data(setting)))
+            self.rows[setting].set_data(str(self.presenter.getControlsAttribute(setting)))
 
     def create_model_data_setter(self, setting: str) -> Callable:
         """Create a model data setter for the fit setting given by an integer.
@@ -218,12 +233,11 @@ class FitSettingsWidget(QtWidgets.QScrollArea):
             The setting to which the setter connects.
 
         """
-
         def set_model_data():
             value = self.rows[setting].get_data()
-            result = self.model.setData(setting, value)
+            result = self.presenter.editControls(setting, value)
             if result is False:
-                self.set_validation_text(setting, self.model.last_validation_error.errors()[0]["msg"])
+                self.set_validation_text(setting, self.presenter.last_validation_error.errors()[0]["msg"])
             else:
                 self.set_validation_text(setting, "")
 

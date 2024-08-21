@@ -1,4 +1,10 @@
+from typing import Any
+import warnings
+
 from .model import MainWindowModel
+from pydantic import ValidationError
+
+from rascal2.core import commands
 
 
 class MainWindowPresenter:
@@ -25,6 +31,7 @@ class MainWindowPresenter:
             The name of the project.
         save_path : str
             The save path of the project.
+            
         """
 
         self.view.setWindowTitle(self.title + " - " + name)
@@ -34,6 +41,42 @@ class MainWindowPresenter:
         self.view.init_settings_and_log(save_path)
         self.view.setup_mdi()
 
+    def getControlsAttribute(self, setting):
+        value = getattr(self.model.controls, setting)
+        return value
+
+    def editControls(self, setting: str, value: Any) -> bool:
+        """Edit a setting in the Controls object.
+
+        Parameters
+        ----------
+        setting : str
+            Which setting in the Controls object should be changed.
+        value : Any
+            The value which the setting should be changed to.
+
+        Returns
+        -------
+        bool
+            Whether the edit was successful.
+        """
+        # FIXME: without proper logging,
+        # we have to check validation in advance because PyQt doesn't return
+        # the exception, it just falls over in C++
+        # also doing it this way stops bad changes being pushed onto the stack
+        # also suppress warnings (we get warning for setting params not matching
+        # procedure on initialisation) to avoid clogging stdout
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            try:
+                self.model.controls.model_validate({setting: value})
+            except ValidationError as err:
+                self.last_validation_error = err
+                return False
+            self.view.undo_stack.push(commands.editControls(self.model.controls, setting, value))
+            return True
+
     def interrupt_terminal(self):
         """Sends an interrupt signal to the terminal."""
+        # TODO: stub for when issue #9 is resolved
         pass

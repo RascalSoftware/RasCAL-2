@@ -16,6 +16,9 @@ class editControls(QtGui.QUndoCommand):
         setattr(self.controls, self.attr, self.value)
 
     def redo(self):
+        # FIXME: when C++ exceptions can be handled properly,
+        # run try/except for validation error here and 
+        # mark as obsolete if one occurs
         setattr(self.controls, self.attr, self.value)
 
     def text(self):
