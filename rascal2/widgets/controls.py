@@ -177,6 +177,7 @@ class FitSettingsWidget(QtWidgets.QWidget):
         The RasCAL presenter.
 
     """
+
     def __init__(self, parent, procedure: Procedures, presenter):
         super().__init__(parent)
         self.presenter = presenter
@@ -188,7 +189,7 @@ class FitSettingsWidget(QtWidgets.QWidget):
 
         settings_grid = QtWidgets.QGridLayout()
         settings_grid.setContentsMargins(10, 10, 10, 10)
-        controls_fields = self.presenter.getControlsAttribute('model_fields')
+        controls_fields = self.presenter.getControlsAttribute("model_fields")
         for i, setting in enumerate(self.visible_settings):
             field_info = controls_fields[setting]
             self.rows[setting] = ValidatedInputWidget(field_info)
@@ -209,7 +210,7 @@ class FitSettingsWidget(QtWidgets.QWidget):
         settings_grid.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         fit_settings = QtWidgets.QWidget(self)
         fit_settings.setLayout(settings_grid)
-        
+
         scroll_area = QtWidgets.QScrollArea(self)
         scroll_area.setWidget(fit_settings)
         scroll_area.setWidgetResizable(True)
@@ -233,6 +234,7 @@ class FitSettingsWidget(QtWidgets.QWidget):
             The setting to which the setter connects.
 
         """
+
         def set_model_data():
             value = self.rows[setting].get_data()
             result = self.presenter.editControls(setting, value)

@@ -69,22 +69,6 @@ class ValidatedInputWidget(QtWidgets.QWidget):
         self.setLayout(layout)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Fixed)
 
-    def set_validation_text(self, msg: str):
-        """Write a message in the validation box.
-
-        Parameters
-        ----------
-        msg: str
-            The message to write in the validation box.
-        """
-        self.validation_box.setText(msg)
-        if msg != "":
-            self.editor.setStyleSheet("color : red")
-            self.input_is_valid = False
-        else:
-            self.editor.setStyleSheet("")
-            self.input_is_valid = True
-
 
 class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     """A double spinbox which adapts to given numbers of decimals."""

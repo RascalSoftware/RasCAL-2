@@ -1,10 +1,11 @@
-from typing import Any
 import warnings
+from typing import Any
 
-from .model import MainWindowModel
 from pydantic import ValidationError
 
 from rascal2.core import commands
+
+from .model import MainWindowModel
 
 
 class MainWindowPresenter:
@@ -31,7 +32,7 @@ class MainWindowPresenter:
             The name of the project.
         save_path : str
             The save path of the project.
-            
+
         """
 
         self.view.setWindowTitle(self.title + " - " + name)
