@@ -33,15 +33,15 @@ class ControlsWidget(QtWidgets.QWidget):
 
         # create run and stop buttons
         self.run_button = QtWidgets.QPushButton(icon=QtGui.QIcon(path_for("play.png")), text="Run")
+        self.run_button.toggled.connect(self.toggle_run_button)
         self.run_button.setStyleSheet("background-color: green;")
         self.run_button.setCheckable(True)
-        self.run_button.toggled.connect(self.toggle_run_button)
 
         self.stop_button = QtWidgets.QPushButton(icon=QtGui.QIcon(path_for("stop.png")), text="Stop")
-        self.stop_button.setStyleSheet("background-color: red;")
-        self.stop_button.setEnabled(False)
         self.stop_button.pressed.connect(self.presenter.interrupt_terminal)
         self.stop_button.pressed.connect(self.run_button.toggle)
+        self.stop_button.setStyleSheet("background-color: red;")
+        self.stop_button.setEnabled(False)
 
         # validation label for if user tries to run with invalid controls
         self.validation_label = QtWidgets.QLabel("")
@@ -75,11 +75,12 @@ class ControlsWidget(QtWidgets.QWidget):
         self.fit_settings_button.setChecked(True)
 
         # compose buttons & widget
-        procedure_box = QtWidgets.QVBoxLayout()
         buttons_layout = QtWidgets.QVBoxLayout()
         buttons_layout.addWidget(self.run_button)
         buttons_layout.addWidget(self.stop_button)
         buttons_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignVCenter)
+
+        procedure_box = QtWidgets.QVBoxLayout()
         procedure_box.addLayout(chi_layout)
         procedure_box.addLayout(buttons_layout)
         procedure_box.addLayout(procedure_layout)
@@ -220,18 +221,31 @@ class FitSettingsWidget(QtWidgets.QWidget):
         self.setLayout(widget_layout)
 
     def update_data(self, setting):
+        """Update the view to match the data in the model.
+        
+        Parameters
+        ----------
+        setting : str
+            The setting to update.
+
+        """
         try:
             self.rows[setting].set_data(self.presenter.getControlsAttribute(setting))
         except TypeError:
             self.rows[setting].set_data(str(self.presenter.getControlsAttribute(setting)))
 
     def create_model_data_setter(self, setting: str) -> Callable:
-        """Create a model data setter for the fit setting given by an integer.
+        """Create a model data setter for a fit setting.
 
         Parameters
         ----------
-        setting: str
+        setting : str
             The setting to which the setter connects.
+
+        Returns
+        -------
+        Callable
+            A function which sets the model data to the current value of the view input.
 
         """
 
@@ -257,6 +271,16 @@ class FitSettingsWidget(QtWidgets.QWidget):
         return [s for s in self.val_labels if self.val_labels[s].text() != ""]
 
     def set_validation_text(self, setting, text):
+        """Set validation text on an invalid setting.
+
+        Parameters
+        ----------
+        setting : str
+            The setting which is invalid.
+        text : str
+            The error message to provide under the setting.
+
+        """
         self.val_labels[setting].setText(text)
         if text == "":
             self.rows[setting].editor.setStyleSheet("")

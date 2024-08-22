@@ -42,7 +42,19 @@ class MainWindowPresenter:
         self.view.init_settings_and_log(save_path)
         self.view.setup_mdi()
 
-    def getControlsAttribute(self, setting):
+    def getControlsAttribute(self, setting) -> Any:
+        """Get the value of an attribute in the model's Controls object.
+        
+        Parameters
+        ----------
+        setting : str
+            Which setting in the Controls object should be read. 
+        
+        Returns
+        -------
+        value : Any
+            The value of the setting in the model's Controls object.
+        """
         value = getattr(self.model.controls, setting)
         return value
 
