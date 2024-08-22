@@ -44,12 +44,12 @@ class MainWindowPresenter:
 
     def getControlsAttribute(self, setting) -> Any:
         """Get the value of an attribute in the model's Controls object.
-        
+
         Parameters
         ----------
         setting : str
-            Which setting in the Controls object should be read. 
-        
+            Which setting in the Controls object should be read.
+
         Returns
         -------
         value : Any

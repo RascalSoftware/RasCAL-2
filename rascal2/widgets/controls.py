@@ -222,7 +222,7 @@ class FitSettingsWidget(QtWidgets.QWidget):
 
     def update_data(self, setting):
         """Update the view to match the data in the model.
-        
+
         Parameters
         ----------
         setting : str

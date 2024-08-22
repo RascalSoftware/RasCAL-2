@@ -10,7 +10,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 class ValidatedInputWidget(QtWidgets.QWidget):
     """Value input generated from Pydantic field info.
-    
+
     Parameters
     ----------
     field_info: FieldInfo
@@ -19,6 +19,7 @@ class ValidatedInputWidget(QtWidgets.QWidget):
         The parent widget of this widget.
 
     """
+
     def __init__(self, field_info: FieldInfo, parent=None):
         super().__init__(parent=parent)
         layout = QtWidgets.QVBoxLayout()
@@ -88,7 +89,7 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
 
     def textFromValue(self, value):
         """Set the display text for the spinbox from the value stored in the widget.
-        
+
         Override of QtWidgets.QDoubleSpinBox.textFromValue.
 
         Parameters
@@ -100,7 +101,7 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         -------
         str
             The string displayed on the spinbox.
-        
+
         """
         return f"{value:.{self.decimals()}g}"
 
@@ -120,7 +121,7 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         -------
         tuple[QtGui.QValidator.State, str, int]
             The validation state of the input, the input string, and position.
-        
+
         """
         if "e" in input:
             try:
