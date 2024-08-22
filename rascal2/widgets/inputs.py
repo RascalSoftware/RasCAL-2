@@ -83,7 +83,7 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     """A double spinbox which adapts to given numbers of decimals."""
 
     def __init__(self, parent=None):
-        super().__init__()
+        super().__init__(parent)
         self.setStepType(self.StepType.AdaptiveDecimalStepType)
         self.setKeyboardTracking(False)
 
