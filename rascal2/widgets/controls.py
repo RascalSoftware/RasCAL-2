@@ -1,7 +1,8 @@
 """Widget for setting up the Controls class."""
 
-from typing import Callable
+from typing import Any, Callable
 
+from pydantic import ValidationError
 from PyQt6 import QtCore, QtGui, QtWidgets
 from RATapi.controls import common_fields, fields
 from RATapi.utils.enums import Procedures
@@ -20,7 +21,9 @@ class ControlsWidget(QtWidgets.QWidget):
         # create fit settings view and setup connection to model
         self.fit_settings_layout = QtWidgets.QStackedLayout()
         for procedure in Procedures:
-            fit_set = FitSettingsWidget(self, procedure, self.presenter)
+            proc_settings = [f for f in fields.get(procedure, []) if f != "procedure"]
+            proc_settings.remove("resampleParams")  # FIXME remove when merged - just for testing
+            fit_set = FitSettingsWidget(self, proc_settings, self.presenter)
             self.fit_settings_layout.addWidget(fit_set)
 
         self.fit_settings = QtWidgets.QWidget()
@@ -172,26 +175,25 @@ class FitSettingsWidget(QtWidgets.QWidget):
     ----------
     parent : QWidget
         The parent widget of this widget.
-    procedure : Procedures
-        The procedure that this widget should get its settings from.
+    settings : list
+        The list of relevant settings that this widget should show.
     presenter : MainWindowPresenter
         The RasCAL presenter.
 
     """
 
-    def __init__(self, parent, procedure: Procedures, presenter):
+    def __init__(self, parent, settings, presenter):
         super().__init__(parent)
         self.presenter = presenter
+        self.controls = presenter.model.controls
         self.rows = {}
         self.datasetter = {}
         self.val_labels = {}
-        self.visible_settings = [f for f in fields.get(procedure, []) if f != "procedure"]
-        self.visible_settings.remove("resampleParams")  # FIXME remove when merged - just for testing
 
         settings_grid = QtWidgets.QGridLayout()
         settings_grid.setContentsMargins(10, 10, 10, 10)
-        controls_fields = self.presenter.getControlsAttribute("model_fields")
-        for i, setting in enumerate(self.visible_settings):
+        controls_fields = self.get_controls_attribute("model_fields")
+        for i, setting in enumerate(settings):
             field_info = controls_fields[setting]
             self.rows[setting] = ValidatedInputWidget(field_info)
             self.datasetter[setting] = self.create_model_data_setter(setting)
@@ -230,9 +232,9 @@ class FitSettingsWidget(QtWidgets.QWidget):
 
         """
         try:
-            self.rows[setting].set_data(self.presenter.getControlsAttribute(setting))
+            self.rows[setting].set_data(self.get_controls_attribute(setting))
         except TypeError:
-            self.rows[setting].set_data(str(self.presenter.getControlsAttribute(setting)))
+            self.rows[setting].set_data(str(self.get_controls_attribute(setting)))
 
     def create_model_data_setter(self, setting: str) -> Callable:
         """Create a model data setter for a fit setting.
@@ -251,9 +253,10 @@ class FitSettingsWidget(QtWidgets.QWidget):
 
         def set_model_data():
             value = self.rows[setting].get_data()
-            result = self.presenter.editControls(setting, value)
-            if result is False:
-                self.set_validation_text(setting, self.presenter.last_validation_error.errors()[0]["msg"])
+            try:
+                self.presenter.editControls(setting, value)
+            except ValidationError as err:
+                self.set_validation_text(setting, err.errors()[0]["msg"])
             else:
                 self.set_validation_text(setting, "")
 
@@ -286,3 +289,20 @@ class FitSettingsWidget(QtWidgets.QWidget):
             self.rows[setting].editor.setStyleSheet("")
         else:
             self.rows[setting].editor.setStyleSheet("color : red")
+
+    def get_controls_attribute(self, setting) -> Any:
+        """Get the value of an attribute in the model's Controls object.
+
+        Parameters
+        ----------
+        setting : str
+            Which setting in the Controls object should be read.
+
+        Returns
+        -------
+        value : Any
+            The value of the setting in the model's Controls object.
+
+        """
+        value = getattr(self.controls, setting)
+        return value

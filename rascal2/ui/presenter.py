@@ -1,8 +1,6 @@
 import warnings
 from typing import Any
 
-from pydantic import ValidationError
-
 from rascal2.core import commands
 
 from .model import MainWindowModel
@@ -42,23 +40,7 @@ class MainWindowPresenter:
         self.view.init_settings_and_log(save_path)
         self.view.setup_mdi()
 
-    def getControlsAttribute(self, setting) -> Any:
-        """Get the value of an attribute in the model's Controls object.
-
-        Parameters
-        ----------
-        setting : str
-            Which setting in the Controls object should be read.
-
-        Returns
-        -------
-        value : Any
-            The value of the setting in the model's Controls object.
-        """
-        value = getattr(self.model.controls, setting)
-        return value
-
-    def editControls(self, setting: str, value: Any) -> bool:
+    def editControls(self, setting: str, value: Any):
         """Edit a setting in the Controls object.
 
         Parameters
@@ -68,10 +50,11 @@ class MainWindowPresenter:
         value : Any
             The value which the setting should be changed to.
 
-        Returns
-        -------
-        bool
-            Whether the edit was successful.
+        Raises
+        ------
+        ValidationError
+            If the setting is changed to an invalid value.
+
         """
         # FIXME: without proper logging,
         # we have to check validation in advance because PyQt doesn't return
@@ -81,11 +64,7 @@ class MainWindowPresenter:
         # procedure on initialisation) to avoid clogging stdout
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            try:
-                self.model.controls.model_validate({setting: value})
-            except ValidationError as err:
-                self.last_validation_error = err
-                return False
+            self.model.controls.model_validate({setting: value})
             self.view.undo_stack.push(commands.editControls(self.model.controls, setting, value))
             return True
 

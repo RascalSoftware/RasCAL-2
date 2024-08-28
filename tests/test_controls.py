@@ -1,47 +1,13 @@
-"""Test the Controls widget."""
+"""Tests for the Controls widget."""
+
+from unittest.mock import MagicMock
 
 import pytest
+from pydantic import BaseModel, Field
 from PyQt6 import QtWidgets
 from RATapi.controls import Controls, fields
 
 from rascal2.widgets.controls import ControlsWidget, FitSettingsWidget
-
-
-class MockValidationError:
-    """A mock of a ValidationError list."""
-
-    def errors(self):
-        return [{"msg": "Validation error!"}]
-
-
-class MockModel:
-    """A mock Model."""
-
-    def __init__(self):
-        self.controls = Controls()
-
-
-class MockPresenter:
-    """A mock MainWindowPresenter class."""
-
-    def __init__(self):
-        self.model = MockModel()
-        self.controls = self.model.controls
-        self.allow_setting = True
-        self.terminal_interrupted = False
-
-    def getControlsAttribute(self, attr):
-        return getattr(self.controls, attr)
-
-    def editControls(self, setting, value):
-        if self.allow_setting:
-            setattr(self.controls, setting, value)
-            return True
-        self.last_validation_error = MockValidationError()
-        return False
-
-    def interrupt_terminal(self):
-        self.terminal_interrupted = True
 
 
 class MockWindowView(QtWidgets.QMainWindow):
@@ -49,10 +15,9 @@ class MockWindowView(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.presenter = MockPresenter()
-
-
-view = MockWindowView()
+        self.presenter = MagicMock()
+        self.presenter.model = MagicMock()
+        self.presenter.model.controls = Controls()
 
 
 @pytest.fixture
@@ -64,13 +29,30 @@ def controls_widget() -> ControlsWidget:
     return _widget
 
 
-@pytest.fixture
-def fit_settings_widget() -> FitSettingsWidget:
-    def _widget(procedure):
-        widget = FitSettingsWidget(view, procedure, MockPresenter())
-        return widget
+view = MockWindowView()
 
-    return _widget
+
+class MockControls(BaseModel, validate_assignment=True):
+    """A mock Pydantic model with validation."""
+
+    set_1: bool = True
+    set_2: float = Field(default=3.0, gt=0)
+    set_3: str = Field(default="eggs", max_length=6)
+
+
+class MockPresenter:
+    """A mock Presenter for accessing MockControls."""
+
+    def __init__(self):
+        self.model = MagicMock()
+        self.model.controls = MockControls()
+        self.terminal_interrupted = False
+
+    def editControls(self, setting, value):
+        setattr(self.model.controls, setting, value)
+
+    def interrupt_terminal(self):
+        self.terminal_interrupted = True
 
 
 def test_toggle_fit(controls_widget):
@@ -118,34 +100,46 @@ def test_procedure_select(controls_widget, procedure):
             assert setting in list(current_fit_set.rows.keys())
 
 
-def test_create_fit_settings(fit_settings_widget):
+@pytest.mark.parametrize("settings", (["set_1", "set_2", "set_3"], ["set_1", "set_3"], ["set_2"]))
+def test_create_fit_settings(settings):
     """Test that fit settings are correctly created from the model's dataset."""
-    wg = fit_settings_widget("calculate")
+    wg = FitSettingsWidget(None, settings, MockPresenter())
     grid = wg.layout().itemAt(0).widget().widget().layout()
-    for i, setting in enumerate(["parallel", "calcSldDuringFit", "display"]):
+    for i, setting in enumerate(settings):
         assert grid.itemAtPosition(2 * i, 0).widget().text() == setting
         assert grid.itemAtPosition(2 * i, 1).widget().get_data() == getattr(wg.presenter.model.controls, setting)
 
 
-def test_invalid_input(fit_settings_widget):
-    """Test that invalid inputs are propagated correctly."""
-    wg = fit_settings_widget("dream")
-    wg.presenter.allow_setting = False
-    grid = wg.layout().itemAt(0).widget().widget().layout()
-    entry = grid.itemAtPosition(10, 1).widget()
+def test_get_controls_data():
+    """Test that the Controls data is correctly retrieved."""
+    wg = FitSettingsWidget(None, ["set_1", "set_2", "set_3"], MockPresenter())
+    fields = wg.get_controls_attribute("model_fields").keys()
+    values = [getattr(wg.presenter.model.controls, field) for field in fields]
+    assert [wg.get_controls_attribute(field) for field in fields] == values
 
-    entry.set_data(0)
+
+@pytest.mark.parametrize(
+    ("fit_setting", "bad_input", "error"),
+    (("set_2", 0, "greater than 0"), ("set_3", "longstring", "at most 6 characters")),
+)
+def test_invalid_input(fit_setting, bad_input, error):
+    """Test that invalid inputs are propagated correctly."""
+    wg = FitSettingsWidget(None, [fit_setting], MockPresenter())
+    grid = wg.layout().itemAt(0).widget().widget().layout()
+    entry = grid.itemAtPosition(0, 1).widget()
+
+    entry.set_data(bad_input)
     entry.editor.editingFinished.emit()
 
-    validation_box = grid.itemAtPosition(11, 1).widget()
-    assert validation_box.text() == "Validation error!"
+    validation_box = grid.itemAtPosition(1, 1).widget()
+    assert error in validation_box.text()
 
 
-@pytest.mark.parametrize(("procedure", "bad_entries"), [("ns", [10]), ("ns", [10, 12]), ("dream", [10, 12])])
-def test_invalid_data_run(controls_widget, fit_settings_widget, procedure, bad_entries):
+@pytest.mark.parametrize("bad_settings", [["set_2"], ["set_3"], ["set_2", "set_3"]])
+def test_invalid_data_run(controls_widget, bad_settings):
     """Tests that the widget refuses to run if values have invalid data."""
     wg = controls_widget()
-    fit_tab = fit_settings_widget("dream")
+    fit_tab = FitSettingsWidget(None, ["set_1", "set_2", "set_3"], MockPresenter())
     fit_lay = QtWidgets.QStackedLayout()
     fit_lay.addWidget(fit_tab)
     fit_wg = QtWidgets.QWidget()
@@ -153,19 +147,21 @@ def test_invalid_data_run(controls_widget, fit_settings_widget, procedure, bad_e
 
     wg.fit_settings_layout = fit_lay
     wg.fit_settings = fit_wg
+    # index and bad value of settings
+    bad_settings_data = {"set_2": (2, 0), "set_3": (4, "longstring")}
 
     fit_tab.presenter.allow_setting = False
     grid = fit_tab.layout().itemAt(0).widget().widget().layout()
-    for entry in bad_entries:
-        entry = grid.itemAtPosition(entry, 1).widget()
-        entry.set_data(0)
+    for setting in bad_settings:
+        index, val = bad_settings_data[setting]
+        entry = grid.itemAtPosition(index, 1).widget()
+        entry.set_data(val)
         entry.editor.editingFinished.emit()
 
-    entry_names = [grid.itemAtPosition(entry, 0).widget().text() for entry in bad_entries]
-    for entry_name in entry_names:
-        assert entry_name in fit_tab.get_invalid_inputs()
+    for setting in bad_settings:
+        assert setting in fit_tab.get_invalid_inputs()
 
     wg.run_button.toggle()
     assert not wg.stop_button.isEnabled()  # to assert run hasn't started
-    for entry_name in entry_names:
-        assert entry_name in wg.validation_label.text()
+    for setting in bad_settings:
+        assert setting in wg.validation_label.text()
