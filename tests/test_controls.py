@@ -20,6 +20,9 @@ class MockWindowView(QtWidgets.QMainWindow):
         self.presenter.model.controls = Controls()
 
 
+view = MockWindowView()
+
+
 @pytest.fixture
 def controls_widget() -> ControlsWidget:
     def _widget():
@@ -27,9 +30,6 @@ def controls_widget() -> ControlsWidget:
         return widget
 
     return _widget
-
-
-view = MockWindowView()
 
 
 class MockControls(BaseModel, validate_assignment=True):
