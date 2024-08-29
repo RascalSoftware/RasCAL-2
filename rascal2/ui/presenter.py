@@ -107,7 +107,7 @@ class RATRunner(QtCore.QObject):
         """Run RAT with the given project and controls."""
         # for testing as we currently do not have project and control creation
         with redirect_stdout(self.stdout_receiver):
-            project, results = RAT.examples.domains_standard_layers()
+            project, results = RAT.run(self.project, self.controls)
         self.finished.emit()
 
 
