@@ -1,6 +1,8 @@
 """Widget for terminal display."""
 
-import pkg_resources
+import logging
+from importlib import metadata
+
 from PyQt6 import QtGui, QtWidgets
 
 
@@ -18,10 +20,12 @@ class TerminalWidget(QtWidgets.QScrollArea):
         self.text_area.setFont(font)
         self.text_area.setLineWrapMode(self.text_area.LineWrapMode.NoWrap)
 
+        self.logger = logging.getLogger("log")
+
         self.setWidget(self.text_area)
         self.setWidgetResizable(True)
 
-        version = pkg_resources.get_distribution("rascal2").version
+        version = metadata.version("rascal2")
         self.append_text(
             """
  ███████████                       █████████    █████████   █████      
@@ -34,11 +38,15 @@ class TerminalWidget(QtWidgets.QScrollArea):
 ░░░░░   ░░░░░  ░░░░░░░░ ░░░░░░    ░░░░░░░░░  ░░░░░   ░░░░░ ░░░░░░░░░░░ 
 """
         )
-        self.append_text(f"RasCAL-2: software for neutron reflectivity calculations v{version}")
+        self.append_html(f"<b>RasCAL-2:</b> software for neutron reflectivity calculations <b>v{version}</b>")
 
     def append_text(self, text):
         """Append a line of text to the terminal."""
         self.text_area.appendPlainText(text)
+
+    def append_html(self, text):
+        """Append HTML text to the terminal."""
+        self.text_area.appendHtml(text)
 
     def clear(self):
         """Clear the text in the terminal."""
