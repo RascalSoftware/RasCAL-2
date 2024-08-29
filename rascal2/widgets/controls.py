@@ -20,19 +20,9 @@ class ControlsWidget(QtWidgets.QWidget):
 
         # create fit settings view and setup connection to model
         self.fit_settings_layout = QtWidgets.QStackedLayout()
-        for procedure in Procedures:
-            proc_settings = [f for f in fields.get(procedure, []) if f != "procedure"]
-            proc_settings.remove("resampleParams")  # FIXME remove when merged - just for testing
-            fit_set = FitSettingsWidget(self, proc_settings, self.presenter)
-            self.fit_settings_layout.addWidget(fit_set)
-
         self.fit_settings = QtWidgets.QWidget()
         self.fit_settings.setLayout(self.fit_settings_layout)
         self.fit_settings.setBackgroundRole(QtGui.QPalette.ColorRole.Base)
-
-        # set initial procedure to whatever is in the Controls object
-        init_procedure = [p.value for p in Procedures].index(self.presenter.model.controls.procedure)
-        self.set_procedure(init_procedure)
 
         # create run and stop buttons
         self.run_button = QtWidgets.QPushButton(icon=QtGui.QIcon(path_for("play.png")), text="Run")
@@ -67,7 +57,6 @@ class ControlsWidget(QtWidgets.QWidget):
         procedure_layout.addWidget(QtWidgets.QLabel("Procedure:"))
         self.procedure_dropdown = QtWidgets.QComboBox()
         self.procedure_dropdown.addItems([p.value for p in Procedures])
-        self.procedure_dropdown.setCurrentIndex(init_procedure)
         self.procedure_dropdown.currentIndexChanged.connect(self.set_procedure)
         procedure_layout.addWidget(self.procedure_dropdown)
 
@@ -95,6 +84,21 @@ class ControlsWidget(QtWidgets.QWidget):
         widget_layout.addWidget(self.fit_settings)
 
         self.setLayout(widget_layout)
+
+    def setup_controls(self):
+        """Setup the parts of the widget which depend on the Controls object."""
+
+        # add fit settings for each procedure
+        for procedure in Procedures:
+            proc_settings = [f for f in fields.get(procedure, []) if f != "procedure"]
+            proc_settings.remove("resampleParams")  # FIXME remove when merged - just for testing
+            fit_set = FitSettingsWidget(self, proc_settings, self.presenter)
+            self.fit_settings_layout.addWidget(fit_set)
+
+        # set initial procedure to whatever is in the Controls object
+        init_procedure = [p.value for p in Procedures].index(self.presenter.model.controls.procedure)
+        self.set_procedure(init_procedure)
+        self.procedure_dropdown.setCurrentIndex(init_procedure)
 
     def toggle_fit_settings(self, toggled: bool):
         """Toggle whether the fit settings table is visible.

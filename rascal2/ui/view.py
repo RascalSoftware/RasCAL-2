@@ -167,6 +167,7 @@ class MainWindowView(QtWidgets.QMainWindow):
             "Terminal": self.terminal_widget,
             "Fitting Controls": self.controls_widget,
         }
+        self.controls_widget.setup_controls()
 
         for title, widget in reversed(widgets.items()):
             widget.setWindowTitle(title)

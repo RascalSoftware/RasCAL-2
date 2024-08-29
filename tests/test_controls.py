@@ -27,6 +27,7 @@ view = MockWindowView()
 def controls_widget() -> ControlsWidget:
     def _widget():
         widget = ControlsWidget(view)
+        widget.setup_controls()
         return widget
 
     return _widget
