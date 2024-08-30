@@ -39,13 +39,19 @@ class LogLevels(IntEnum):
 
     def __str__(self):
         names = {
-            LogLevels.Debug: "debug",
-            LogLevels.Info: "info",
-            LogLevels.Warning: "warning",
-            LogLevels.Error: "error",
-            LogLevels.Critical: "critical",
+            LogLevels.Debug: "DEBUG",
+            LogLevels.Info: "INFO",
+            LogLevels.Warning: "WARNING",
+            LogLevels.Error: "ERROR",
+            LogLevels.Critical: "CRITICAL",
         }
         return names[self]
+
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            return cls(getattr(logging, value.upper()))
+        raise ValueError("Not a known logging level.")
 
 
 class Settings(BaseModel, validate_assignment=True, arbitrary_types_allowed=True):
