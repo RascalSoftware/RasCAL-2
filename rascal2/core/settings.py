@@ -1,5 +1,6 @@
 """Global settings for RasCAL."""
 
+import logging
 from enum import IntEnum, StrEnum
 from os import PathLike
 from pathlib import PurePath
@@ -30,11 +31,11 @@ class Styles(StrEnum):
 class LogLevels(IntEnum):
     """Debug log-levels with human readable string names."""
 
-    Debug = 0
-    Info = 10
-    Warning = 20
-    Error = 30
-    Critical = 40
+    Debug = logging.DEBUG
+    Info = logging.INFO
+    Warning = logging.WARNING
+    Error = logging.ERROR
+    Critical = logging.CRITICAL
 
     def __str__(self):
         names = {
