@@ -57,6 +57,7 @@ class Settings(BaseModel, validate_assignment=True, arbitrary_types_allowed=True
     For each system setting, the model field `title` contains the setting group,
     and the model field `description` gives an English name for the setting.
     The model fields for a setting can be accessed via Settings.model_fields[setting].
+
     """
 
     # The Settings object's own model fields contain the within-project settings.
@@ -73,6 +74,7 @@ class Settings(BaseModel, validate_assignment=True, arbitrary_types_allowed=True
         for setting in unset_settings:
             if global_name(setting) in global_settings.allKeys():
                 setattr(self, setting, global_settings.value(global_name(setting)))
+                self.model_fields_set.remove(setting)  # we don't want it to count as manually set!
 
     def save(self, path: str | PathLike):
         """Save settings to a JSON file in the given path.
@@ -85,7 +87,7 @@ class Settings(BaseModel, validate_assignment=True, arbitrary_types_allowed=True
         """
         file = PurePath(path, "settings.json")
         with open(file, "w") as f:
-            f.write(self.model_dump_json(exclude_defaults=True))
+            f.write(self.model_dump_json(exclude_unset=True))
 
     def set_global_settings(self):
         """Set manually-set local settings as global settings."""
