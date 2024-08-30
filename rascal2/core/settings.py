@@ -1,6 +1,6 @@
 """Global settings for RasCAL."""
 
-from enum import StrEnum
+from enum import IntEnum, StrEnum
 from os import PathLike
 from pathlib import PurePath
 from typing import Any
@@ -9,9 +9,8 @@ from pydantic import BaseModel, Field
 from PyQt6 import QtCore
 
 
-# we do this statically rather than making it an attribute of Settings
-# because all fields in a Pydantic model must be pickleable
-# so it's easier to keep this 'outside' the model
+# we do this statically rather than making it an attribute of Settings because all fields in a Pydantic model
+# must be pickleable, so it's easier to keep this 'outside' the model
 def get_global_settings() -> QtCore.QSettings:
     """Get the global settings QSettings object."""
     return QtCore.QSettings(
@@ -23,22 +22,50 @@ def get_global_settings() -> QtCore.QSettings:
 
 
 class Styles(StrEnum):
+    """Visual styles for RasCAL-2."""
+
     Light = "light"
 
 
+class LogLevels(IntEnum):
+    """Debug log-levels with human readable string names."""
+
+    Debug = 0
+    Info = 10
+    Warning = 20
+    Error = 30
+    Critical = 40
+
+    def __str__(self):
+        names = {
+            LogLevels.Debug: "debug",
+            LogLevels.Info: "info",
+            LogLevels.Warning: "warning",
+            LogLevels.Error: "error",
+            LogLevels.Critical: "critical",
+        }
+        return names[self]
+
+
 class Settings(BaseModel, validate_assignment=True, arbitrary_types_allowed=True):
-    """Model for system settings."""
+    """Model for system settings.
+
+    If a setting is not provided, it will fallback to the global default.
+
+    Notes
+    -----
+    For each system setting, the model field `title` contains the setting group,
+    and the model field `description` gives an English name for the setting.
+    The model fields for a setting can be accessed via Settings.model_fields[setting].
+    """
 
     # The Settings object's own model fields contain the within-project settings.
-    # The object itself contains the attribute `self.global_settings` which
-    # holds the global settings QSettings object.
-
-    # Pydantic gives two plaintext fields to play around with:
-    # we use 'title' for setting group
-    # and 'description' for human-readable setting name
+    # The global settings are read and written via this object using `set_global_settings`.
     style: Styles = Field(default=Styles.Light, title="general", description="Style")
     editor_fontsize: int = Field(default=12, title="general", description="Editor Font Size", gt=0)
     terminal_fontsize: int = Field(default=12, title="general", description="Terminal Font Size", gt=0)
+    log_path: str = Field(default="logs/rascal.log", title="logging", description="Path to Log File")
+    log_level: LogLevels = Field(default=LogLevels.Info, title="logging", description="Minimum Log Level")
 
     def model_post_init(self, __context: Any):
         global_settings = get_global_settings()
@@ -47,21 +74,21 @@ class Settings(BaseModel, validate_assignment=True, arbitrary_types_allowed=True
             if global_name(setting) in global_settings.allKeys():
                 setattr(self, setting, global_settings.value(global_name(setting)))
 
-    def save(self, path: PathLike):
+    def save(self, path: str | PathLike):
         """Save settings to a JSON file in the given path.
 
         Parameters
         ----------
-        path : PathLike
+        path : str or PathLike
             The path to the folder where settings will be saved.
 
         """
         file = PurePath(path, "settings.json")
         with open(file, "w") as f:
-            f.write(self.model_dump_json())
+            f.write(self.model_dump_json(exclude_defaults=True))
 
     def set_global_settings(self):
-        """Set local settings as global settings."""
+        """Set manually-set local settings as global settings."""
         global_settings = get_global_settings()
         for setting in self.model_fields_set:
             global_settings.setValue(global_name(setting), getattr(self, setting))

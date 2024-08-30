@@ -4,6 +4,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from rascal2.core import Settings
 
 
@@ -21,13 +23,13 @@ class MockGlobalSettings:
 
 
 def mock_get_global_settings():
-    """Mock for getting global settings."""
+    """Mock for `get_global_settings`."""
     return MockGlobalSettings()
 
 
 @patch("rascal2.core.settings.get_global_settings", new=mock_get_global_settings)
 def test_global_defaults():
-    """Test that settings are overwritten by global settings only if not set."""
+    """Test that settings are overwritten by global settings only if not manually set."""
     default_set = Settings()
     assert default_set.editor_fontsize == 15
     assert default_set.terminal_fontsize == 28
@@ -39,13 +41,18 @@ def test_global_defaults():
     assert all_set.terminal_fontsize == 15
 
 
+@pytest.mark.parametrize("kwargs", [{}, {"style": "light", "editor_fontsize": 15}, {"terminal_fontsize": 8}])
 @patch("rascal2.core.settings.get_global_settings", new=mock_get_global_settings)
-def test_save():
+def test_save(kwargs):
     """Tests that settings files can be saved and retrieved."""
-    settings = Settings()
+    settings = Settings(**kwargs)
     with tempfile.TemporaryDirectory() as temp:
         settings.save(temp)
         json = Path(temp, "settings.json").read_text()
+
+    for setting in kwargs:
+        assert setting in json
+        assert str(kwargs[setting]) in json
 
     loaded_settings = Settings.model_validate_json(json)
 
