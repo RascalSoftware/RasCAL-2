@@ -3,7 +3,8 @@ import pathlib
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from rascal2.config import path_for, setup_logging, setup_settings
-from rascal2.dialogs.startup_dialog import ProjectDialog, StartUpDialog
+from rascal2.dialogs.project_dialog import ProjectDialog
+from rascal2.widgets.startup_widget import StartUpWidget
 
 
 from .presenter import MainWindowPresenter
@@ -25,12 +26,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.undo_view.setWindowIcon(window_icon)
         self.undo_view.setAttribute(QtCore.Qt.WidgetAttribute.WA_QuitOnClose, False)
 
-        self.mdi = QtWidgets.QMdiArea()
-        # TODO replace the widgets below
-        self.plotting_widget = QtWidgets.QWidget()
-        self.terminal_widget = QtWidgets.QWidget()
-        self.controls_widget = QtWidgets.QWidget()
-        self.project_widget = QtWidgets.QWidget()
+        self.initializeMDI()
 
         self.createActions()
         self.createMenus()
@@ -41,34 +37,28 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.setMinimumSize(1024, 900)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
 
-        self.startup_dlg = StartUpDialog(self)
-        self.project_dlg = ProjectDialog(self)
+        self.startup_dlg, self.project_dlg = StartUpWidget(self), ProjectDialog(self)
 
-        self.startup_dlg._switch_to_project_dialog.connect(self.showProjectDialog)
-        self.project_dlg._switch_to_startup_dialog.connect(self.showStartUpDialog)
-        self.project_dlg._create_project.connect(self.createProject)
-
-    def launchWindow(self):
-        """Creates the main window
-        and the start up window"""
-        self.show()
-        self.showStartUpDialog()
-
-    def showStartUpDialog(self):
-        """Shows start up dialog"""
-        self.startup_dlg.show()
-        self.project_dlg.hide()
+        self.setCentralWidget(self.startup_dlg)
 
     def showProjectDialog(self):
-        """Shows project dialog"""
-        self.startup_dlg.hide()
+        """Shows the dialog to create a new rascal project"""
+        self.new_project_action_called = True
+        self.project_dlg = ProjectDialog(self)
         self.project_dlg.show()
 
-    def createProject(self):
-        """Creates the project"""
-        self.startup_dlg.close()
+    def toggleView(self):
+        """Toggles between startup widget and project dialog"""
+        self.startup_dlg.hide() if self.startup_dlg.isVisible() else self.startup_dlg.show()
+        self.project_dlg.hide() if self.project_dlg.isVisible() else self.project_dlg.show()
+
+    def createNewProject(self):
+        """Creates a new rascal project"""
+        self.setWindowTitle(MAIN_WINDOW_TITLE + " - " + self.project_dlg.project_name.text())
+        if not self.new_project_action_called:
+            self.startup_dlg.close()
         self.project_dlg.close()
-        self.setWindowTitle(MAIN_WINDOW_TITLE + " - " + self.project_dlg._project_name.text())
+        self.initializeMDI()
         self.setupMDI()
 
     def createActions(self):
@@ -77,7 +67,8 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.new_project_action = QtGui.QAction("&New", self)
         self.new_project_action.setStatusTip("Create a new project")
         self.new_project_action.setIcon(QtGui.QIcon(path_for("new-project.png")))
-        self.new_project_action.triggered.connect(self.showStartUpDialog)
+        self.new_project_action.triggered.connect(self.showProjectDialog)
+        self.new_project_action_called = False
         self.new_project_action.setShortcut(QtGui.QKeySequence.StandardKey.New)
 
         self.open_project_action = QtGui.QAction("&Open", self)
@@ -165,6 +156,15 @@ class MainWindowView(QtWidgets.QMainWindow):
         """Creates the status bar"""
         sb = QtWidgets.QStatusBar()
         self.setStatusBar(sb)
+
+    def initializeMDI(self):
+        """Initializes the mdi"""
+        self.mdi = QtWidgets.QMdiArea()
+        # TODO replace the widgets below
+        self.plotting_widget = QtWidgets.QWidget()
+        self.terminal_widget = QtWidgets.QWidget()
+        self.controls_widget = QtWidgets.QWidget()
+        self.project_widget = QtWidgets.QWidget()
 
     def setupMDI(self):
         """Creates the multi-document interface"""
