@@ -26,7 +26,12 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.undo_view.setWindowIcon(window_icon)
         self.undo_view.setAttribute(QtCore.Qt.WidgetAttribute.WA_QuitOnClose, False)
 
-        self.initializeMDI()
+        self.mdi = QtWidgets.QMdiArea()
+        # TODO replace the widgets below
+        self.plotting_widget = QtWidgets.QWidget()
+        self.terminal_widget = QtWidgets.QWidget()
+        self.controls_widget = QtWidgets.QWidget()
+        self.project_widget = QtWidgets.QWidget()
 
         self.createActions()
         self.createMenus()
@@ -58,7 +63,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         if not self.new_project_action_called:
             self.startup_dlg.close()
         self.project_dlg.close()
-        self.initializeMDI()
+        self.toolbar.setEnabled(True)
         self.setupMDI()
 
     def createActions(self):
@@ -140,31 +145,23 @@ class MainWindowView(QtWidgets.QMainWindow):
 
     def createToolBar(self):
         """Creates the toolbar"""
-        toolbar = self.addToolBar("ToolBar")
-        toolbar.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
-        toolbar.setMovable(False)
+        self.toolbar = self.addToolBar("ToolBar")
+        self.toolbar.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
+        self.toolbar.setMovable(False)
+        self.toolbar.setEnabled(False)
 
-        toolbar.addAction(self.new_project_action)
-        toolbar.addAction(self.open_project_action)
-        toolbar.addAction(self.save_project_action)
-        toolbar.addAction(self.undo_action)
-        toolbar.addAction(self.redo_action)
-        toolbar.addAction(self.export_plots_action)
-        toolbar.addAction(self.open_help_action)
+        self.toolbar.addAction(self.new_project_action)
+        self.toolbar.addAction(self.open_project_action)
+        self.toolbar.addAction(self.save_project_action)
+        self.toolbar.addAction(self.undo_action)
+        self.toolbar.addAction(self.redo_action)
+        self.toolbar.addAction(self.export_plots_action)
+        self.toolbar.addAction(self.open_help_action)
 
     def createStatusBar(self):
         """Creates the status bar"""
         sb = QtWidgets.QStatusBar()
         self.setStatusBar(sb)
-
-    def initializeMDI(self):
-        """Initializes the mdi"""
-        self.mdi = QtWidgets.QMdiArea()
-        # TODO replace the widgets below
-        self.plotting_widget = QtWidgets.QWidget()
-        self.terminal_widget = QtWidgets.QWidget()
-        self.controls_widget = QtWidgets.QWidget()
-        self.project_widget = QtWidgets.QWidget()
 
     def setupMDI(self):
         """Creates the multi-document interface"""
