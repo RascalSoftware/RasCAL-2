@@ -19,7 +19,7 @@ class StartUpWidget(QtWidgets.QWidget):
 
     def __init__(self, parent):
         """
-        Initializes the widget
+        Initialize widget.
 
         Parameters
         ----------
@@ -29,14 +29,14 @@ class StartUpWidget(QtWidgets.QWidget):
         super().__init__(parent)
 
         self.create_banner_and_footer()
-        self.create_buttons_for_startup_page()
-        self.create_labels_for_startup_page()
+        self.create_buttons()
+        self.create_labels()
 
-        self.add_widgets_to_startup_page_layout()
+        self.add_widgets_to_layout()
 
-    def add_widgets_to_startup_page_layout(self) -> None:
+    def add_widgets_to_layout(self) -> None:
         """
-        Adds the widgets to the startup layout.
+        Add widgets to layout.
         """
         startup_layout = QtWidgets.QVBoxLayout()
 
@@ -62,44 +62,42 @@ class StartUpWidget(QtWidgets.QWidget):
 
     def create_banner_and_footer(self) -> None:
         """
-        Creates the banner and footer for the startup page.
+        Create banner and footer.
         """
-        # Create the banner
         self.banner_label = QtWidgets.QLabel(self)
         self.banner_label.setPixmap(QtGui.QPixmap(path_for("banner.png")))
         self.banner_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-        # Create the footer
         self.footer_label = QtWidgets.QLabel(self)
         self.footer_label.setPixmap(QtGui.QPixmap(path_for("footer.png")))
         self.footer_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
     def toggle_view(self) -> None:
         """
-        Shows the project dialog
+        Show ProjectDialog.
         """
         self.parent().toggleView()
 
-    def create_buttons_for_startup_page(self) -> None:
+    def create_buttons(self) -> None:
         """
-        Creates the buttons for the startup page.
+        Create buttons.
         """
         self.new_project_button = QtWidgets.QPushButton(self)
-        self.new_project_button.setIcon(QtGui.QIcon(path_for("plus.png")))
+        self.new_project_button.setIcon(QtGui.QIcon(path_for("create.png")))
         self.new_project_button.clicked.connect(self.toggle_view)
         self.new_project_button.setStyleSheet(self._button_style)
 
         self.import_project_button = QtWidgets.QPushButton(self)
-        self.import_project_button.setIcon(QtGui.QIcon(path_for("open-project-light.png")))
+        self.import_project_button.setIcon(QtGui.QIcon(path_for("browse-light.png")))
         self.import_project_button.setStyleSheet(self._button_style)
 
         self.import_r1_button = QtWidgets.QPushButton(self)
         self.import_r1_button.setIcon(QtGui.QIcon(path_for("import-r1.png")))
         self.import_r1_button.setStyleSheet(self._button_style)
 
-    def create_labels_for_startup_page(self) -> None:
+    def create_labels(self) -> None:
         """
-        Creates the labels for the startup page.
+        Create labels.
         """
         self.new_project_label = QtWidgets.QLabel("New\nProject", self)
         self.new_project_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)

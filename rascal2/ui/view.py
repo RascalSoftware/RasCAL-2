@@ -78,7 +78,7 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         self.open_project_action = QtGui.QAction("&Open", self)
         self.open_project_action.setStatusTip("Open an existing project")
-        self.open_project_action.setIcon(QtGui.QIcon(path_for("open-project.png")))
+        self.open_project_action.setIcon(QtGui.QIcon(path_for("browse-dark.png")))
         self.open_project_action.setShortcut(QtGui.QKeySequence.StandardKey.Open)
 
         self.save_project_action = QtGui.QAction("&Save", self)

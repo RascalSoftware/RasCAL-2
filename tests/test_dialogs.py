@@ -25,7 +25,7 @@ def setup_project_dialog_widget():
 
 def test_project_dialog_initial_state(setup_project_dialog_widget):
     """
-    Tests the inital state of the project dialog.
+    Tests the inital state of the ProjectDialog class.
     """
     project_dialog, _ = setup_project_dialog_widget
 
@@ -57,9 +57,9 @@ def test_project_dialog_initial_state(setup_project_dialog_widget):
     assert not project_dialog.folder_error
 
 
-def test_lineedit_errors(setup_project_dialog_widget):
+def test_inline_error_msgs(setup_project_dialog_widget):
     """
-    Tests the project name and folder line edit errors displayed.
+    Tests the project name and folder inline errors.
     """
     project_dialog, _ = setup_project_dialog_widget
 

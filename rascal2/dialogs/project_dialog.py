@@ -8,7 +8,7 @@ from rascal2.config import path_for
 
 class ProjectDialog(QtWidgets.QDialog):
     """
-    The Project Dialog
+    The Project dialog
     """
 
     _button_style = """background-color: {};
@@ -25,7 +25,7 @@ class ProjectDialog(QtWidgets.QDialog):
 
     def __init__(self, parent):
         """
-        Initializes the dialog
+        Initialize dialog.
 
         Parameters
         ----------
@@ -41,13 +41,13 @@ class ProjectDialog(QtWidgets.QDialog):
         self.name_error = False
         self.folder_error = False
 
-        self.create_project_dialog_labels()
-        self.create_project_dialog_buttons()
+        self.create_buttons()
+        self.create_labels()
         self.add_widgets_to_layout()
 
     def add_widgets_to_layout(self) -> None:
         """
-        Adds the widgets to the layout
+        Add widgets to the layout.
         """
         self.main_layout = QtWidgets.QVBoxLayout()
 
@@ -79,9 +79,9 @@ class ProjectDialog(QtWidgets.QDialog):
 
         self.setLayout(self.main_layout)
 
-    def create_project_dialog_labels(self) -> None:
+    def create_labels(self) -> None:
         """
-        Creates the labels for the project dialog.
+        Create labels.
         """
         # Project name labels
         self.project_name_label = QtWidgets.QLabel("Project Name:", self)
@@ -108,17 +108,17 @@ class ProjectDialog(QtWidgets.QDialog):
         self.project_folder_error.setStyleSheet(self._error_style)
         self.project_folder_error.hide()
 
-    def create_project_dialog_buttons(self) -> None:
+    def create_buttons(self) -> None:
         """
-        Creates the buttons for the project dialog.
+        Create buttons.
         """
         self.browse_button = QtWidgets.QPushButton(" Browse", self)
-        self.browse_button.setIcon(QtGui.QIcon(path_for("open-project-light.png")))
+        self.browse_button.setIcon(QtGui.QIcon(path_for("browse-light.png")))
         self.browse_button.clicked.connect(self.open_folder_selector)
         self.browse_button.setStyleSheet(self._button_style.format("#403F3F"))
 
         self.create_button = QtWidgets.QPushButton(" Create", self)
-        self.create_button.setIcon(QtGui.QIcon(path_for("plus.png")))
+        self.create_button.setIcon(QtGui.QIcon(path_for("create.png")))
         self.create_button.clicked.connect(self.create_project)
         self.create_button.setStyleSheet(self._button_style.format("#0D69BB"))
 
@@ -136,7 +136,7 @@ class ProjectDialog(QtWidgets.QDialog):
 
     def reset_variables(self) -> None:
         """
-        Resets the variables.
+        Reset variables.
         """
         self.project_folder.setText("")
         self.project_name.setText("")
@@ -145,7 +145,7 @@ class ProjectDialog(QtWidgets.QDialog):
 
     def open_folder_selector(self) -> None:
         """
-        Opens the folder selector.
+        Open folder selector.
         """
         folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder")
         if folder_path:
@@ -153,28 +153,26 @@ class ProjectDialog(QtWidgets.QDialog):
             if files_in_folder:
                 self.handle_error("folder")
             else:
-                self.handle_non_error("folder")
+                self.handle_success("folder")
                 self.project_folder.setText(folder_path)
 
     def handle_error(self, tag: Literal["name", "folder"]) -> None:
         """
-        Displays the line edit error msgs.
+        Display error msgs.
 
         Parameters
         ----------
         tag: Literal["name", "folder"]
-            Specifies whether the input verification
-            is for the project name or folder.
+            Specifies whether to show the error
+            for the project name or folder.
         """
-        input = getattr(self, "project_" + tag)
-        input.setStyleSheet(self._line_edit_error_style)
-        error_label = getattr(self, "project_" + tag + "_error")
-        error_label.show()
+        getattr(self, "project_" + tag).setStyleSheet(self._line_edit_error_style)
+        getattr(self, "project_" + tag + "_error").show()
         setattr(self, tag + "_error", True)
 
-    def handle_non_error(self, tag: Literal["name", "folder"]) -> None:
+    def handle_success(self, tag: Literal["name", "folder"]) -> None:
         """
-        Clears the style sheets of the error line edits.
+        Hide error msgs.
 
         Parameters
         ----------
@@ -182,15 +180,13 @@ class ProjectDialog(QtWidgets.QDialog):
             Specifies whether to clear the error
             for the project name or folder.
         """
-        input = getattr(self, "project_" + tag)
-        input.setStyleSheet("")
-        error_label = getattr(self, "project_" + tag + "_error")
-        error_label.hide()
+        getattr(self, "project_" + tag).setStyleSheet("")
+        getattr(self, "project_" + tag + "_error").hide()
         setattr(self, tag + "_error", False)
 
     def verify_inputs(self, tag: Literal["name", "folder"]) -> None:
         """
-        Verifies the name and folder inputs of the project dialog.
+        Verify inputs.
 
         Parameters
         ----------
@@ -201,11 +197,11 @@ class ProjectDialog(QtWidgets.QDialog):
         if getattr(self, "project_" + tag).text() == "":
             self.handle_error(tag)
         else:
-            self.handle_non_error(tag)
+            self.handle_success(tag)
 
     def create_project(self) -> None:
         """
-        Verifies the inputs specified.
+        Create project if inputs verified.
         """
         self.verify_inputs("name")
         self.verify_inputs("folder")
