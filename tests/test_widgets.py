@@ -1,24 +1,38 @@
-from rascal2.ui.view import MainWindowView
+from unittest.mock import patch
+
+import pytest
+from PyQt6 import QtCore, QtTest
+
 from rascal2.widgets.startup_widget import StartUpWidget
+from tests.test_dialogs import MockParentWindow
 
 
-def test_startup_widget_initial_state():
+@pytest.fixture
+def setup_startup_widget():
+    parent = MockParentWindow()
+    startup_widget = StartUpWidget(parent)
+    return startup_widget, parent
+
+
+def test_startup_widget_initial_state(setup_startup_widget):
     """
     Tests the initial state of the start up widget.
     """
-    view = MainWindowView()
-    startup_widget = StartUpWidget(view)
-
+    startup_widget, _ = setup_startup_widget
     assert startup_widget.new_project_button.isEnabled()
     assert startup_widget.import_project_button.isEnabled()
-    assert startup_widget.load_example_button.isEnabled()
     assert startup_widget.import_r1_button.isEnabled()
-    assert startup_widget.cancel_button.isEnabled()
-    assert startup_widget.import_rascal_button.isEnabled()
 
     assert startup_widget.new_project_label.text() == "New\nProject"
     assert startup_widget.import_project_label.text() == "Import Existing\nProject"
-    assert startup_widget.load_example_label.text() == "Open Example\nProject"
     assert startup_widget.import_r1_label.text() == "Import R1\nProject"
-    assert startup_widget.cancel_label.text() == "Cancel"
-    assert startup_widget.import_rascal_label.text() == "Import RasCAL\nProject"
+
+
+@patch.object(MockParentWindow, "toggleView")
+def test_toggle_view_called(mock, setup_startup_widget):
+    """
+    Tests the toggleView method is called once.
+    """
+    startup_widget, _ = setup_startup_widget
+    QtTest.QTest.mouseClick(startup_widget.new_project_button, QtCore.Qt.MouseButton.LeftButton)
+    mock.assert_called_once()

@@ -23,9 +23,14 @@ class ProjectDialog(QtWidgets.QDialog):
     _error_style = "color: #E34234"
     _line_edit_error_style = "border: 1px solid #E34234"
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         """
         Initializes the dialog
+
+        Parameters
+        ----------
+        parent: MainWindowView
+                An instance of the MainWindowView
         """
         super().__init__(parent)
 
@@ -86,7 +91,7 @@ class ProjectDialog(QtWidgets.QDialog):
         self.project_name = QtWidgets.QLineEdit(self)
         self.project_name.setPlaceholderText("Enter project name")
 
-        self.project_name_error = QtWidgets.QLabel("", self)
+        self.project_name_error = QtWidgets.QLabel("Project name needs to be specified.", self)
         self.project_name_error.setStyleSheet(self._error_style)
         self.project_name_error.hide()
 
@@ -99,7 +104,7 @@ class ProjectDialog(QtWidgets.QDialog):
         self.project_folder.setReadOnly(True)
         self.project_folder.setPlaceholderText("Select project folder")
 
-        self.project_folder_error = QtWidgets.QLabel("", self)
+        self.project_folder_error = QtWidgets.QLabel("An empty project folder needs to be selected.", self)
         self.project_folder_error.setStyleSheet(self._error_style)
         self.project_folder_error.hide()
 
@@ -126,10 +131,7 @@ class ProjectDialog(QtWidgets.QDialog):
         """
         Cancel project creation.
         """
-        if self.parent().new_project_action_called:
-            self.close()
-        else:
-            self.parent().toggleView()
+        self.close() if self.parent().new_project_action_called else self.parent().toggleView()
         self.reset_variables()
 
     def reset_variables(self) -> None:
@@ -149,12 +151,12 @@ class ProjectDialog(QtWidgets.QDialog):
         if folder_path:
             files_in_folder = list(filter(lambda x: x[0] != ".", os.listdir(folder_path)))
             if files_in_folder:
-                self.handle_error("folder", "Selected folder contains files. Select an empty folder.")
+                self.handle_error("folder")
             else:
                 self.handle_non_error("folder")
                 self.project_folder.setText(folder_path)
 
-    def handle_error(self, tag: Literal["name", "folder"], msg: str) -> None:
+    def handle_error(self, tag: Literal["name", "folder"]) -> None:
         """
         Displays the line edit error msgs.
 
@@ -163,16 +165,11 @@ class ProjectDialog(QtWidgets.QDialog):
         tag: Literal["name", "folder"]
             Specifies whether the input verification
             is for the project name or folder.
-        msg: str
-            Specifies the msg to display.
         """
         input = getattr(self, "project_" + tag)
         input.setStyleSheet(self._line_edit_error_style)
-
         error_label = getattr(self, "project_" + tag + "_error")
-        error_label.setText(msg)
         error_label.show()
-
         setattr(self, tag + "_error", True)
 
     def handle_non_error(self, tag: Literal["name", "folder"]) -> None:
@@ -187,13 +184,11 @@ class ProjectDialog(QtWidgets.QDialog):
         """
         input = getattr(self, "project_" + tag)
         input.setStyleSheet("")
-
         error_label = getattr(self, "project_" + tag + "_error")
         error_label.hide()
-
         setattr(self, tag + "_error", False)
 
-    def verify_inputs(self, tag: Literal["name", "folder"], msg: str) -> None:
+    def verify_inputs(self, tag: Literal["name", "folder"]) -> None:
         """
         Verifies the name and folder inputs of the project dialog.
 
@@ -202,12 +197,9 @@ class ProjectDialog(QtWidgets.QDialog):
         tag: Literal["name", "folder"]
             Specifies whether the input verification
             is for the project name or folder.
-        msg: str
-            Specifies the msg to display if there is an error
-            in verification.
         """
         if getattr(self, "project_" + tag).text() == "":
-            self.handle_error(tag, msg)
+            self.handle_error(tag)
         else:
             self.handle_non_error(tag)
 
@@ -215,14 +207,7 @@ class ProjectDialog(QtWidgets.QDialog):
         """
         Verifies the inputs specified.
         """
-        self.verify_inputs("name", "Project name needs to be specified.")
-        self.verify_inputs("folder", "An empty project folder needs to be selected.")
+        self.verify_inputs("name")
+        self.verify_inputs("folder")
         if not self.name_error and not self.folder_error:
             self.parent().createNewProject()
-
-    def resizeEvent(self, _) -> None:
-        """
-        Recenters the dialog when project folder is selected.
-        """
-        if self.parent():
-            self.move(self.parent().geometry().center() - self.rect().center())

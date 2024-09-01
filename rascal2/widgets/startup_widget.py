@@ -17,9 +17,14 @@ class StartUpWidget(QtWidgets.QWidget):
 
     _label_style = "font-weight: bold; font-size: 1em;"
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         """
         Initializes the widget
+
+        Parameters
+        ----------
+        parent: MainWindowView
+                An instance of the MainWindowView
         """
         super().__init__(parent)
 
@@ -29,7 +34,7 @@ class StartUpWidget(QtWidgets.QWidget):
 
         self.add_widgets_to_startup_page_layout()
 
-    def add_widgets_to_startup_page_layout(self):
+    def add_widgets_to_startup_page_layout(self) -> None:
         """
         Adds the widgets to the startup layout.
         """
@@ -55,7 +60,7 @@ class StartUpWidget(QtWidgets.QWidget):
 
         self.setLayout(startup_layout)
 
-    def create_banner_and_footer(self):
+    def create_banner_and_footer(self) -> None:
         """
         Creates the banner and footer for the startup page.
         """
@@ -69,13 +74,19 @@ class StartUpWidget(QtWidgets.QWidget):
         self.footer_label.setPixmap(QtGui.QPixmap(path_for("footer.png")))
         self.footer_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-    def create_buttons_for_startup_page(self):
+    def toggle_view(self) -> None:
+        """
+        Shows the project dialog
+        """
+        self.parent().toggleView()
+
+    def create_buttons_for_startup_page(self) -> None:
         """
         Creates the buttons for the startup page.
         """
         self.new_project_button = QtWidgets.QPushButton(self)
         self.new_project_button.setIcon(QtGui.QIcon(path_for("plus.png")))
-        self.new_project_button.clicked.connect(self.parent().toggleView)
+        self.new_project_button.clicked.connect(self.toggle_view)
         self.new_project_button.setStyleSheet(self._button_style)
 
         self.import_project_button = QtWidgets.QPushButton(self)
@@ -86,7 +97,7 @@ class StartUpWidget(QtWidgets.QWidget):
         self.import_r1_button.setIcon(QtGui.QIcon(path_for("import-r1.png")))
         self.import_r1_button.setStyleSheet(self._button_style)
 
-    def create_labels_for_startup_page(self):
+    def create_labels_for_startup_page(self) -> None:
         """
         Creates the labels for the startup page.
         """
