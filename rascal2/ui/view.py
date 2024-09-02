@@ -1,6 +1,8 @@
+import pathlib
+
 from PyQt6 import QtCore, QtGui, QtWidgets
 
-from rascal2.config import path_for
+from rascal2.config import path_for, setup_logging, setup_settings
 
 from .presenter import MainWindowPresenter
 
@@ -91,6 +93,13 @@ class MainWindowView(QtWidgets.QMainWindow):
             "Terminal": self.terminal_widget,
             "Fitting Controls": self.controls_widget,
         }
+
+        project_path = self.presenter.model.save_path
+        self.settings = setup_settings(project_path)
+        log_path = self.settings.log_path
+        if not log_path.is_absolute():
+            log_path = pathlib.Path(project_path, log_path)
+        self.logging = setup_logging(logpath=log_path, level=self.settings.log_level)
 
         for title, widget in reversed(widgets.items()):
             widget.setWindowTitle(title)

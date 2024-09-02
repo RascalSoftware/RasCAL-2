@@ -58,25 +58,25 @@ def setup_settings(project_path: str | PathLike) -> Settings:
     return Settings()
 
 
-def setup_logging(logpath: str | PathLike, level: int = logging.INFO) -> logging.Logger:
+def setup_logging(log_path: str | PathLike, level: int = logging.INFO) -> logging.Logger:
     """Set up logging for the project.
 
     The default logging path and level are defined in the settings.
 
     Parameters
     ----------
-    logpath : str | PathLike
+    log_path : str | PathLike
         The path to where the log file will be written.
     file_level : int, default logging.INFO
         The debug level for the logger.
 
     """
-    logpath = pathlib.Path(logpath)
-    logger = logging.getLogger(logpath.stem)
+    path = pathlib.Path(log_path)
+    logger = logging.getLogger(path.stem)
     logging.setLevel(level)
 
     # TODO add console print handler when console is added
-    log_filehandler = logging.FileHandler(logpath)
+    log_filehandler = logging.FileHandler(path)
     logger.addHandler(log_filehandler)
 
     return logger
