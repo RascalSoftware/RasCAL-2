@@ -19,10 +19,10 @@ def test_setup_settings():
         assert sets_from_json == settings1
 
 
-def test_setup_logging(level):
+def test_setup_logging():
     """Test that the logger is set up correctly."""
     with tempfile.TemporaryDirectory() as tmp:
-        log = setup_logging(Path(tmp, "rascal.log"), level)
+        log = setup_logging(Path(tmp, "rascal.log"))
         assert Path(tmp, "rascal.log").is_file()
 
     assert log.level == INFO
