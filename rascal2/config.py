@@ -51,9 +51,9 @@ def setup_settings(project_path: str | PathLike) -> Settings:
         (global) default Settings object.
 
     """
-    filepath = pathlib.Path(project_path, "settings.json")
+    filepath: pathlib.Path = pathlib.Path(project_path, "settings.json")
     if filepath.is_file():
-        json = pathlib.Path(filepath).read_text()
+        json = filepath.read_text()
         return Settings.model_validate_json(json)
     return Settings()
 
@@ -73,7 +73,7 @@ def setup_logging(log_path: str | PathLike, level: int = logging.INFO) -> loggin
     """
     path = pathlib.Path(log_path)
     logger = logging.getLogger(path.stem)
-    logging.setLevel(level)
+    logger.setLevel(level)
 
     # TODO add console print handler when console is added
     log_filehandler = logging.FileHandler(path)
