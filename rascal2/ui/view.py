@@ -94,12 +94,14 @@ class MainWindowView(QtWidgets.QMainWindow):
             "Fitting Controls": self.controls_widget,
         }
 
-        project_path = self.presenter.model.save_path
+        project_path = pathlib.Path(self.presenter.model.save_path)
         self.settings = setup_settings(project_path)
-        log_path = self.settings.log_path
+        log_path = pathlib.Path(self.settings.log_path)
         if not log_path.is_absolute():
-            log_path = pathlib.Path(project_path, log_path)
-        self.logging = setup_logging(logpath=log_path, level=self.settings.log_level)
+            log_path = project_path / log_path
+
+        log_path.parents[0].mkdir(parents=True, exist_ok=True)
+        self.logging = setup_logging(log_path, level=self.settings.log_level)
 
         for title, widget in reversed(widgets.items()):
             widget.setWindowTitle(title)
