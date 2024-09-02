@@ -67,7 +67,7 @@ def setup_logging(log_path: str | PathLike, level: int = logging.INFO) -> loggin
     ----------
     log_path : str | PathLike
         The path to where the log file will be written.
-    file_level : int, default logging.INFO
+    level : int, default logging.INFO
         The debug level for the logger.
 
     """

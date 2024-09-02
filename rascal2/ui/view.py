@@ -94,15 +94,6 @@ class MainWindowView(QtWidgets.QMainWindow):
             "Fitting Controls": self.controls_widget,
         }
 
-        project_path = pathlib.Path(self.presenter.model.save_path)
-        self.settings = setup_settings(project_path)
-        log_path = pathlib.Path(self.settings.log_path)
-        if not log_path.is_absolute():
-            log_path = project_path / log_path
-
-        log_path.parents[0].mkdir(parents=True, exist_ok=True)
-        self.logging = setup_logging(log_path, level=self.settings.log_level)
-
         for title, widget in reversed(widgets.items()):
             widget.setWindowTitle(title)
             window = self.mdi.addSubWindow(
@@ -112,3 +103,21 @@ class MainWindowView(QtWidgets.QMainWindow):
         # TODO implement user save for layouts, this should default to use saved layout and fallback to tile
         self.mdi.tileSubWindows()
         self.setCentralWidget(self.mdi)
+
+    def init_settings_and_log(self, save_path: str):
+        """Initialise settings and logging for the project.
+
+        Parameters
+        ----------
+        save_path : str
+            The save path for the project.
+
+        """
+        proj_path = pathlib.Path(save_path)
+        self.settings = setup_settings(proj_path)
+        log_path = pathlib.Path(self.settings.log_path)
+        if not log_path.is_absolute():
+            log_path = proj_path / log_path
+
+        log_path.parents[0].mkdir(parents=True, exist_ok=True)
+        self.logging = setup_logging(log_path, level=self.settings.log_level)
