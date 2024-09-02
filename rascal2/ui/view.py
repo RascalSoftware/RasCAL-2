@@ -6,7 +6,6 @@ from rascal2.config import path_for, setup_logging, setup_settings
 from rascal2.dialogs.project_dialog import ProjectDialog
 from rascal2.widgets.startup_widget import StartUpWidget
 
-
 from .presenter import MainWindowPresenter
 
 MAIN_WINDOW_TITLE = "RasCAL-2"
@@ -48,7 +47,6 @@ class MainWindowView(QtWidgets.QMainWindow):
 
     def showProjectDialog(self):
         """Shows the dialog to create a new rascal project"""
-        self.new_project_action_called = True
         self.project_dlg = ProjectDialog(self)
         self.project_dlg.show()
 
@@ -57,15 +55,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.startup_dlg.hide() if self.startup_dlg.isVisible() else self.startup_dlg.show()
         self.project_dlg.hide() if self.project_dlg.isVisible() else self.project_dlg.show()
 
-    def createNewProject(self):
-        """Creates a new rascal project"""
-        self.setWindowTitle(MAIN_WINDOW_TITLE + " - " + self.project_dlg.project_name.text())
-        if not self.new_project_action_called:
-            self.startup_dlg.close()
-        self.project_dlg.close()
-        self.toolbar.setEnabled(True)
-        self.setupMDI()
-
     def createActions(self):
         """Creates the menu and toolbar actions"""
 
@@ -73,7 +62,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.new_project_action.setStatusTip("Create a new project")
         self.new_project_action.setIcon(QtGui.QIcon(path_for("new-project.png")))
         self.new_project_action.triggered.connect(self.showProjectDialog)
-        self.new_project_action_called = False
         self.new_project_action.setShortcut(QtGui.QKeySequence.StandardKey.New)
 
         self.open_project_action = QtGui.QAction("&Open", self)

@@ -1,5 +1,4 @@
 import os
-from typing import Literal
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 
@@ -38,11 +37,10 @@ class ProjectDialog(QtWidgets.QDialog):
         self.setModal(True)
         self.setMinimumWidth(700)
 
-        self.name_error = False
-        self.folder_error = False
+        self.folder_path = ""
 
         self.create_buttons()
-        self.create_labels()
+        self.create_form()
         self.add_widgets_to_layout()
 
     def add_widgets_to_layout(self) -> None:
@@ -79,11 +77,11 @@ class ProjectDialog(QtWidgets.QDialog):
 
         self.setLayout(self.main_layout)
 
-    def create_labels(self) -> None:
+    def create_form(self) -> None:
         """
-        Create labels.
+        Create form widgets.
         """
-        # Project name labels
+        # Project name widgets
         self.project_name_label = QtWidgets.QLabel("Project Name:", self)
         self.project_name_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
         self.project_name_label.setStyleSheet(self._label_style)
@@ -95,7 +93,7 @@ class ProjectDialog(QtWidgets.QDialog):
         self.project_name_error.setStyleSheet(self._error_style)
         self.project_name_error.hide()
 
-        # Project folder labels
+        # Project folder widgets
         self.project_folder_label = QtWidgets.QLabel("Project Folder:", self)
         self.project_folder_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
         self.project_folder_label.setStyleSheet(self._label_style)
@@ -131,79 +129,58 @@ class ProjectDialog(QtWidgets.QDialog):
         """
         Cancel project creation.
         """
-        self.close() if self.parent().new_project_action_called else self.parent().toggleView()
-        self.reset_variables()
-
-    def reset_variables(self) -> None:
-        """
-        Reset variables.
-        """
+        self.close() if self.parent().toolbar.isEnabled() else self.parent().toggleView()
         self.project_folder.setText("")
         self.project_name.setText("")
-        self.name_error = False
-        self.folder_error = False
 
     def open_folder_selector(self) -> None:
         """
         Open folder selector.
         """
-        folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder")
-        if folder_path:
-            files_in_folder = list(filter(lambda x: x[0] != ".", os.listdir(folder_path)))
+        self.folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder")
+        if self.folder_path:
+            self.verify_folder()
+
+    def verify_folder(self) -> None:
+        """
+        Verify the project folder.
+        """
+        error = False
+        if self.folder_path:
+            files_in_folder = [file for file in os.listdir(self.folder_path) if not file.startswith(".")]
             if files_in_folder:
-                self.handle_error("folder")
-            else:
-                self.handle_success("folder")
-                self.project_folder.setText(folder_path)
+                error = True
+        elif self.project_folder.text() == "":
+            error = True
 
-    def handle_error(self, tag: Literal["name", "folder"]) -> None:
-        """
-        Display error msgs.
-
-        Parameters
-        ----------
-        tag: Literal["name", "folder"]
-            Specifies whether to show the error
-            for the project name or folder.
-        """
-        getattr(self, "project_" + tag).setStyleSheet(self._line_edit_error_style)
-        getattr(self, "project_" + tag + "_error").show()
-        setattr(self, tag + "_error", True)
-
-    def handle_success(self, tag: Literal["name", "folder"]) -> None:
-        """
-        Hide error msgs.
-
-        Parameters
-        ----------
-        tag: Literal["name", "folder"]
-            Specifies whether to clear the error
-            for the project name or folder.
-        """
-        getattr(self, "project_" + tag).setStyleSheet("")
-        getattr(self, "project_" + tag + "_error").hide()
-        setattr(self, tag + "_error", False)
-
-    def verify_inputs(self, tag: Literal["name", "folder"]) -> None:
-        """
-        Verify inputs.
-
-        Parameters
-        ----------
-        tag: Literal["name", "folder"]
-            Specifies whether the input verification
-            is for the project name or folder.
-        """
-        if getattr(self, "project_" + tag).text() == "":
-            self.handle_error(tag)
+        if error:
+            self.project_folder.setStyleSheet(self._line_edit_error_style)
+            self.project_folder_error.show()
+            self.project_folder.setText("")
         else:
-            self.handle_success(tag)
+            self.project_folder.setStyleSheet("")
+            self.project_folder_error.hide()
+            self.project_folder.setText(self.folder_path)
+
+    def verify_name(self) -> None:
+        """
+        Verify the project name.
+        """
+        if self.project_name.text() == "":
+            self.project_name.setStyleSheet(self._line_edit_error_style)
+            self.project_name_error.show()
+        else:
+            self.project_name.setStyleSheet("")
+            self.project_name_error.hide()
 
     def create_project(self) -> None:
         """
         Create project if inputs verified.
         """
-        self.verify_inputs("name")
-        self.verify_inputs("folder")
-        if not self.name_error and not self.folder_error:
-            self.parent().createNewProject()
+        self.verify_name()
+        self.verify_folder()
+        if self.project_name_error.isHidden() and self.project_folder_error.isHidden():
+            self.parent().presenter.createProject(self.project_name.text(), self.project_folder.text())
+            if not self.parent().toolbar.isEnabled():
+                self.parent().toolbar.setEnabled(True)
+            self.close()

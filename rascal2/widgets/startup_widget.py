@@ -107,6 +107,6 @@ class StartUpWidget(QtWidgets.QWidget):
         self.import_project_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.import_project_label.setStyleSheet(self._label_style)
 
-        self.import_r1_label = QtWidgets.QLabel("Import R1\nProject", self)
+        self.import_r1_label = QtWidgets.QLabel("Import RasCAL-1\nProject", self)
         self.import_r1_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.import_r1_label.setStyleSheet(self._label_style)

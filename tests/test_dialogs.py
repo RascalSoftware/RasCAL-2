@@ -1,13 +1,22 @@
 from unittest.mock import patch
 
 import pytest
-from PyQt6 import QtCore, QtTest, QtWidgets
+from PyQt6 import QtCore, QtWidgets
 
 from rascal2.dialogs.project_dialog import ProjectDialog
 
 
+class MockPresenter(QtWidgets.QMainWindow):
+    def createProject(self, name: str, folder: str):
+        pass
+
+
 class MockParentWindow(QtWidgets.QMainWindow):
-    new_project_action_called = False
+    def __init__(self):
+        super().__init__()
+        self.presenter = MockPresenter()
+        self.toolbar = self.addToolBar("ToolBar")
+        self.toolbar.setEnabled(False)
 
     def toggleView(self):
         pass
@@ -53,55 +62,56 @@ def test_project_dialog_initial_state(setup_project_dialog_widget):
     assert project_dialog.project_folder_error.isHidden()
     assert project_dialog.project_folder.isReadOnly()
 
-    assert not project_dialog.name_error
-    assert not project_dialog.folder_error
 
-
-def test_inline_error_msgs(setup_project_dialog_widget):
+@patch("os.listdir")
+def test_inline_error_msgs(mock_listdir, setup_project_dialog_widget):
     """
     Tests the project name and folder inline errors.
     """
     project_dialog, _ = setup_project_dialog_widget
 
-    # tests the project name and folder line edit errors displayed.
-    QtTest.QTest.mouseClick(project_dialog.create_button, QtCore.Qt.MouseButton.LeftButton)
+    mock_listdir.return_value = [".hiddenfile"]
+
+    # tests the project name and folder inline errors.
+    project_dialog.create_button.click()
 
     assert not project_dialog.project_name_error.isHidden()
-    assert project_dialog.name_error
     assert not project_dialog.project_folder_error.isHidden()
-    assert project_dialog.folder_error
 
-    # tests the project name line edit error displayed.
+    # tests the project name inline error.
     project_dialog.project_folder.setText("test-folder")
-    QtTest.QTest.mouseClick(project_dialog.create_button, QtCore.Qt.MouseButton.LeftButton)
+    project_dialog.folder_path = "test-folder"
+    project_dialog.create_button.click()
 
     assert not project_dialog.project_name_error.isHidden()
-    assert project_dialog.name_error
     assert project_dialog.project_folder_error.isHidden()
-    assert not project_dialog.folder_error
 
-    # tests the project folder line edit error displayed.
+    # tests the project folder inline error.
     project_dialog.project_name.setText("test-name")
     project_dialog.project_folder.setText("")
-    QtTest.QTest.mouseClick(project_dialog.create_button, QtCore.Qt.MouseButton.LeftButton)
+    project_dialog.folder_path = ""
+    project_dialog.create_button.click()
 
     assert project_dialog.project_name_error.isHidden()
-    assert not project_dialog.name_error
     assert not project_dialog.project_folder_error.isHidden()
-    assert project_dialog.folder_error
 
 
-@patch.object(MockParentWindow, "createNewProject")
-def test_create_button(mock_create_new_project, setup_project_dialog_widget):
+@patch("os.listdir")
+@patch.object(MockPresenter, "createProject")
+def test_create_button(mock_create_project, mock_listdir, setup_project_dialog_widget):
     """
     Tests create button on the ProjectDialog class.
     """
     project_dialog, _ = setup_project_dialog_widget
 
+    mock_listdir.return_value = []
+
     project_dialog.project_name.setText("test-name")
     project_dialog.project_folder.setText("test-folder")
-    QtTest.QTest.mouseClick(project_dialog.create_button, QtCore.Qt.MouseButton.LeftButton)
-    mock_create_new_project.assert_called_once()
+    project_dialog.folder_path = "test-folder"
+    project_dialog.create_button.click()
+    mock_create_project.assert_called_once()
+    assert project_dialog.parent().toolbar.isEnabled()
 
 
 @patch.object(MockParentWindow, "toggleView")
@@ -112,18 +122,14 @@ def test_cancel_button(mock_toggle_view, setup_project_dialog_widget):
     project_dialog, _ = setup_project_dialog_widget
 
     project_dialog.project_name.setText("test-name")
-    project_dialog.name_error = True
     project_dialog.project_folder.setText("test-folder")
-    project_dialog.folder_error = True
 
-    QtTest.QTest.mouseClick(project_dialog.cancel_button, QtCore.Qt.MouseButton.LeftButton)
+    project_dialog.cancel_button.click()
 
     mock_toggle_view.assert_called_once()
 
     assert project_dialog.project_name.text() == ""
-    assert not project_dialog.name_error
     assert project_dialog.project_folder.text() == ""
-    assert not project_dialog.folder_error
 
 
 @patch("os.listdir")
@@ -138,17 +144,15 @@ def test_browse_button(mock_get_existing_directory, mock_listdir, setup_project_
     mock_get_existing_directory.return_value = "/test/folder/path"
     mock_listdir.return_value = [".hiddenfile"]
 
-    QtTest.QTest.mouseClick(project_dialog.browse_button, QtCore.Qt.MouseButton.LeftButton)
+    project_dialog.browse_button.click()
 
     assert project_dialog.project_folder.text() == "/test/folder/path"
-    assert not project_dialog.folder_error
-
-    project_dialog.reset_variables()
+    assert project_dialog.project_folder_error.isHidden()
 
     # When a non empty folder is selected.
     mock_listdir.return_value = [".hiddenfile", "testfile"]
 
-    QtTest.QTest.mouseClick(project_dialog.browse_button, QtCore.Qt.MouseButton.LeftButton)
+    project_dialog.browse_button.click()
 
     assert project_dialog.project_folder.text() == ""
-    assert project_dialog.folder_error
+    assert not project_dialog.project_folder_error.isHidden()
