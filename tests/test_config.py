@@ -3,7 +3,6 @@
 import tempfile
 from logging import CRITICAL, INFO, WARNING
 from pathlib import Path
-from shutil import rmtree
 
 import pytest
 
@@ -31,5 +30,3 @@ def test_setup_logging(level):
 
     assert log.level == level
     assert log.hasHandlers()
-
-    rmtree(tmp)
