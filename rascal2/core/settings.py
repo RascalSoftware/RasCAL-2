@@ -81,7 +81,7 @@ class Settings(BaseModel, validate_assignment=True, arbitrary_types_allowed=True
         for setting in unset_settings:
             if global_name(setting) in global_settings.allKeys():
                 setattr(self, setting, global_settings.value(global_name(setting)))
-                self.model_fields_set.remove(setting)  # we don't want it to count as manually set!
+                self.model_fields_set.remove(setting)  # we don't want global defaults to count as manually set!
 
     def save(self, path: str | PathLike):
         """Save settings to a JSON file in the given path.

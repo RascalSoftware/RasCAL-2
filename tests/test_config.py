@@ -2,6 +2,8 @@
 
 import tempfile
 from logging import CRITICAL, INFO, WARNING
+from pathlib import Path
+from shutil import rmtree
 
 import pytest
 
@@ -23,8 +25,11 @@ def test_setup_settings():
 @pytest.mark.parametrize("level", [INFO, WARNING, CRITICAL])
 def test_setup_logging(level):
     """Test that the logger is set up correctly."""
-    with tempfile.TemporaryFile() as tmp:
-        log = setup_logging(tmp, level)
+    tmp = tempfile.mkdtemp()
+    log = setup_logging(Path(tmp, "rascal.log"), level)
+    assert Path(tmp, "rascal.log").is_file()
 
     assert log.level == level
     assert log.hasHandlers()
+
+    rmtree(tmp)
