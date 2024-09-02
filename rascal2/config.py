@@ -4,7 +4,12 @@ import platform
 import sys
 from os import PathLike
 
+<<<<<<< HEAD
 from rascal2.core import Settings, get_global_settings
+=======
+from rascal2.core import Settings
+from rascal2.widgets import TerminalWidget
+>>>>>>> a071eb5 (added terminal output for logging)
 
 SOURCE_PATH = pathlib.Path(__file__).parent
 STATIC_PATH = SOURCE_PATH / "static"
@@ -59,7 +64,7 @@ def setup_settings(project_path: str | PathLike) -> Settings:
     return Settings()
 
 
-def setup_logging(log_path: str | PathLike, level: int = logging.INFO) -> logging.Logger:
+def setup_logging(log_path: str | PathLike, terminal: TerminalWidget, level: int = logging.INFO) -> logging.Logger:
     """Set up logging for the project.
 
     The default logging path and level are defined in the settings.
@@ -68,6 +73,8 @@ def setup_logging(log_path: str | PathLike, level: int = logging.INFO) -> loggin
     ----------
     log_path : str | PathLike
         The path to where the log file will be written.
+    terminal : TerminalWidget
+        The StdoutReceiver instance which sends text to the terminal widget.
     level : int, default logging.INFO
         The debug level for the logger.
 
@@ -77,10 +84,12 @@ def setup_logging(log_path: str | PathLike, level: int = logging.INFO) -> loggin
     logger.setLevel(level)
     logger.handlers.clear()
 
-    # TODO add console print handler when console is added
-    # https://github.com/RascalSoftware/RasCAL-2/issues/5
     log_filehandler = logging.FileHandler(path)
     logger.addHandler(log_filehandler)
+
+    # handler that logs to terminal widget
+    log_termhandler = logging.StreamHandler(stream=terminal)
+    logger.addHandler(log_termhandler)
 
     return logger
 

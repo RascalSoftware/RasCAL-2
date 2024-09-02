@@ -291,7 +291,7 @@ class MainWindowView(QtWidgets.QMainWindow):
             log_path = proj_path / log_path
 
         log_path.parents[0].mkdir(parents=True, exist_ok=True)
-        self.logging = setup_logging(log_path, level=self.settings.log_level)
+        self.logging = setup_logging(log_path, self.terminal_widget, level=self.settings.log_level)
 
     def enable_elements(self):
         """Enable the elements that are disabled on startup."""

@@ -1,6 +1,7 @@
 import warnings
 from contextlib import redirect_stdout
 from typing import Any
+from contextlib import redirect_stderr, redirect_stdout
 
 import RATapi as RAT
 from PyQt6 import QtCore
@@ -86,7 +87,7 @@ class MainWindowPresenter:
         self.runner = RATRunner(self.model.project, self.model.controls)
         self.runner.moveToThread(self.run_thread)
         self.runner.finished.connect(self.run_thread.quit)
-        self.runner.stdout_receiver.text_sent.connect(self.view.terminal_widget.append_text)
+        self.runner.stdout.text_sent.connect(self.view.terminal_widget.write)
         self.run_thread.started.connect(self.runner.run)
         self.run_thread.start()
 
@@ -101,18 +102,21 @@ class RATRunner(QtCore.QObject):
 
         self.project = project
         self.controls = controls
-        self.stdout_receiver = StdoutReceiver()
+        # if we use self.view.terminal_widget as the io stream, then
+        # we get a segfault for trying to use it between threads. so
+        # we use a pyqt signal to send messages between threads
+        self.stdout = StdoutEmitter()
 
     def run(self):
         """Run RAT with the given project and controls."""
         # for testing as we currently do not have project and control creation
-        with redirect_stdout(self.stdout_receiver):
+        with redirect_stdout(self.stdout), redirect_stderr(self.stdout):
             project, results = RAT.run(self.project, self.controls)
         self.finished.emit()
 
 
-class StdoutReceiver(QtCore.QObject):
-    """Class for redirecting stdout to a signal."""
+class StdoutEmitter(QtCore.QObject):
+    """Thread-safe stream to send signals for text."""
 
     text_sent = QtCore.pyqtSignal(str)
 
