@@ -1,8 +1,9 @@
 """Tests for configuration utilities."""
 
 import tempfile
-from logging import INFO
-from pathlib import Path
+from logging import CRITICAL, INFO, WARNING
+
+import pytest
 
 from rascal2.config import setup_logging, setup_settings
 from rascal2.core.settings import LogLevels, Settings
@@ -19,11 +20,11 @@ def test_setup_settings():
         assert sets_from_json == settings1
 
 
-def test_setup_logging():
+@pytest.mark.parametrize("level", [INFO, WARNING, CRITICAL])
+def test_setup_logging(level):
     """Test that the logger is set up correctly."""
-    with tempfile.TemporaryDirectory() as tmp:
-        log = setup_logging(Path(tmp, "rascal.log"))
-        assert Path(tmp, "rascal.log").is_file()
+    with tempfile.TemporaryFile() as tmp:
+        log = setup_logging(tmp, level)
 
-    assert log.level == INFO
+    assert log.level == level
     assert log.hasHandlers()
