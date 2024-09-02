@@ -4,9 +4,8 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 from rascal2.config import path_for, setup_logging, setup_settings
 from rascal2.dialogs.project_dialog import ProjectDialog
-from rascal2.widgets.startup_widget import StartUpWidget
-from rascal2.dialogs import ErrorDialog
 from rascal2.widgets import ControlsWidget
+from rascal2.widgets.startup_widget import StartUpWidget
 
 from .presenter import MainWindowPresenter
 
@@ -198,15 +197,3 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         log_path.parents[0].mkdir(parents=True, exist_ok=True)
         self.logging = setup_logging(log_path, level=self.settings.log_level)
-
-    def createErrorDialog(self, error: Exception):
-        """Produce an error dialog from an Exception.
-
-        Parameters
-        ----------
-        error : Exception
-            The exception passed to the View.
-
-        """
-        dlg = ErrorDialog(error=error, parent=self)
-        dlg.exec()
