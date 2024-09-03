@@ -19,9 +19,6 @@ class MockParentWindow(QtWidgets.QMainWindow):
         self.toolbar.setEnabled(False)
         self.showProjectDialog = MagicMock()
 
-    def showProjectDialog(self):
-        pass
-
 
 @pytest.fixture
 def setup_project_dialog_widget():
