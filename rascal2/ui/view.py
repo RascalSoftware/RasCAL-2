@@ -38,10 +38,10 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.controls_widget = QtWidgets.QWidget()
         self.project_widget = QtWidgets.QWidget()
 
-        self.createActions()
-        self.createMenus()
-        self.createToolBar()
-        self.createStatusBar()
+        self.create_actions()
+        self.create_menus()
+        self.create_toolbar()
+        self.create_status_bar()
 
         self.setMinimumSize(1024, 900)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
