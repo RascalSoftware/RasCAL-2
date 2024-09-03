@@ -1,7 +1,7 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-from PyQt6 import QtCore, QtWidgets
+from PyQt6 import QtWidgets
 
 from rascal2.dialogs.project_dialog import ProjectDialog
 
@@ -17,11 +17,9 @@ class MockParentWindow(QtWidgets.QMainWindow):
         self.presenter = MockPresenter()
         self.toolbar = self.addToolBar("ToolBar")
         self.toolbar.setEnabled(False)
+        self.showProjectDialog = MagicMock()
 
-    def toggleView(self):
-        pass
-
-    def createNewProject(self):
+    def showProjectDialog(self):
         pass
 
 
@@ -37,8 +35,6 @@ def test_project_dialog_initial_state(setup_project_dialog_widget):
     Tests the inital state of the ProjectDialog class.
     """
     project_dialog, _ = setup_project_dialog_widget
-
-    assert project_dialog.windowFlags() == (QtCore.Qt.WindowType.FramelessWindowHint | QtCore.Qt.WindowType.Dialog)
 
     assert project_dialog.isModal()
     assert project_dialog.minimumWidth() == 700
@@ -114,22 +110,15 @@ def test_create_button(mock_create_project, mock_listdir, setup_project_dialog_w
     assert project_dialog.parent().toolbar.isEnabled()
 
 
-@patch.object(MockParentWindow, "toggleView")
-def test_cancel_button(mock_toggle_view, setup_project_dialog_widget):
+def test_cancel_button(setup_project_dialog_widget):
     """
     Tests cancel button on the ProjectDialog class.
     """
     project_dialog, _ = setup_project_dialog_widget
 
-    project_dialog.project_name.setText("test-name")
-    project_dialog.project_folder.setText("test-folder")
-
-    project_dialog.cancel_button.click()
-
-    mock_toggle_view.assert_called_once()
-
-    assert project_dialog.project_name.text() == ""
-    assert project_dialog.project_folder.text() == ""
+    with patch.object(project_dialog, "reject", wraps=project_dialog.reject) as mock_reject:
+        project_dialog.cancel_button.click()
+        mock_reject.assert_called_once()
 
 
 @patch("os.listdir")

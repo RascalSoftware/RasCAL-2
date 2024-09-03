@@ -72,19 +72,13 @@ class StartUpWidget(QtWidgets.QWidget):
         self.footer_label.setPixmap(QtGui.QPixmap(path_for("footer.png")))
         self.footer_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-    def toggle_view(self) -> None:
-        """
-        Show ProjectDialog.
-        """
-        self.parent().toggleView()
-
     def create_buttons(self) -> None:
         """
         Create buttons.
         """
         self.new_project_button = QtWidgets.QPushButton(self)
         self.new_project_button.setIcon(QtGui.QIcon(path_for("create.png")))
-        self.new_project_button.clicked.connect(self.toggle_view)
+        self.new_project_button.clicked.connect(self.parent().showProjectDialog)
         self.new_project_button.setStyleSheet(self._button_style)
 
         self.import_project_button = QtWidgets.QPushButton(self)

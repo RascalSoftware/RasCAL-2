@@ -38,3 +38,6 @@ venv.bak/
 
 # OS specific files
 **/.DS_Store
+
+# log files
+**/logs/

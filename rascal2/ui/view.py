@@ -16,6 +16,8 @@ class MainWindowView(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.setWindowTitle(MAIN_WINDOW_TITLE)
+
         self.presenter = MainWindowPresenter(self)
         window_icon = QtGui.QIcon(path_for("logo.png"))
 
@@ -37,7 +39,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.createToolBar()
         self.createStatusBar()
 
-        self.setWindowTitle(MAIN_WINDOW_TITLE)
         self.setMinimumSize(1024, 900)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
 
@@ -46,14 +47,15 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.setCentralWidget(self.startup_dlg)
 
     def showProjectDialog(self):
-        """Shows the dialog to create a new rascal project"""
+        """Shows the project dialog to create a new project"""
+        if self.startup_dlg.isVisible():
+            self.startup_dlg.hide()
         self.project_dlg = ProjectDialog(self)
-        self.project_dlg.show()
-
-    def toggleView(self):
-        """Toggles between startup widget and project dialog"""
-        self.startup_dlg.hide() if self.startup_dlg.isVisible() else self.startup_dlg.show()
-        self.project_dlg.hide() if self.project_dlg.isVisible() else self.project_dlg.show()
+        if (
+            self.project_dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted
+            and self.centralWidget() is self.startup_dlg
+        ):
+            self.startup_dlg.show()
 
     def createActions(self):
         """Creates the menu and toolbar actions"""
@@ -168,6 +170,7 @@ class MainWindowView(QtWidgets.QMainWindow):
             window.setWindowTitle(title)
         # TODO implement user save for layouts, this should default to use saved layout and fallback to tile
         self.mdi.tileSubWindows()
+        self.startup_dlg = self.takeCentralWidget()
         self.setCentralWidget(self.mdi)
 
     def init_settings_and_log(self, save_path: str):

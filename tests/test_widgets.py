@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import pytest
 
 from rascal2.widgets.startup_widget import StartUpWidget
@@ -27,11 +25,10 @@ def test_startup_widget_initial_state(setup_startup_widget):
     assert startup_widget.import_r1_label.text() == "Import RasCAL-1\nProject"
 
 
-@patch.object(MockParentWindow, "toggleView")
-def test_toggle_view_called(mock, setup_startup_widget):
+def test_show_project_dialog_called(setup_startup_widget):
     """
-    Tests the toggleView method is called once.
+    Tests the showProjectDialog method is called once.
     """
-    startup_widget, _ = setup_startup_widget
+    startup_widget, parent = setup_startup_widget
     startup_widget.new_project_button.click()
-    mock.assert_called_once()
+    parent.showProjectDialog.assert_called_once()

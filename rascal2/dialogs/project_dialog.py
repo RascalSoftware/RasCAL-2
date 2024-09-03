@@ -33,7 +33,6 @@ class ProjectDialog(QtWidgets.QDialog):
         """
         super().__init__(parent)
 
-        self.setWindowFlags(QtCore.Qt.WindowType.FramelessWindowHint | QtCore.Qt.WindowType.Dialog)
         self.setModal(True)
         self.setMinimumWidth(700)
 
@@ -73,6 +72,7 @@ class ProjectDialog(QtWidgets.QDialog):
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self.create_button)
         layout.addWidget(self.cancel_button)
+        self.main_layout.addStretch(1)
         self.main_layout.addLayout(layout)
 
         self.setLayout(self.main_layout)
@@ -122,16 +122,8 @@ class ProjectDialog(QtWidgets.QDialog):
 
         self.cancel_button = QtWidgets.QPushButton(" Cancel", self)
         self.cancel_button.setIcon(QtGui.QIcon(path_for("cancel.png")))
-        self.cancel_button.clicked.connect(self.cancel_project_creation)
+        self.cancel_button.clicked.connect(self.reject)
         self.cancel_button.setStyleSheet(self._button_style.format("#E34234"))
-
-    def cancel_project_creation(self) -> None:
-        """
-        Cancel project creation.
-        """
-        self.close() if self.parent().toolbar.isEnabled() else self.parent().toggleView()
-        self.project_folder.setText("")
-        self.project_name.setText("")
 
     def open_folder_selector(self) -> None:
         """
@@ -183,4 +175,4 @@ class ProjectDialog(QtWidgets.QDialog):
             self.parent().presenter.createProject(self.project_name.text(), self.project_folder.text())
             if not self.parent().toolbar.isEnabled():
                 self.parent().toolbar.setEnabled(True)
-            self.close()
+            self.accept()
