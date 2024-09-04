@@ -50,7 +50,7 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         self.setCentralWidget(self.startup_dlg)
 
-    def showProjectDialog(self):
+    def show_project_dialog(self):
         """Shows the project dialog to create a new project"""
         if self.startup_dlg.isVisible():
             self.startup_dlg.hide()
@@ -67,7 +67,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.new_project_action = QtGui.QAction("&New", self)
         self.new_project_action.setStatusTip("Create a new project")
         self.new_project_action.setIcon(QtGui.QIcon(path_for("new-project.png")))
-        self.new_project_action.triggered.connect(self.showProjectDialog)
+        self.new_project_action.triggered.connect(self.show_project_dialog)
         self.new_project_action.setShortcut(QtGui.QKeySequence.StandardKey.New)
 
         self.open_project_action = QtGui.QAction("&Open", self)
@@ -97,7 +97,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.open_help_action = QtGui.QAction("&Help", self)
         self.open_help_action.setStatusTip("Open Documentation")
         self.open_help_action.setIcon(QtGui.QIcon(path_for("help.png")))
-        self.open_help_action.triggered.connect(self.openDocs)
+        self.open_help_action.triggered.connect(self.open_docs)
 
         self.exit_action = QtGui.QAction("E&xit", self)
         self.exit_action.setStatusTip(f"Quit {MAIN_WINDOW_TITLE}")
@@ -132,7 +132,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         help_menu = main_menu.addMenu("&Help")
         help_menu.addAction(self.open_help_action)
 
-    def openDocs(self):
+    def open_docs(self):
         """Opens the documentation"""
         url = QtCore.QUrl("https://rascalsoftware.github.io/RAT-Docs/dev/index.html")
         QtGui.QDesktopServices.openUrl(url)
