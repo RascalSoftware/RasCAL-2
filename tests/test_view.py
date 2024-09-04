@@ -48,11 +48,17 @@ class TestMDISettings:
 
         for i, window in enumerate(view.mdi.subWindowList()):
             widgets_in_order.append(window.windowTitle().lower().split(" ")[-1])
-            x, y, width, height = geometry[i][0:4]
             window.setGeometry(*geometry[i][0:4])
             if geometry[i][4] is True:
                 window.showMinimized()
 
         view.save_mdi_layout()
         for i, widget in enumerate(widgets_in_order):
-            assert getattr(view.settings.mdi_defaults, widget) == geometry[i]
+            window = view.mdi.subWindowList()[i]
+            assert getattr(view.settings.mdi_defaults, widget) == (
+                window.x(),
+                window.y(),
+                window.width(),
+                window.height(),
+                window.isMinimized(),
+            )
