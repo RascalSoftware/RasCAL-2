@@ -46,7 +46,9 @@ class ControlsWidget(QtWidgets.QWidget):
 
         # create box containing chi-squared value
         chi_layout = QtWidgets.QHBoxLayout()
-        self.chi_squared = QtWidgets.QLineEdit("1.060")  # TODO hook this up when we can actually run... issue #9
+        # TODO hook this up when we can actually run
+        # https://github.com/RascalSoftware/RasCAL-2/issues/9
+        self.chi_squared = QtWidgets.QLineEdit("1.060")
         self.chi_squared.setReadOnly(True)
         chi_layout.addWidget(QtWidgets.QLabel("Current chi-squared:"))
         chi_layout.addWidget(self.chi_squared)
@@ -91,7 +93,9 @@ class ControlsWidget(QtWidgets.QWidget):
         # add fit settings for each procedure
         for procedure in Procedures:
             proc_settings = [f for f in fields.get(procedure, []) if f != "procedure"]
-            proc_settings.remove("resampleParams")  # FIXME remove when merged - just for testing
+            # FIXME remove when resampleParams has been split
+            # https://github.com/RascalSoftware/python-RAT/issues/69
+            proc_settings.remove("resampleParams")
             fit_set = FitSettingsWidget(self, proc_settings, self.presenter)
             self.fit_settings_layout.addWidget(fit_set)
 
@@ -148,6 +152,7 @@ class ControlsWidget(QtWidgets.QWidget):
             # self.presenter.run() etc.
             # presenter should send a signal when run is completed,
             # which then toggles the button back
+            # https://github.com/RascalSoftware/RasCAL-2/issues/9
         else:
             self.fit_settings.setEnabled(True)
             self.procedure_dropdown.setEnabled(True)
@@ -168,7 +173,9 @@ class ControlsWidget(QtWidgets.QWidget):
         self.presenter.edit_controls("procedure", procedure)
         # synchronise common fields between procedures
         for field in common_fields:
-            if field not in ["procedure", "resampleParams"]:  # FIXME remove resampleparams when merged
+            # FIXME remove resampleparams when fixed
+            # https://github.com/RascalSoftware/RasCAL-2/issues/9
+            if field not in ["procedure", "resampleParams"]:
                 self.fit_settings_layout.currentWidget().update_data(field)
 
 

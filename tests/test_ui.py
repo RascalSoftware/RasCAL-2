@@ -35,12 +35,8 @@ def test_integration(qt_application, make_main_window):
     _ = qt_application
     window = make_main_window()
     window.show()
-    # TODO replace with startup project creation when implemented
-    from RATapi import Controls  # noqa
 
-    window.presenter.model.controls = Controls()
-
-    window.setup_mdi()
+    window.presenter.create_project("project", ".")
     names = [win.windowTitle() for win in window.mdi.subWindowList()]
     # QMDIArea is first in last out hence the reversed list
     assert names == ["Fitting Controls", "Terminal", "Project", "Plots"]

@@ -3,7 +3,7 @@
 from PyQt6 import QtGui
 
 
-class edit_controls(QtGui.QUndoCommand):
+class EditControls(QtGui.QUndoCommand):
     """Command for editing the Controls object."""
 
     def __init__(self, controls, attr, value):
@@ -19,6 +19,7 @@ class edit_controls(QtGui.QUndoCommand):
         # FIXME: when C++ exceptions can be handled properly,
         # run try/except for validation error here and
         # mark as obsolete if one occurs
+        # https://github.com/RascalSoftware/RasCAL-2/issues/26
         setattr(self.controls, self.attr, self.value)
 
     def text(self):

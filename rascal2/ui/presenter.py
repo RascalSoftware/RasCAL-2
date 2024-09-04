@@ -60,15 +60,17 @@ class MainWindowPresenter:
         # we have to check validation in advance because PyQt doesn't return
         # the exception, it just falls over in C++
         # also doing it this way stops bad changes being pushed onto the stack
+        # https://github.com/RascalSoftware/RasCAL-2/issues/26
         # also suppress warnings (we get warning for setting params not matching
         # procedure on initialisation) to avoid clogging stdout
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self.model.controls.model_validate({setting: value})
-            self.view.undo_stack.push(commands.edit_controls(self.model.controls, setting, value))
+            self.view.undo_stack.push(commands.EditControls(self.model.controls, setting, value))
             return True
 
     def interrupt_terminal(self):
         """Sends an interrupt signal to the terminal."""
         # TODO: stub for when issue #9 is resolved
+        # https://github.com/RascalSoftware/RasCAL-2/issues/9
         pass
