@@ -214,7 +214,6 @@ class MainWindowView(QtWidgets.QMainWindow):
             geom = window.geometry()
             geoms[widget_name] = (geom.x(), geom.y(), geom.width(), geom.height(), window.isMinimized())
 
-        print(MDIGeometries.model_validate(geoms))
         self.settings.mdi_defaults = MDIGeometries.model_validate(geoms)
 
     def init_settings_and_log(self, save_path: str):
