@@ -145,11 +145,7 @@ class ControlsWidget(QtWidgets.QWidget):
             self.procedure_dropdown.setEnabled(False)
             self.run_button.setEnabled(False)
             self.stop_button.setEnabled(True)
-            # TODO some functional stuff... issue #9
-            # self.presenter.run() etc.
-            # presenter should send a signal when run is completed,
-            # which then toggles the button back
-            # https://github.com/RascalSoftware/RasCAL-2/issues/9
+            self.presenter.run()
         else:
             self.fit_settings.setEnabled(True)
             self.procedure_dropdown.setEnabled(True)

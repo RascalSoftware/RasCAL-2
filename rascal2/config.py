@@ -4,12 +4,8 @@ import platform
 import sys
 from os import PathLike
 
-<<<<<<< HEAD
 from rascal2.core import Settings, get_global_settings
-=======
-from rascal2.core import Settings
 from rascal2.widgets import TerminalWidget
->>>>>>> a071eb5 (added terminal output for logging)
 
 SOURCE_PATH = pathlib.Path(__file__).parent
 STATIC_PATH = SOURCE_PATH / "static"
@@ -64,7 +60,7 @@ def setup_settings(project_path: str | PathLike) -> Settings:
     return Settings()
 
 
-def setup_logging(log_path: str | PathLike, terminal: TerminalWidget, level: int = logging.INFO) -> logging.Logger:
+def setup_logging(log_path: str | PathLike, terminal, level: int = logging.INFO) -> logging.Logger:
     """Set up logging for the project.
 
     The default logging path and level are defined in the settings.

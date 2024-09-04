@@ -1,7 +1,6 @@
 import warnings
-from contextlib import redirect_stdout
-from typing import Any
 from contextlib import redirect_stderr, redirect_stdout
+from typing import Any
 
 import RATapi as RAT
 from PyQt6 import QtCore
@@ -87,6 +86,7 @@ class MainWindowPresenter:
         self.runner = RATRunner(self.model.project, self.model.controls)
         self.runner.moveToThread(self.run_thread)
         self.runner.finished.connect(self.run_thread.quit)
+        self.runner.finished.connect(lambda: self.view.control_widget.run_button.setChecked(False))
         self.runner.stdout.text_sent.connect(self.view.terminal_widget.write)
         self.run_thread.started.connect(self.runner.run)
         self.run_thread.start()
