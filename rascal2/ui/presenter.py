@@ -1,9 +1,10 @@
 import warnings
-from contextlib import redirect_stderr, redirect_stdout
+from concurrent.futures import ProcessPoolExecutor
+from contextlib import redirect_stdout
 from typing import Any
 
 import RATapi as RAT
-from PyQt6 import QtCore
+from tqdm.auto import tqdm
 
 from rascal2.core import commands
 
@@ -76,54 +77,79 @@ class MainWindowPresenter:
 
     def interrupt_terminal(self):
         """Sends an interrupt signal to the terminal."""
-        # TODO: stub for when issue #9 is resolved
-        # https://github.com/RascalSoftware/RasCAL-2/issues/9
-        pass
+        if hasattr(self, "pool"):
+            self.process.cancel()
 
     def run(self):
         """Run RAT."""
-        self.run_thread = QtCore.QThread(self.view)
-        self.runner = RATRunner(self.model.project, self.model.controls)
-        self.runner.moveToThread(self.run_thread)
-        self.runner.finished.connect(self.run_thread.quit)
-        self.runner.finished.connect(lambda: self.view.controls_widget.run_button.setChecked(False))
-        self.runner.stdout.text_sent.connect(self.view.terminal_widget.write)
-        self.run_thread.started.connect(self.runner.run)
-        self.run_thread.start()
+        self.pool = ProcessPoolExecutor()
+        rat_inputs = RAT.inputs.make_input(self.model.project, self.model.controls)
+        self.model.controls.procedure = "dream"
+        display_on = self.model.controls.display != RAT.utils.enums.Display.Off
+
+        with redirect_stdout(self.view.terminal_widget), StdoutHandler(self.view.terminal_widget, display_on):
+            self.process = self.pool.submit(run_rat, rat_inputs, self.model.controls.procedure)
+
+            results = self.process.result()
+            print(results)
+        self.view.handle_run_finish()
 
 
-class RATRunner(QtCore.QObject):
-    """Class to run RAT in a QThread."""
+def run_rat(rat_inputs: tuple, procedure: str) -> RAT.outputs.Results | RAT.outputs.BayesResults:
+    """Run RAT and retrieve the results object.
 
-    finished = QtCore.pyqtSignal()
+    Parameters
+    ----------
+    rat_inputs : tuple
+        The C++ inputs for RAT.
+    procedure : str
+        The method procedure.
 
-    def __init__(self, project, controls):
-        super().__init__()
+    Returns
+    -------
+    RAT.outputs.Results | RAT.outputs.BayesResults
+        The results of the RAT calculation.
 
-        self.project = project
-        self.controls = controls
-        # if we use self.view.terminal_widget as the io stream, then
-        # we get a segfault for trying to use it between threads. so
-        # we use a pyqt signal to send messages between threads
-        self.stdout = StdoutEmitter()
+    """
+    problem_definition, cells, limits, priors, cpp_controls = rat_inputs
+    problem_definition, output_results, bayes_results = RAT.rat_core.RATMain(
+        problem_definition, cells, limits, cpp_controls, priors
+    )
+    results = RAT.outputs.make_results(procedure, output_results, bayes_results)
 
-    def run(self):
-        """Run RAT with the given project and controls."""
-        with redirect_stdout(self.stdout), redirect_stderr(self.stdout):
-            project, results = RAT.run(self.project, self.controls)
-        self.finished.emit()
+    return results
 
 
-class StdoutEmitter(QtCore.QObject):
-    """Thread-safe stream to send signals for text."""
+class StdoutHandler:
+    """Context manager to handle stdout and direct it to a terminal widget."""
 
-    text_sent = QtCore.pyqtSignal(str)
+    def __init__(self, terminal, display: bool):
+        self.terminal = terminal
+        self.display = display
+        self.pbar = None
+        self.tqdm_kwargs = {
+            "total": 100,
+            "desc": "",
+            "bar_format": "{l_bar}{bar}",
+            "disable": not self.display,
+            "file": self.terminal,
+        }
 
-    def __init__(self):
-        super().__init__()
+    def __enter__(self):
+        if self.display:
+            RAT.events.register(RAT.events.EventTypes.Message, self.terminal.write)
+            RAT.events.register(RAT.events.EventTypes.Progress, self.print_progress)
 
-    def write(self, text):
-        self.text_sent.emit(text)
+    def print_progress(self, event):
+        if self.pbar is None:
+            self.pbar = tqdm(**self.tqdm_kwargs)
+        value = event.percent * 100
+        self.pbar.desc = event.message
+        self.pbar.update(value - self.pbar.n)
 
-    def flush(self):
-        pass
+    def __exit__(self, _exc_type, _exc_val, _traceback):
+        if self.pbar is not None:
+            self.pbar.close()
+            print("")  # Print new line after bar
+            RAT.events.clear(RAT.events.EventTypes.Message, self.terminal.write)
+            RAT.events.clear(RAT.events.EventTypes.Message, self.print_progress)

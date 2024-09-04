@@ -298,3 +298,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         for element in self.disabled_elements:
             element.setEnabled(True)
         self.disabled_elements = []
+
+    def handle_run_finish(self):
+        """Handle the end of a RAT run."""
+        self.controls_widget.run_button.setChecked(False)
