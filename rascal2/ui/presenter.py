@@ -40,7 +40,7 @@ class MainWindowPresenter:
         self.view.init_settings_and_log(save_path)
         self.view.setup_mdi()
 
-    def editControls(self, setting: str, value: Any):
+    def edit_controls(self, setting: str, value: Any):
         """Edit a setting in the Controls object.
 
         Parameters
