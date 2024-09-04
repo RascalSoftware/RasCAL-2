@@ -81,10 +81,14 @@ def setup_logging(log_path: str | PathLike, terminal, level: int = logging.INFO)
     logger.handlers.clear()
 
     log_filehandler = logging.FileHandler(path)
+    file_formatting = logging.Formatter("%(asctime)s - %(threadName)s -  %(name)s - %(levelname)s - %(message)s")
+    log_filehandler.setFormatter(file_formatting)
     logger.addHandler(log_filehandler)
 
     # handler that logs to terminal widget
     log_termhandler = logging.StreamHandler(stream=terminal)
+    term_formatting = logging.Formatter("%(levelname)s - %(message)s")
+    log_termhandler.setFormatter(term_formatting)
     logger.addHandler(log_termhandler)
 
     return logger

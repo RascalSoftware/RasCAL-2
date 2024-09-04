@@ -1,12 +1,9 @@
 import warnings
-from concurrent.futures import ProcessPoolExecutor
-from contextlib import redirect_stdout
 from typing import Any
 
 import RATapi as RAT
-from tqdm.auto import tqdm
 
-from rascal2.core import commands
+from rascal2.core import RATRunner, commands
 
 from .model import MainWindowModel
 
@@ -77,79 +74,24 @@ class MainWindowPresenter:
 
     def interrupt_terminal(self):
         """Sends an interrupt signal to the terminal."""
-        if hasattr(self, "pool"):
-            self.process.cancel()
+        self.runner.interrupt()
 
     def run(self):
         """Run RAT."""
-        self.pool = ProcessPoolExecutor()
+        self.model.project, _ = RAT.examples.DSPC_standard_layers()
         rat_inputs = RAT.inputs.make_input(self.model.project, self.model.controls)
-        self.model.controls.procedure = "dream"
         display_on = self.model.controls.display != RAT.utils.enums.Display.Off
 
-        with redirect_stdout(self.view.terminal_widget), StdoutHandler(self.view.terminal_widget, display_on):
-            self.process = self.pool.submit(run_rat, rat_inputs, self.model.controls.procedure)
+        self.runner = RATRunner(rat_inputs, self.model.controls.procedure, display_on)
+        self.runner.finished.connect(self.handle_results)
+        self.runner.stopped.connect(self.handle_stop)
+        self.runner.message.connect(self.view.terminal_widget.write)
+        self.runner.start()
 
-            results = self.process.result()
-            print(results)
-        self.view.handle_run_finish()
+    def handle_results(self):
+        results = self.runner.results
+        self.view.handle_results(results)
 
-
-def run_rat(rat_inputs: tuple, procedure: str) -> RAT.outputs.Results | RAT.outputs.BayesResults:
-    """Run RAT and retrieve the results object.
-
-    Parameters
-    ----------
-    rat_inputs : tuple
-        The C++ inputs for RAT.
-    procedure : str
-        The method procedure.
-
-    Returns
-    -------
-    RAT.outputs.Results | RAT.outputs.BayesResults
-        The results of the RAT calculation.
-
-    """
-    problem_definition, cells, limits, priors, cpp_controls = rat_inputs
-    problem_definition, output_results, bayes_results = RAT.rat_core.RATMain(
-        problem_definition, cells, limits, cpp_controls, priors
-    )
-    results = RAT.outputs.make_results(procedure, output_results, bayes_results)
-
-    return results
-
-
-class StdoutHandler:
-    """Context manager to handle stdout and direct it to a terminal widget."""
-
-    def __init__(self, terminal, display: bool):
-        self.terminal = terminal
-        self.display = display
-        self.pbar = None
-        self.tqdm_kwargs = {
-            "total": 100,
-            "desc": "",
-            "bar_format": "{l_bar}{bar}",
-            "disable": not self.display,
-            "file": self.terminal,
-        }
-
-    def __enter__(self):
-        if self.display:
-            RAT.events.register(RAT.events.EventTypes.Message, self.terminal.write)
-            RAT.events.register(RAT.events.EventTypes.Progress, self.print_progress)
-
-    def print_progress(self, event):
-        if self.pbar is None:
-            self.pbar = tqdm(**self.tqdm_kwargs)
-        value = event.percent * 100
-        self.pbar.desc = event.message
-        self.pbar.update(value - self.pbar.n)
-
-    def __exit__(self, _exc_type, _exc_val, _traceback):
-        if self.pbar is not None:
-            self.pbar.close()
-            print("")  # Print new line after bar
-            RAT.events.clear(RAT.events.EventTypes.Message, self.terminal.write)
-            RAT.events.clear(RAT.events.EventTypes.Message, self.print_progress)
+    def handle_stop(self):
+        self.view.logging.info("RAT run interrupted!")
+        self.view.handle_stop()

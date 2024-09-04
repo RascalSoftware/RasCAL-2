@@ -32,7 +32,6 @@ class ControlsWidget(QtWidgets.QWidget):
 
         self.stop_button = QtWidgets.QPushButton(icon=QtGui.QIcon(path_for("stop.png")), text="Stop")
         self.stop_button.pressed.connect(self.presenter.interrupt_terminal)
-        self.stop_button.pressed.connect(self.run_button.toggle)
         self.stop_button.setStyleSheet("background-color: red;")
         self.stop_button.setEnabled(False)
 
@@ -48,7 +47,7 @@ class ControlsWidget(QtWidgets.QWidget):
         chi_layout = QtWidgets.QHBoxLayout()
         # TODO hook this up when we can actually run
         # https://github.com/RascalSoftware/RasCAL-2/issues/9
-        self.chi_squared = QtWidgets.QLineEdit("1.060")
+        self.chi_squared = QtWidgets.QLineEdit()
         self.chi_squared.setReadOnly(True)
         chi_layout.addWidget(QtWidgets.QLabel("Current chi-squared:"))
         chi_layout.addWidget(self.chi_squared)
