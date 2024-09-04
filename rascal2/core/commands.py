@@ -3,7 +3,7 @@
 from PyQt6 import QtGui
 
 
-class editControls(QtGui.QUndoCommand):
+class edit_controls(QtGui.QUndoCommand):
     """Command for editing the Controls object."""
 
     def __init__(self, controls, attr, value):

@@ -40,7 +40,7 @@ def presenter():
 @pytest.mark.parametrize(["param", "value"], [("nSamples", 50), ("calcSldDuringFit", True), ("parallel", "contrasts")])
 def test_set_controls_data(presenter, param, value):
     """Check that setting values are correctly propagated to the Controls object."""
-    assert presenter.editControls(param, value)
+    assert presenter.edit_controls(param, value)
     assert getattr(presenter.model.controls, param) == value
 
 
@@ -50,7 +50,7 @@ def test_set_controls_data(presenter, param, value):
 def test_controls_validation_error(presenter, param, value):
     """Test that data is not changed if invalid data is passed to set."""
     try:
-        presenter.editControls(param, value)
+        presenter.edit_controls(param, value)
     except ValidationError as err:
         with pytest.raises(ValidationError, match=f"{param}"):
             raise err

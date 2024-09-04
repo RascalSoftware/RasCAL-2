@@ -49,7 +49,7 @@ class MockPresenter:
         self.model.controls = MockControls()
         self.terminal_interrupted = False
 
-    def editControls(self, setting, value):
+    def edit_controls(self, setting, value):
         setattr(self.model.controls, setting, value)
 
     def interrupt_terminal(self):

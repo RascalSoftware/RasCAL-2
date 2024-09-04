@@ -165,7 +165,7 @@ class ControlsWidget(QtWidgets.QWidget):
         """
         self.fit_settings_layout.setCurrentIndex(index)
         procedure = [p.value for p in Procedures][index]
-        self.presenter.editControls("procedure", procedure)
+        self.presenter.edit_controls("procedure", procedure)
         # synchronise common fields between procedures
         for field in common_fields:
             if field not in ["procedure", "resampleParams"]:  # FIXME remove resampleparams when merged
@@ -258,7 +258,7 @@ class FitSettingsWidget(QtWidgets.QWidget):
         def set_model_data():
             value = self.rows[setting].get_data()
             try:
-                self.presenter.editControls(setting, value)
+                self.presenter.edit_controls(setting, value)
             except ValidationError as err:
                 self.set_validation_text(setting, err.errors()[0]["msg"])
             else:

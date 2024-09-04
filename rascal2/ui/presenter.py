@@ -65,7 +65,7 @@ class MainWindowPresenter:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self.model.controls.model_validate({setting: value})
-            self.view.undo_stack.push(commands.editControls(self.model.controls, setting, value))
+            self.view.undo_stack.push(commands.edit_controls(self.model.controls, setting, value))
             return True
 
     def interrupt_terminal(self):
