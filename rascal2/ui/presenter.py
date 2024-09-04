@@ -86,7 +86,7 @@ class MainWindowPresenter:
         self.runner = RATRunner(self.model.project, self.model.controls)
         self.runner.moveToThread(self.run_thread)
         self.runner.finished.connect(self.run_thread.quit)
-        self.runner.finished.connect(lambda: self.view.control_widget.run_button.setChecked(False))
+        self.runner.finished.connect(lambda: self.view.controls_widget.run_button.setChecked(False))
         self.runner.stdout.text_sent.connect(self.view.terminal_widget.write)
         self.run_thread.started.connect(self.runner.run)
         self.run_thread.start()
@@ -109,7 +109,6 @@ class RATRunner(QtCore.QObject):
 
     def run(self):
         """Run RAT with the given project and controls."""
-        # for testing as we currently do not have project and control creation
         with redirect_stdout(self.stdout), redirect_stderr(self.stdout):
             project, results = RAT.run(self.project, self.controls)
         self.finished.emit()

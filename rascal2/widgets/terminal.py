@@ -26,7 +26,7 @@ class TerminalWidget(QtWidgets.QScrollArea):
         self.setWidgetResizable(True)
 
         version = metadata.version("rascal2")
-        self.append_text(
+        self.write(
             """
  ███████████                       █████████    █████████   █████      
 ░░███░░░░░███                     ███░░░░░███  ███░░░░░███ ░░███       
@@ -38,13 +38,12 @@ class TerminalWidget(QtWidgets.QScrollArea):
 ░░░░░   ░░░░░  ░░░░░░░░ ░░░░░░    ░░░░░░░░░  ░░░░░   ░░░░░ ░░░░░░░░░░░ 
 """
         )
-        self.append_html(f"<b>RasCAL-2:</b> software for neutron reflectivity calculations <b>v{version}</b>")
+        self.write_html(f"<b>RasCAL-2:</b> software for neutron reflectivity calculations <b>v{version}</b>")
 
-    def append_text(self, text):
-        """Append a line of text to the terminal."""
+    def write(self, text):
         self.text_area.appendPlainText(text)
 
-    def append_html(self, text):
+    def write_html(self, text):
         """Append HTML text to the terminal."""
         self.text_area.appendHtml(text)
 
@@ -52,3 +51,7 @@ class TerminalWidget(QtWidgets.QScrollArea):
         """Clear the text in the terminal."""
         self.text_area.setPlainText("")
         self.update()
+
+    # added to make TerminalWidget an IO stream
+    def flush(self):
+        pass
