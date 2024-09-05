@@ -1,7 +1,6 @@
 """QObject for running RAT."""
 
 from multiprocessing import Process, Queue
-from time import time
 
 import RATapi as RAT
 from PyQt6 import QtCore
@@ -23,7 +22,7 @@ class RATRunner(QtCore.QObject):
         self.display_on = display_on
 
         self.timer = QtCore.QTimer()
-        self.timer.setInterval(20)
+        self.timer.setInterval(1)
         self.timer.timeout.connect(self.check_queue)
 
         # this queue handles both event data and results
@@ -71,6 +70,11 @@ class RATRunner(QtCore.QObject):
         procedure : str
             The method procedure.
 
+        Returns
+        -------
+        RAT.outputs.Results | RAT.outputs.BayesResults
+            The results of the RAT calculation.
+
         """
         horizontal_line = "\u2500" * 107 + "\n"
 
@@ -78,15 +82,12 @@ class RATRunner(QtCore.QObject):
         if self.display_on:
             RAT.events.register(RAT.events.EventTypes.Message, self.queue.put)
             RAT.events.register(RAT.events.EventTypes.Progress, self.queue.put)
-            start = time()
             self.queue.put("Starting RAT " + horizontal_line)
         problem_definition, output_results, bayes_results = RAT.rat_core.RATMain(
             problem_definition, cells, limits, cpp_controls, priors
         )
         results = RAT.outputs.make_results(procedure, output_results, bayes_results)
         if self.display_on:
-            end = time()
-            self.queue.put(f"Elapsed time is {end-start:.3f} seconds.\n")
             self.queue.put("Finished RAT " + horizontal_line)
             RAT.events.clear()
 
