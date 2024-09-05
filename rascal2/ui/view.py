@@ -301,10 +301,11 @@ class MainWindowView(QtWidgets.QMainWindow):
 
     def handle_results(self, results):
         """Handle the results of a RAT run."""
-        self.controls_widget.run_button.setChecked(False)
+        self.end_run()
         self.controls_widget.chi_squared.setText(f"{results.calculationResults.sumChi:.6g}")
         print(results)
 
-    def handle_stop(self):
-        """Handle the RAT run being stopped."""
+    def end_run(self):
+        """Reset widgets after a run."""
         self.controls_widget.run_button.setChecked(False)
+        self.terminal_widget.progress_bar.setVisible(False)

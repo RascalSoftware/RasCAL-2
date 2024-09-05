@@ -12,6 +12,7 @@ class RATRunner(QtCore.QObject):
     """Class for running RAT."""
 
     message = QtCore.pyqtSignal(str)
+    progress = QtCore.pyqtSignal(RAT.events.ProgressEventData)
     finished = QtCore.pyqtSignal()
     stopped = QtCore.pyqtSignal()
 
@@ -23,9 +24,9 @@ class RATRunner(QtCore.QObject):
 
         self.timer = QtCore.QTimer()
         self.timer.setInterval(20)
-        self.timer.timeout.connect(self.check_results)
+        self.timer.timeout.connect(self.check_queue)
 
-        # this queue accepts both messages to emit and results objects
+        # this queue handles both event data and results
         self.queue = Queue()
 
         self.results = None
@@ -43,14 +44,16 @@ class RATRunner(QtCore.QObject):
         self.teardown()
         self.stopped.emit()
 
-    def check_results(self):
-        """Check for new results in the queue."""
+    def check_queue(self):
+        """Check for new data in the queue."""
         if self.queue.empty():
             return
         else:
             item = self.queue.get()
             if isinstance(item, str):  # if item is message
                 self.message.emit(item)
+            elif isinstance(item, RAT.events.ProgressEventData):
+                self.progress.emit(item)
             else:  # else, assume item is results
                 self.teardown()
                 self.results = item
@@ -79,6 +82,7 @@ class RATRunner(QtCore.QObject):
         problem_definition, cells, limits, priors, cpp_controls = rat_inputs
         if self.display_on:
             RAT.events.register(RAT.events.EventTypes.Message, self.queue.put)
+            RAT.events.register(RAT.events.EventTypes.Progress, self.queue.put)
             start = time()
             self.queue.put("Starting RAT " + horizontal_line)
         problem_definition, output_results, bayes_results = RAT.rat_core.RATMain(
@@ -87,9 +91,9 @@ class RATRunner(QtCore.QObject):
         results = RAT.outputs.make_results(procedure, output_results, bayes_results)
         if self.display_on:
             end = time()
-            self.queue.put(f"Elapsed time is {end-start:.3f} seconds\n")
+            self.queue.put(f"Elapsed time is {end-start:.3f} seconds.\n")
             self.queue.put("Finished RAT " + horizontal_line)
-            RAT.events.clear(RAT.events.EventTypes.Message, self.queue.put)
+            RAT.events.clear()
 
         queue.put(results)
         return

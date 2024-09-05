@@ -86,6 +86,7 @@ class MainWindowPresenter:
         self.runner.finished.connect(self.handle_results)
         self.runner.stopped.connect(self.handle_stop)
         self.runner.message.connect(self.view.terminal_widget.write)
+        self.runner.progress.connect(self.view.terminal_widget.update_progress)
         self.runner.start()
 
     def handle_results(self):
@@ -94,4 +95,4 @@ class MainWindowPresenter:
 
     def handle_stop(self):
         self.view.logging.info("RAT run interrupted!")
-        self.view.handle_stop()
+        self.view.end_run()
