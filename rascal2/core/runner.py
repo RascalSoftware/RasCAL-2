@@ -71,11 +71,6 @@ class RATRunner(QtCore.QObject):
         procedure : str
             The method procedure.
 
-        Returns
-        -------
-        RAT.outputs.Results | RAT.outputs.BayesResults
-            The results of the RAT calculation.
-
         """
         horizontal_line = "\u2500" * 107 + "\n"
 

@@ -303,7 +303,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         """Handle the results of a RAT run."""
         self.end_run()
         self.controls_widget.chi_squared.setText(f"{results.calculationResults.sumChi:.6g}")
-        print(results)
 
     def end_run(self):
         """Reset widgets after a run."""

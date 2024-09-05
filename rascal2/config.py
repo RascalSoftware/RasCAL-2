@@ -70,7 +70,7 @@ def setup_logging(log_path: str | PathLike, terminal, level: int = logging.INFO)
     log_path : str | PathLike
         The path to where the log file will be written.
     terminal : TerminalWidget
-        The StdoutReceiver instance which sends text to the terminal widget.
+        The TerminalWidget instance which acts as an IO stream.
     level : int, default logging.INFO
         The debug level for the logger.
 
