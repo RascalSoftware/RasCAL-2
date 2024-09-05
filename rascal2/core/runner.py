@@ -58,7 +58,7 @@ class RATRunner(QtCore.QObject):
                 self.results = item
                 self.finished.emit()
 
-    def run(self, queue, rat_inputs: tuple, procedure: str) -> RAT.outputs.Results | RAT.outputs.BayesResults:
+    def run(self, queue, rat_inputs: tuple, procedure: str):
         """Run RAT and put the result into the queue.
 
         Parameters
@@ -69,11 +69,6 @@ class RATRunner(QtCore.QObject):
             The C++ inputs for RAT.
         procedure : str
             The method procedure.
-
-        Returns
-        -------
-        RAT.outputs.Results | RAT.outputs.BayesResults
-            The results of the RAT calculation.
 
         """
         horizontal_line = "\u2500" * 107 + "\n"
