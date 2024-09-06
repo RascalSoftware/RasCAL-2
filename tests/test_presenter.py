@@ -1,6 +1,6 @@
 """Tests for the Presenter."""
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -26,6 +26,10 @@ class MockWindowView(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.undo_stack = MockUndoStack()
+        self.terminal_widget = MagicMock()
+        self.handle_results = MagicMock()
+        self.end_run = MagicMock()
+        self.logging = MagicMock()
 
 
 @pytest.fixture
@@ -56,3 +60,31 @@ def test_controls_validation_error(presenter, param, value):
             raise err
     else:
         raise AssertionError("Invalid data did not raise error!")
+
+
+@patch("RATapi.inputs.make_input")
+@patch("rascal2.ui.presenter.RATRunner")
+def test_run_and_interrupt(mock_runner, mock_inputs, presenter):
+    """Test that the runner can be started and interrupted."""
+    presenter.run()
+    presenter.interrupt_terminal()
+
+    mock_inputs.assert_called_once()
+    presenter.runner.start.assert_called_once()
+    presenter.runner.interrupt.assert_called_once()
+
+
+def test_handle_results(presenter):
+    """Test that results are handed to the view correctly."""
+    presenter.runner = MagicMock()
+    presenter.runner.results = "TEST RESULTS"
+    presenter.handle_results()
+
+    presenter.view.handle_results.assert_called_once_with("TEST RESULTS")
+
+
+def test_stop_run(presenter):
+    """Test that log info is emitted and the run is stopped when stop_run is called."""
+    presenter.handle_stop()
+    presenter.view.logging.info.assert_called_once_with("RAT run interrupted!")
+    presenter.view.end_run.assert_called_once()

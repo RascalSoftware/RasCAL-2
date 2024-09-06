@@ -17,10 +17,6 @@ class RATRunner(QtCore.QObject):
 
     def __init__(self, rat_inputs, procedure: Procedures, display_on: bool):
         super().__init__()
-        self.rat_inputs = rat_inputs
-        self.procedure = procedure
-        self.display_on = display_on
-
         self.timer = QtCore.QTimer()
         self.timer.setInterval(1)
         self.timer.timeout.connect(self.check_queue)
@@ -28,12 +24,13 @@ class RATRunner(QtCore.QObject):
         # this queue handles both event data and results
         self.queue = Queue()
 
+        self.process = Process(target=self.run, args=(self.queue, rat_inputs, procedure, display_on))
+        self.process.daemon = True
+
         self.results = None
 
     def start(self):
         """Start the calculation."""
-        self.process = Process(target=self.run, args=(self.queue, self.rat_inputs, self.procedure))
-        self.process.daemon = True
         self.process.start()
         self.timer.start()
 
@@ -58,7 +55,7 @@ class RATRunner(QtCore.QObject):
                 self.results = item
                 self.finished.emit()
 
-    def run(self, queue, rat_inputs: tuple, procedure: str):
+    def run(self, queue, rat_inputs: tuple, procedure: str, display: bool):
         """Run RAT and put the result into the queue.
 
         Parameters
@@ -68,21 +65,25 @@ class RATRunner(QtCore.QObject):
         rat_inputs : tuple
             The C++ inputs for RAT.
         procedure : str
-            The method procedure.
+            The optimisation procedure.
+        display : bool
+            Whether to display events.
 
         """
         horizontal_line = "\u2500" * 107 + "\n"
-
         problem_definition, cells, limits, priors, cpp_controls = rat_inputs
-        if self.display_on:
+
+        if display:
             RAT.events.register(RAT.events.EventTypes.Message, self.queue.put)
             RAT.events.register(RAT.events.EventTypes.Progress, self.queue.put)
             self.queue.put("Starting RAT " + horizontal_line)
+
         problem_definition, output_results, bayes_results = RAT.rat_core.RATMain(
             problem_definition, cells, limits, cpp_controls, priors
         )
         results = RAT.outputs.make_results(procedure, output_results, bayes_results)
-        if self.display_on:
+
+        if display:
             self.queue.put("Finished RAT " + horizontal_line)
             RAT.events.clear()
 
