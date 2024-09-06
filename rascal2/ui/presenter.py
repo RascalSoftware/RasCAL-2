@@ -3,7 +3,8 @@ from typing import Any
 
 import RATapi as RAT
 
-from rascal2.core import RATRunner, commands
+from rascal2.core import commands
+from rascal2.core.runner import LogData, RATRunner
 
 from .model import MainWindowModel
 
@@ -105,3 +106,5 @@ class MainWindowPresenter:
             self.view.terminal_widget.write(event)
         elif isinstance(event, RAT.events.ProgressEventData):
             self.view.terminal_widget.update_progress(event)
+        elif isinstance(event, LogData):
+            self.view.logging.log(event.level, event.msg)

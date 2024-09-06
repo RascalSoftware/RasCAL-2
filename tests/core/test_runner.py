@@ -1,11 +1,12 @@
 """Tests for the RATRunner class."""
 
+from multiprocessing import Queue
 from unittest.mock import patch
 
 import pytest
 import RATapi as RAT
 
-from rascal2.core import RATRunner
+from rascal2.core.runner import LogData, RATRunner, run
 
 
 def make_progress_event(percent):
@@ -100,24 +101,23 @@ def test_check_queue(mock_process, queue_items):
 @patch("RATapi.outputs.make_results", new=mock_make_results)
 def test_run(display):
     """Test that a run puts the correct items in the queue."""
-    runner = RATRunner([], "", True)
-    runner.run(runner.queue, [0, 1, 2, 3, 4], "", display)
-    horizontal_line = "\u2500" * 107 + "\n"
+    queue = Queue()
+    run(queue, [0, 1, 2, 3, 4], "", display)
     expected_display = [
-        "Starting RAT " + horizontal_line,
+        LogData(20, "Starting RAT"),
         0.2,
         0.5,
         "test message",
         "test message 2",
         0.7,
-        "Finished RAT " + horizontal_line,
+        LogData(20, "Finished RAT"),
     ]
 
-    while not runner.queue.empty():
-        item = runner.queue.get()
+    while not queue.empty():
+        item = queue.get()
         if isinstance(item, RAT.outputs.Results):
             # ensure results were the last item to be added
-            assert runner.queue.empty()
+            assert queue.empty()
         else:
             expected_item = expected_display.pop(0)
             if isinstance(item, RAT.events.ProgressEventData):
