@@ -96,6 +96,16 @@ def test_check_queue(mock_process, queue_items):
         assert isinstance(runner.results, RAT.outputs.Results)
 
 
+@patch("rascal2.core.runner.Process")
+def test_empty_queue(mock_process):
+    """Test that nothing happens if the queue is empty."""
+    runner = RATRunner([], "", True)
+    runner.check_queue()
+
+    assert len(runner.events) == 0
+    assert runner.results is None
+
+
 @pytest.mark.parametrize("display", [True, False])
 @patch("RATapi.rat_core.RATMain", new=mock_rat_main)
 @patch("RATapi.outputs.make_results", new=mock_make_results)

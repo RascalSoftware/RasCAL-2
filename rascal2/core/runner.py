@@ -45,7 +45,6 @@ class RATRunner(QtCore.QObject):
         """Check for new data in the queue."""
         self.queue.put(None)
         for item in iter(self.queue.get, None):
-            print(item)
             if isinstance(item, (RAT.outputs.Results, RAT.outputs.BayesResults)):
                 self.results = item
                 self.finished.emit()
