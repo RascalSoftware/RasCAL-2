@@ -75,7 +75,7 @@ def test_interrupt(mock_process):
     ],
 )
 @patch("rascal2.core.runner.Process")
-def test_check_queue(mock_process, queue_items, qtbot):
+def test_check_queue(mock_process, queue_items):
     """Test that queue data is appropriately assigned."""
     runner = RATRunner([], "", True)
 
