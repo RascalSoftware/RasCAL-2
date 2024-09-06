@@ -85,6 +85,6 @@ def test_handle_results(presenter):
 
 def test_stop_run(presenter):
     """Test that log info is emitted and the run is stopped when stop_run is called."""
-    presenter.handle_stop()
+    presenter.handle_interrupt()
     presenter.view.logging.info.assert_called_once_with("RAT run interrupted!")
     presenter.view.end_run.assert_called_once()

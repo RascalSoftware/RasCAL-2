@@ -4,7 +4,6 @@ from unittest.mock import patch
 
 import pytest
 import RATapi as RAT
-from PyQt6 import QtTest
 
 from rascal2.core import RATRunner
 
@@ -76,39 +75,24 @@ def test_interrupt(mock_process):
     ],
 )
 @patch("rascal2.core.runner.Process")
-def test_check_queue(mock_process, queue_items):
-    """Test that signals are sent when the queue receives messages."""
+def test_check_queue(mock_process, queue_items, qtbot):
+    """Test that queue data is appropriately assigned."""
     runner = RATRunner([], "", True)
-
-    messages = []
-    progress_events = []
-    runner.message.connect(lambda x: messages.append(x))
-    runner.progress.connect(lambda x: progress_events.append(x.percent))
-    message_spy = QtTest.QSignalSpy(runner.message)
-    progress_spy = QtTest.QSignalSpy(runner.progress)
-    result_spy = QtTest.QSignalSpy(runner.finished)
-
-    def assert_results_last():
-        assert runner.queue.empty()
-
-    runner.finished.connect(assert_results_last)
 
     for item in queue_items:
         runner.queue.put(item)
 
-    for item in queue_items:
-        if isinstance(item, str):
-            message_spy.wait(50)
-            runner.check_queue()
-        elif isinstance(item, RAT.events.ProgressEventData):
-            progress_spy.wait(50)
-            runner.check_queue()
-        elif isinstance(item, RAT.outputs.Results):
-            result_spy.wait(50)
-            runner.check_queue()
+    runner.check_queue()
 
-    assert messages == [x for x in queue_items if isinstance(x, str)]
-    assert progress_events == [x.percent for x in queue_items if isinstance(x, RAT.events.ProgressEventData)]
+    assert len(runner.events) == len([x for x in queue_items if not isinstance(x, RAT.outputs.Results)])
+    for i, item in enumerate(runner.events):
+        if isinstance(item, RAT.events.ProgressEventData):
+            assert item.percent == queue_items[i].percent
+        else:
+            assert item == queue_items[i]
+
+    if runner.results is not None:
+        assert isinstance(runner.results, RAT.outputs.Results)
 
 
 @pytest.mark.parametrize("display", [True, False])

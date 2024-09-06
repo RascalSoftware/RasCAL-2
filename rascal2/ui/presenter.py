@@ -84,15 +84,24 @@ class MainWindowPresenter:
 
         self.runner = RATRunner(rat_inputs, self.model.controls.procedure, display_on)
         self.runner.finished.connect(self.handle_results)
-        self.runner.stopped.connect(self.handle_stop)
-        self.runner.message.connect(self.view.terminal_widget.write)
-        self.runner.progress.connect(self.view.terminal_widget.update_progress)
+        self.runner.stopped.connect(self.handle_interrupt)
+        self.runner.event_received.connect(self.handle_event)
         self.runner.start()
 
     def handle_results(self):
+        """Handle a RAT run being finished."""
         results = self.runner.results
         self.view.handle_results(results)
 
-    def handle_stop(self):
+    def handle_interrupt(self):
+        """Handle a RAT run being interrupted."""
         self.view.logging.info("RAT run interrupted!")
         self.view.end_run()
+
+    def handle_event(self):
+        """Handle the RAT run producing event data."""
+        event = self.runner.events.pop(0)
+        if isinstance(event, str):
+            self.view.terminal_widget.write(event)
+        elif isinstance(event, RAT.events.ProgressEventData):
+            self.view.terminal_widget.update_progress(event)

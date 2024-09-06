@@ -10,8 +10,7 @@ from RATapi.utils.enums import Procedures
 class RATRunner(QtCore.QObject):
     """Class for running RAT."""
 
-    message = QtCore.pyqtSignal(str)
-    progress = QtCore.pyqtSignal(RAT.events.ProgressEventData)
+    event_received = QtCore.pyqtSignal()
     finished = QtCore.pyqtSignal()
     stopped = QtCore.pyqtSignal()
 
@@ -28,6 +27,7 @@ class RATRunner(QtCore.QObject):
         self.process.daemon = True
 
         self.results = None
+        self.events = []
 
     def start(self):
         """Start the calculation."""
@@ -42,18 +42,16 @@ class RATRunner(QtCore.QObject):
 
     def check_queue(self):
         """Check for new data in the queue."""
-        if self.queue.empty():
-            return
-        else:
-            item = self.queue.get()
-            if isinstance(item, str):  # if item is message
-                self.message.emit(item)
-            elif isinstance(item, RAT.events.ProgressEventData):
-                self.progress.emit(item)
-            else:  # else, assume item is results
+        self.queue.put(None)
+        for item in iter(self.queue.get, None):
+            if isinstance(item, RAT.outputs.Results):
                 self.teardown()
                 self.results = item
                 self.finished.emit()
+                break
+            else:  # else, assume item is an event
+                self.events.append(item)
+                self.event_received.emit()
 
     def run(self, queue, rat_inputs: tuple, procedure: str, display: bool):
         """Run RAT and put the result into the queue.
