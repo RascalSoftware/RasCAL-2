@@ -1,7 +1,7 @@
 """Tests for the RATRunner class."""
 
 from multiprocessing import Queue
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 import RATapi as RAT
@@ -26,24 +26,6 @@ def mock_rat_main(*args, **kwargs):
     return 1, 2, 3
 
 
-def mock_make_results(*args, **kwargs):
-    """Produce an empty Results object."""
-    return RAT.outputs.Results(
-        reflectivity=[],
-        simulation=[],
-        shiftedData=[],
-        layerSlds=[],
-        sldProfiles=[],
-        resampledLayers=[],
-        calculationResults=RAT.outputs.CalculationResults(chiValues=[], sumChi=0.0),
-        contrastParams=RAT.outputs.ContrastParams(
-            backgroundParams=[], scalefactors=[], bulkIn=[], bulkOut=[], resolutionParams=[], subRoughs=[], resample=[]
-        ),
-        fitParams=[],
-        fitNames=[],
-    )
-
-
 @patch("rascal2.core.runner.Process")
 def test_start(mock_process):
     """Test that `start` creates and starts a process and timer."""
@@ -56,12 +38,10 @@ def test_start(mock_process):
 
 @patch("rascal2.core.runner.Process")
 def test_interrupt(mock_process):
-    """Test that `start` creates and starts a process and timer."""
+    """Test that `interrupt` kills the process and stops the timer."""
     runner = RATRunner([], "", True)
     runner.interrupt()
 
-    runner.process.join.assert_called_once()
-    runner.process.close.assert_called_once()
     runner.process.kill.assert_called_once()
     assert not runner.timer.isActive()
 
@@ -70,7 +50,8 @@ def test_interrupt(mock_process):
     "queue_items",
     [
         ["message!"],
-        ["message!", mock_make_results()],
+        ["message!", MagicMock(spec=RAT.outputs.Results)],
+        [MagicMock(spec=RAT.outputs.BayesResults)],
         [make_progress_event(0.6)],
         ["message 1!", make_progress_event(0.4), "message 2!"],
     ],
@@ -108,7 +89,7 @@ def test_empty_queue(mock_process):
 
 @pytest.mark.parametrize("display", [True, False])
 @patch("RATapi.rat_core.RATMain", new=mock_rat_main)
-@patch("RATapi.outputs.make_results", new=mock_make_results)
+@patch("RATapi.outputs.make_results", new=MagicMock(spec=RAT.outputs.Results))
 def test_run(display):
     """Test that a run puts the correct items in the queue."""
     queue = Queue()

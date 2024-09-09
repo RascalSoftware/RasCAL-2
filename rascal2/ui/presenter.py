@@ -1,3 +1,4 @@
+import re
 import warnings
 from typing import Any
 
@@ -96,15 +97,55 @@ class MainWindowPresenter:
 
     def handle_interrupt(self):
         """Handle a RAT run being interrupted."""
-        self.view.logging.info("RAT run interrupted!")
+        if self.runner.error is None:
+            self.view.logging.info("RAT run interrupted!")
+        else:
+            self.view.logging.critical(f"RAT run failed with exception:\n{self.runner.error}")
         self.view.end_run()
 
     def handle_event(self):
-        """Handle the RAT run producing event data."""
+        """Handle event data produced by the RAT run."""
         event = self.runner.events.pop(0)
         if isinstance(event, str):
             self.view.terminal_widget.write(event)
+            chi_squared = get_live_chi_squared(event, str(self.model.controls.procedure))
+            if chi_squared is not None:
+                self.view.controls_widget.chi_squared.setText(chi_squared)
         elif isinstance(event, RAT.events.ProgressEventData):
             self.view.terminal_widget.update_progress(event)
         elif isinstance(event, LogData):
             self.view.logging.log(event.level, event.msg)
+
+
+# '\d+\.\d+' is the regex for
+# 'some integer, then a decimal point, then another integer'
+# the parentheses () mean it is put in capture group 1,
+# which is what we return as the chi-squared value
+# we compile these regexes on import to make `get_live_chi_squared` basically instant
+chi_squared_patterns = {
+    "simplex": re.compile(r"(\d+\.\d+)"),
+    "de": re.compile(r"Best: (\d+\.\d+)"),
+}
+
+
+def get_live_chi_squared(item: str, procedure: str) -> str | None:
+    """Get the chi-squared value from iteration message data.
+
+    Parameters
+    ----------
+    item : str
+        The iteration message.
+    procedure : str
+        The procedure currently running.
+
+    Returns
+    -------
+    str or None
+        The chi-squared value from that procedure's message data in string form,
+        or None if one has not been found.
+
+    """
+    if procedure not in chi_squared_patterns:
+        return None
+    # match returns None if no match found, so whether one is found can be checked via 'if match'
+    return match.group(1) if (match := chi_squared_patterns[procedure].search(item)) else None

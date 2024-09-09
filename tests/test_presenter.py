@@ -88,3 +88,11 @@ def test_stop_run(presenter):
     presenter.handle_interrupt()
     presenter.view.logging.info.assert_called_once_with("RAT run interrupted!")
     presenter.view.end_run.assert_called_once()
+
+
+def test_run_error(presenter):
+    """Test that a critical log is emitted if stop_run is called with an error."""
+    presenter.runner = MagicMock()
+    presenter.runner.error = ValueError("Test error!")
+    presenter.handle_interrupt()
+    presenter.view.logging.critical.assert_called_once_with("RAT run failed with exception:\nTest error!")

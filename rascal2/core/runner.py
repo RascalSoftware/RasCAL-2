@@ -18,16 +18,16 @@ class RATRunner(QtCore.QObject):
     def __init__(self, rat_inputs, procedure: Procedures, display_on: bool):
         super().__init__()
         self.timer = QtCore.QTimer()
-        self.timer.setInterval(5)
+        self.timer.setInterval(1)
         self.timer.timeout.connect(self.check_queue)
 
         # this queue handles both event data and results
         self.queue = Queue()
 
         self.process = Process(target=run, args=(self.queue, rat_inputs, procedure, display_on))
-        self.process.daemon = True
 
         self.results = None
+        self.error = None
         self.events = []
 
     def start(self):
@@ -37,29 +37,28 @@ class RATRunner(QtCore.QObject):
 
     def interrupt(self):
         """Interrupt the running process."""
+        self.timer.stop()
         self.process.kill()
-        self.teardown()
         self.stopped.emit()
 
     def check_queue(self):
         """Check for new data in the queue."""
+        if not self.process.is_alive():
+            self.timer.stop()
         self.queue.put(None)
-        for item in iter(self.queue.get, None):
+        # the queue should never be empty at this line (because we just put a
+        # None in it) but if it is, it'd hang forever - we add the timeout
+        # to avoid this happening just in case
+        for item in iter(lambda: self.queue.get(timeout=500), None):
             if isinstance(item, (RAT.outputs.Results, RAT.outputs.BayesResults)):
                 self.results = item
                 self.finished.emit()
-                self.teardown()
-                break
+            elif isinstance(item, Exception):
+                self.error = item
+                self.stopped.emit()
             else:  # else, assume item is an event
                 self.events.append(item)
                 self.event_received.emit()
-
-    def teardown(self):
-        """End and close all communication."""
-        self.timer.stop()
-        self.process.join()
-        self.process.close()
-        self.queue.close()
 
 
 def run(queue, rat_inputs: tuple, procedure: str, display: bool):
@@ -84,10 +83,14 @@ def run(queue, rat_inputs: tuple, procedure: str, display: bool):
         RAT.events.register(RAT.events.EventTypes.Progress, queue.put)
         queue.put(LogData(20, "Starting RAT"))
 
-    problem_definition, output_results, bayes_results = RAT.rat_core.RATMain(
-        problem_definition, cells, limits, cpp_controls, priors
-    )
-    results = RAT.outputs.make_results(procedure, output_results, bayes_results)
+    try:
+        problem_definition, output_results, bayes_results = RAT.rat_core.RATMain(
+            problem_definition, cells, limits, cpp_controls, priors
+        )
+        results = RAT.outputs.make_results(procedure, output_results, bayes_results)
+    except Exception as err:
+        queue.put(err)
+        return
 
     if display:
         queue.put(LogData(20, "Finished RAT"))
