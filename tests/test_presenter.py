@@ -6,7 +6,9 @@ import pytest
 from pydantic import ValidationError
 from PyQt6 import QtWidgets
 from RATapi import Controls
+from RATapi.events import ProgressEventData
 
+from rascal2.core.runner import LogData
 from rascal2.ui.presenter import MainWindowPresenter
 
 
@@ -26,6 +28,7 @@ class MockWindowView(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.undo_stack = MockUndoStack()
+        self.controls_widget = MagicMock()
         self.terminal_widget = MagicMock()
         self.handle_results = MagicMock()
         self.end_run = MagicMock()
@@ -35,6 +38,7 @@ class MockWindowView(QtWidgets.QMainWindow):
 @pytest.fixture
 def presenter():
     pr = MainWindowPresenter(MockWindowView())
+    pr.runner = MagicMock()
     pr.model = MagicMock()
     pr.model.controls = Controls()
 
@@ -85,6 +89,8 @@ def test_handle_results(presenter):
 
 def test_stop_run(presenter):
     """Test that log info is emitted and the run is stopped when stop_run is called."""
+    presenter.runner = MagicMock()
+    presenter.runner.error = None
     presenter.handle_interrupt()
     presenter.view.logging.info.assert_called_once_with("RAT run interrupted!")
     presenter.view.end_run.assert_called_once()
@@ -96,3 +102,36 @@ def test_run_error(presenter):
     presenter.runner.error = ValueError("Test error!")
     presenter.handle_interrupt()
     presenter.view.logging.critical.assert_called_once_with("RAT run failed with exception:\nTest error!")
+
+
+@pytest.mark.parametrize(
+    ("procedure", "string"),
+    [
+        ("calculate", "Test message!"),
+        ("simplex", "some stuff, 3443, 10.5, 9"),
+        ("de", "things: 54, Best: 10.5, test... ... N: 65.3"),
+    ],
+)
+def test_handle_message_chisquared(presenter, procedure, string):
+    """Test that messages are handled correctly, including chi-squared data."""
+    presenter.runner.events = [string]
+    presenter.model.controls.procedure = procedure
+    presenter.handle_event()
+    presenter.view.terminal_widget.write.assert_called_with(string)
+    if procedure in ["simplex", "de"]:
+        presenter.view.controls_widget.chi_squared.setText.assert_called_with("10.5")
+    else:
+        presenter.view.controls_widget.chi_squared.setText.assert_not_called()
+
+
+def test_handle_progress_event(presenter):
+    """Test that progress events are handled correctly."""
+    presenter.runner.events = [ProgressEventData()]
+    presenter.handle_event()
+    presenter.view.terminal_widget.update_progress.assert_called()
+
+
+def test_handle_log_data(presenter):
+    presenter.runner.events = [LogData(10, "Test log!")]
+    presenter.handle_event()
+    presenter.view.logging.log.assert_called_with(10, "Test log!")
