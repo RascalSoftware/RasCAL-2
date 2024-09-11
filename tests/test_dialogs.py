@@ -7,6 +7,7 @@ from rascal2.core.settings import Settings, SettingsGroups
 from rascal2.dialogs.project_dialog import CreateDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog, SettingsTab
 from rascal2.widgets.inputs import ValidatedInputWidget
+from rascal2.dialogs.project_dialog import LoadDialog, LoadR1Dialog, NewProjectDialog, StartupDialog
 
 
 class MockPresenter:
@@ -28,11 +29,16 @@ class MockParentWindow(QtWidgets.QMainWindow):
         self.show_project_dialog = MagicMock()
 
 
+parent = MockParentWindow()
+
+
 @pytest.fixture
 def setup_project_dialog_widget():
-    parent = MockParentWindow()
-    project_dialog = CreateDialog(parent)
-    return project_dialog, parent
+    def _setup(dialog):
+        project_dialog = dialog(parent)
+        return project_dialog
+
+    return _setup
 
 
 @pytest.fixture
@@ -43,30 +49,45 @@ def settings_dialog_with_parent():
 
 
 def test_project_dialog_initial_state(setup_project_dialog_widget):
+@pytest.mark.parametrize(
+    ("dialog", "num_widgets"),
+    (
+        [NewProjectDialog, 2],
+        [LoadDialog, 1],
+        [LoadR1Dialog, 1],
+    ),
+)
+def test_project_dialog_initial_state(dialog, num_widgets):
     """
-    Tests the inital state of the CreateDialog class.
+    Tests that each dialog has expected initial state.
     """
-    project_dialog, _ = setup_project_dialog_widget
+    project_dialog = dialog(parent)
 
     assert project_dialog.isModal()
     assert project_dialog.minimumWidth() == 700
 
-    assert project_dialog.create_button.isEnabled()
-    assert project_dialog.cancel_button.isEnabled()
-    assert project_dialog.browse_button.isEnabled()
+    assert project_dialog.layout().count() == num_widgets + 2  # +2 for the buttons layout and a stretch
+    buttons = project_dialog.layout().itemAt(num_widgets + 1).layout()
+    assert isinstance(buttons, QtWidgets.QHBoxLayout)
+    assert buttons.count() == 2
+    assert buttons.itemAt(1).widget().text() == " Cancel"
+    if isinstance(project_dialog, NewProjectDialog):
+        assert buttons.itemAt(0).widget().text() == " Create"
+    else:
+        assert buttons.itemAt(0).widget().text() == " Load"
 
-    assert project_dialog.create_button.text() == " Create"
-    assert project_dialog.cancel_button.text() == " Cancel"
-    assert project_dialog.browse_button.text() == " Browse"
+    if isinstance(project_dialog, NewProjectDialog):
+        assert project_dialog.project_name.placeholderText() == "Enter project name"
+        assert project_dialog.project_name_label.text() == "Project Name:"
+        assert project_dialog.project_name_error.text() == "Project name needs to be specified."
+        assert project_dialog.project_name_error.isHidden()
 
-    assert project_dialog.project_name.placeholderText() == "Enter project name"
-    assert project_dialog.project_name_label.text() == "Project Name:"
-    assert project_dialog.project_name_error.text() == "Project name needs to be specified."
-    assert project_dialog.project_name_error.isHidden()
-
-    assert project_dialog.project_folder.placeholderText() == "Select project folder"
-    assert project_dialog.project_folder_label.text() == "Project Folder:"
-    assert project_dialog.project_folder_error.text() == "An empty project folder needs to be selected."
+    if isinstance(dialog, LoadR1Dialog):
+        assert project_dialog.project_folder.placeholderText() == "Select RasCAL-1 file"
+        assert project_dialog.project_folder_label.text() == "RasCAL-1 file:"
+    else:
+        assert project_dialog.project_folder.placeholderText() == "Select project folder"
+        assert project_dialog.project_folder_label.text() == "Project Folder:"
     assert project_dialog.project_folder_error.isHidden()
     assert project_dialog.project_folder.isReadOnly()
 
@@ -108,7 +129,7 @@ def test_inline_error_msgs(mock_listdir, setup_project_dialog_widget):
 @patch.object(MockPresenter, "create_project")
 def test_create_button(mock_create_project, mock_listdir, setup_project_dialog_widget):
     """
-    Tests create button on the CreateDialog class.
+    Tests create button on the NewProjectDialog class.
     """
     project_dialog, _ = setup_project_dialog_widget
 
@@ -123,7 +144,7 @@ def test_create_button(mock_create_project, mock_listdir, setup_project_dialog_w
 
 def test_cancel_button(setup_project_dialog_widget):
     """
-    Tests cancel button on the CreateDialog class.
+    Tests cancel button on the NewProjectDialog class.
     """
     project_dialog, _ = setup_project_dialog_widget
 
@@ -136,9 +157,9 @@ def test_cancel_button(setup_project_dialog_widget):
 @patch("PyQt6.QtWidgets.QFileDialog.getExistingDirectory")
 def test_browse_button(mock_get_existing_directory, mock_listdir, setup_project_dialog_widget):
     """
-    Tests the browse button on the CreateDialog class.
+    Tests the browse button on the NewProjectDialog class.
     """
-    project_dialog, _ = setup_project_dialog_widget
+    project_dialog = StartupDialog()
 
     # When empty folder is selected.
     mock_get_existing_directory.return_value = "/test/folder/path"
