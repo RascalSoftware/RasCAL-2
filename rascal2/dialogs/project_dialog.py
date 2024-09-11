@@ -22,6 +22,7 @@ class AbstractStartupDialog(QtWidgets.QDialog):
     _label_style = "font-weight: bold"
     _error_style = "color: #E34234"
     _line_edit_error_style = "border: 1px solid #E34234"
+    folder_selector = QtWidgets.QFileDialog.getExistingDirectory
 
     def __init__(self, parent):
         """
@@ -122,7 +123,7 @@ class AbstractStartupDialog(QtWidgets.QDialog):
         """
         Open folder selector.
         """
-        self.folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder")
+        self.folder_path = self.folder_selector(self, "Select Folder")
         if self.folder_path:
             try:
                 self.verify_folder()
@@ -139,7 +140,7 @@ class AbstractStartupDialog(QtWidgets.QDialog):
     def verify_folder(self):
         """Verify that the path is valid for the current dialog, and raise an error otherwise.
 
-        This is an abstract method and must be reimplemented by subclasses.
+        This is an empty method to be reimplemented by subclasses.
 
         Raises
         ------
@@ -147,13 +148,11 @@ class AbstractStartupDialog(QtWidgets.QDialog):
             If the folder path is not valid for the current operation.
 
         """
-        raise NotImplementedError
+        pass
 
 
 class CreateDialog(AbstractStartupDialog):
-    """
-    The dialog to create a new project.
-    """
+    """The dialog to create a new project."""
 
     def create_form(self) -> list[QtWidgets.QWidget | QtWidgets.QLayout]:
         # Project name widgets
@@ -183,9 +182,7 @@ class CreateDialog(AbstractStartupDialog):
         create_button.clicked.connect(self.create_project)
         create_button.setStyleSheet(self._button_style.format("#0D69BB"))
 
-        standard_buttons = super().create_buttons()
-
-        return [create_button] + standard_buttons
+        return [create_button] + super().create_buttons()
 
     def verify_folder(self) -> None:
         if any(Path(self.folder_path, file).exists() for file in PROJECT_FILES):
@@ -207,6 +204,75 @@ class CreateDialog(AbstractStartupDialog):
         Create project if inputs are valid.
         """
         self.verify_name()
+        if self.project_folder.text() == "":
+            self.project_folder.setStyleSheet(self._line_edit_error_style)
+            self.project_folder_error.show()
+            self.project_folder_error.setText("Please specify a project folder.")
         if self.project_name_error.isHidden() and self.project_folder_error.isHidden():
             self.parent().presenter.create_project(self.project_name.text(), self.project_folder.text())
+            self.accept()
+
+
+class LoadDialog(AbstractStartupDialog):
+    """Dialog to load an existing project."""
+
+    def create_buttons(self):
+        load_button = QtWidgets.QPushButton(" Load", self)
+        load_button.setIcon(QtGui.QIcon(path_for("browse-dark.png")))
+        load_button.clicked.connect(self.load_project)
+        load_button.setStyleSheet(self._button_style.format("#0D69BB"))
+
+        return [load_button] + super().create_buttons()
+
+    def verify_folder(self):
+        if not all(Path(self.folder_path, file).exists() for file in PROJECT_FILES):
+            raise ValueError("No project found in this folder.")
+
+    def load_project(self):
+        """Load the project if inputs are valid."""
+        if self.project_folder.text() == "":
+            self.project_folder.setStyleSheet(self._line_edit_error_style)
+            self.project_folder_error.show()
+            self.project_folder_error.setText("Please specify a project folder.")
+        if self.project_folder_error.isHidden():
+            try:
+                self.parent().presenter.load_project(self.project_folder.text())
+            except ValueError as err:
+                self.project_folder.setStyleSheet(self._line_edit_error_style)
+                self.project_folder_error.show()
+                self.project_folder_error.setText(str(err))
+            else:
+                if not self.parent().toolbar.isEnabled():
+                    self.parent().toolbar.setEnabled(True)
+                self.accept()
+
+
+class LoadR1Dialog(AbstractStartupDialog):
+    """Dialog to load a RasCAL-1 project."""
+
+    def __init__(self, parent):
+        # our 'folder selector' is actually a .mat file selector in this case
+        self.folder_selector = lambda p, _: QtWidgets.QFileDialog.getOpenFileName(
+            p, "Select RasCAL-1 File", filter="*.mat"
+        )[0]
+        super().__init__(parent)
+
+    def create_buttons(self):
+        load_button = QtWidgets.QPushButton(" Load", self)
+        load_button.setIcon(QtGui.QIcon(path_for("browse-dark.png")))
+        load_button.clicked.connect(self.load_project)
+        load_button.setStyleSheet(self._button_style.format("#0D69BB"))
+
+        return [load_button] + super().create_buttons()
+
+    def load_project(self):
+        """Load the project if inputs are valid."""
+        if self.project_folder.text() == "":
+            self.project_folder.setStyleSheet(self._line_edit_error_style)
+            self.project_folder_error.show()
+            self.project_folder_error.setText("Please specify a project folder.")
+        if self.project_folder_error.isHidden():
+            self.parent().presenter.load_r1_project(self.project_folder.text())
+            if not self.parent().toolbar.isEnabled():
+                self.parent().toolbar.setEnabled(True)
             self.accept()

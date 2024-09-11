@@ -1,10 +1,11 @@
 import pathlib
+from typing import Literal
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from rascal2.config import path_for, setup_logging, setup_settings
 from rascal2.core.settings import MDIGeometries, Settings
-from rascal2.dialogs.project_dialog import CreateDialog
+from rascal2.dialogs.project_dialog import CreateDialog, LoadDialog, LoadR1Dialog
 from rascal2.dialogs.settings_dialog import SettingsDialog
 from rascal2.widgets import ControlsWidget, TerminalWidget
 from rascal2.widgets.startup_widget import StartUpWidget
@@ -53,18 +54,23 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         self.settings = Settings()
         self.startup_dlg = StartUpWidget(self)
-        self.project_dlg = CreateDialog(self)
         self.setCentralWidget(self.startup_dlg)
 
-    def show_project_dialog(self):
-        """Shows the project dialog to create a new project"""
+    def show_startup_dialog(self, type: Literal["new", "load", "r1"]):
+        """Shows a startup dialog of a given type.
+
+        Parameters
+        ----------
+        type : Literal['new', 'load', 'r1']
+            Which type of dialog to display (new project, load project, load R1 project)
+        """
         if self.startup_dlg.isVisible():
             self.startup_dlg.hide()
-        self.project_dlg = CreateDialog(self)
-        if (
-            self.project_dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted
-            and self.centralWidget() is self.startup_dlg
-        ):
+
+        dialogs = {"new": CreateDialog, "load": LoadDialog, "r1": LoadR1Dialog}
+
+        project_dlg = dialogs[type](self)
+        if project_dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted and self.centralWidget() is self.startup_dlg:
             self.startup_dlg.show()
 
     def show_settings_dialog(self):
@@ -78,7 +84,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.new_project_action = QtGui.QAction("&New", self)
         self.new_project_action.setStatusTip("Create a new project")
         self.new_project_action.setIcon(QtGui.QIcon(path_for("new-project.png")))
-        self.new_project_action.triggered.connect(self.show_project_dialog)
+        self.new_project_action.triggered.connect(lambda: self.show_startup_dialog("new"))
         self.new_project_action.setShortcut(QtGui.QKeySequence.StandardKey.New)
 
         self.open_project_action = QtGui.QAction("&Open", self)
@@ -89,6 +95,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.save_project_action = QtGui.QAction("&Save", self)
         self.save_project_action.setStatusTip("Save project")
         self.save_project_action.setIcon(QtGui.QIcon(path_for("save-project.png")))
+        self.save_project_action.triggered.connect(self.presenter.model.save_project)
         self.save_project_action.setShortcut(QtGui.QKeySequence.StandardKey.Save)
         self.save_project_action.setEnabled(False)
         self.disabled_elements.append(self.save_project_action)

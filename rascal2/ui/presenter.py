@@ -53,7 +53,7 @@ class MainWindowPresenter:
 
         """
         self.model.load_project(load_path)
-        self.initialise_ui()
+        self.initialise_ui(self.model.project.name, load_path)
 
     def load_r1_project(self, load_path: str):
         """Load a RAT project from a RasCAL-1 project file.
@@ -65,7 +65,7 @@ class MainWindowPresenter:
 
         """
         self.model.load_r1_project(load_path)
-        self.initialise_ui()
+        self.initialise_ui(self.model.project.name, self.model.save_path)
 
     def initialise_ui(self, name: str, save_path: str):
         """Initialise UI for a project.

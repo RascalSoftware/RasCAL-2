@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import RATapi as RAT
-from pydantic import ValidationError
 from PyQt6 import QtCore
 
 
@@ -76,9 +75,10 @@ class MainWindowModel(QtCore.QObject):
         try:
             self.controls = RAT.Controls.model_validate_json(controls_file.read_text())
         except ValueError as err:
-            raise ValueError("The controls.json file is not valid JSON.") from err
-        except ValidationError as err:
-            raise ValidationError("The controls.json file contains invalid parameter values.") from err
+            raise ValueError(
+                "The controls.json file for this project is not valid. "
+                "It may contain invalid parameter values or be invalid JSON."
+            ) from err
 
         # TODO add saving `Project` once this is possible
         # https://github.com/RascalSoftware/python-RAT/issues/76
@@ -96,4 +96,4 @@ class MainWindowModel(QtCore.QObject):
         """
         self.project = RAT.utils.convert.r1_to_project_class(load_path)
         self.controls = RAT.Controls()
-        self.save_path = Path(load_path).parent()
+        self.save_path = Path(load_path).parent
