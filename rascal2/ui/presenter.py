@@ -1,5 +1,6 @@
 import re
 import warnings
+from pathlib import Path
 from typing import Any
 
 import RATapi as RAT
@@ -8,6 +9,9 @@ from rascal2.core import commands
 from rascal2.core.runner import LogData, RATRunner
 
 from .model import MainWindowModel
+
+# global variable for required project files
+PROJECT_FILES = ["controls.json"]
 
 
 class MainWindowPresenter:
@@ -35,9 +39,48 @@ class MainWindowPresenter:
             The save path of the project.
 
         """
-
-        self.view.setWindowTitle(self.title + " - " + name)
         self.model.create_project(name, save_path)
+        self.initialise_ui(name, save_path)
+
+    def load_project(self, load_path: str):
+        """Load an existing RAT project then initialise UI.
+
+        Parameters
+        ----------
+        load_path : str
+            The path from which to load the project.
+
+        """
+        for file in PROJECT_FILES:
+            if not Path(load_path, file).exists():
+                raise ValueError("This folder does not contain a valid RasCAL-2 project.")
+        self.model.load_project(load_path)
+        self.initialise_ui()
+
+    def load_r1_project(self, load_path: str):
+        """Load a RAT project from a RasCAL-1 project file.
+
+        Parameters
+        ----------
+        load_path : str
+            The path to the R1 file.
+
+        """
+        self.model.load_r1_project(load_path)
+        self.initialise_ui()
+
+    def initialise_ui(self, name: str, save_path: str):
+        """Initialise UI for a project.
+
+        Parameters
+        ----------
+        name : str
+            The name of the project.
+        save_path : str
+            The save path of the project.
+
+        """
+        self.view.setWindowTitle(self.title + " - " + name)
         # TODO if the view's central widget is the startup one then setup MDI else reset the widgets.
         # https://github.com/RascalSoftware/RasCAL-2/issues/15
         self.view.init_settings_and_log(save_path)
