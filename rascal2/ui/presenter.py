@@ -80,7 +80,6 @@ class MainWindowPresenter:
 
     def run(self):
         """Run RAT."""
-        self.model.project, _ = RAT.examples.DSPC_standard_layers()
         rat_inputs = RAT.inputs.make_input(self.model.project, self.model.controls)
         display_on = self.model.controls.display != RAT.utils.enums.Display.Off
 
