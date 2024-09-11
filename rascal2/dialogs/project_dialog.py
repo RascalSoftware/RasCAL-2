@@ -8,8 +8,8 @@ from rascal2.config import path_for
 PROJECT_FILES = ["controls.json"]
 
 
-class AbstractStartupDialog(QtWidgets.QDialog):
-    """Abstract base class for startup dialogs."""
+class StartupDialog(QtWidgets.QDialog):
+    """Base class for startup dialogs."""
 
     _button_style = """background-color: {};
                        color: #F2F1E8;
@@ -101,10 +101,10 @@ class AbstractStartupDialog(QtWidgets.QDialog):
         self.project_folder.setReadOnly(True)
         self.project_folder.setPlaceholderText("Select project folder")
 
-        self.browse_button = QtWidgets.QPushButton(" Browse", self)
-        self.browse_button.setIcon(QtGui.QIcon(path_for("browse-light.png")))
-        self.browse_button.clicked.connect(self.open_folder_selector)
-        self.browse_button.setStyleSheet(self._button_style.format("#403F3F"))
+        browse_button = QtWidgets.QPushButton(" Browse", self)
+        browse_button.setIcon(QtGui.QIcon(path_for("browse-light.png")))
+        browse_button.clicked.connect(self.open_folder_selector)
+        browse_button.setStyleSheet(self._button_style.format("#403F3F"))
 
         self.project_folder_error = QtWidgets.QLabel("", self)
         self.project_folder_error.setStyleSheet(self._error_style)
@@ -114,7 +114,7 @@ class AbstractStartupDialog(QtWidgets.QDialog):
         project_folder_layout.setVerticalSpacing(2)
         project_folder_layout.addWidget(self.project_folder_label, 0, 0, 1, 1)
         project_folder_layout.addWidget(self.project_folder, 0, 1, 1, 4)
-        project_folder_layout.addWidget(self.browse_button, 0, 5, 1, 1)
+        project_folder_layout.addWidget(browse_button, 0, 5, 1, 1)
         project_folder_layout.addWidget(self.project_folder_error, 1, 1, 1, 4)
 
         return [project_folder_layout]
@@ -151,7 +151,7 @@ class AbstractStartupDialog(QtWidgets.QDialog):
         pass
 
 
-class CreateDialog(AbstractStartupDialog):
+class NewProjectDialog(StartupDialog):
     """The dialog to create a new project."""
 
     def create_form(self) -> list[QtWidgets.QWidget | QtWidgets.QLayout]:
@@ -213,7 +213,7 @@ class CreateDialog(AbstractStartupDialog):
             self.accept()
 
 
-class LoadDialog(AbstractStartupDialog):
+class LoadDialog(StartupDialog):
     """Dialog to load an existing project."""
 
     def create_buttons(self):
@@ -247,7 +247,7 @@ class LoadDialog(AbstractStartupDialog):
                 self.accept()
 
 
-class LoadR1Dialog(AbstractStartupDialog):
+class LoadR1Dialog(StartupDialog):
     """Dialog to load a RasCAL-1 project."""
 
     def __init__(self, parent):
@@ -256,6 +256,13 @@ class LoadR1Dialog(AbstractStartupDialog):
             p, "Select RasCAL-1 File", filter="*.mat"
         )[0]
         super().__init__(parent)
+
+    def create_form(self):
+        form = super().create_form()
+        self.project_folder_label.setText("RasCAL-1 file:")
+        self.project_folder.setPlaceholderText("Select RasCAL-1 file")
+
+        return form
 
     def create_buttons(self):
         load_button = QtWidgets.QPushButton(" Load", self)
@@ -270,7 +277,7 @@ class LoadR1Dialog(AbstractStartupDialog):
         if self.project_folder.text() == "":
             self.project_folder.setStyleSheet(self._line_edit_error_style)
             self.project_folder_error.show()
-            self.project_folder_error.setText("Please specify a project folder.")
+            self.project_folder_error.setText("Please specify a project file.")
         if self.project_folder_error.isHidden():
             self.parent().presenter.load_r1_project(self.project_folder.text())
             if not self.parent().toolbar.isEnabled():

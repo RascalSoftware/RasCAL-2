@@ -5,7 +5,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 from rascal2.config import path_for, setup_logging, setup_settings
 from rascal2.core.settings import MDIGeometries, Settings
-from rascal2.dialogs.project_dialog import CreateDialog, LoadDialog, LoadR1Dialog
+from rascal2.dialogs.project_dialog import LoadDialog, LoadR1Dialog, NewProjectDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog
 from rascal2.widgets import ControlsWidget, TerminalWidget
 from rascal2.widgets.startup_widget import StartUpWidget
@@ -67,7 +67,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         if self.startup_dlg.isVisible():
             self.startup_dlg.hide()
 
-        dialogs = {"new": CreateDialog, "load": LoadDialog, "r1": LoadR1Dialog}
+        dialogs = {"new": NewProjectDialog, "load": LoadDialog, "r1": LoadR1Dialog}
 
         project_dlg = dialogs[type](self)
         if project_dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted and self.centralWidget() is self.startup_dlg:

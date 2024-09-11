@@ -76,7 +76,7 @@ class MainWindowModel(QtCore.QObject):
             self.controls = RAT.Controls.model_validate_json(controls_file.read_text())
         except ValueError as err:
             raise ValueError(
-                "The controls.json file for this project is not valid. "
+                "The controls.json file for this project is not valid.\n"
                 "It may contain invalid parameter values or be invalid JSON."
             ) from err
 
