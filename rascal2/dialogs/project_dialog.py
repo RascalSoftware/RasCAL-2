@@ -1,14 +1,15 @@
-import os
+from pathlib import Path
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from rascal2.config import path_for
 
+# global variable for required project files
+PROJECT_FILES = ["controls.json"]
 
-class ProjectDialog(QtWidgets.QDialog):
-    """
-    The Project dialog
-    """
+
+class AbstractStartupDialog(QtWidgets.QDialog):
+    """Abstract base class for startup dialogs."""
 
     _button_style = """background-color: {};
                        color: #F2F1E8;
@@ -38,63 +39,59 @@ class ProjectDialog(QtWidgets.QDialog):
 
         self.folder_path = ""
 
-        self.create_buttons()
-        self.create_form()
-        self.add_widgets_to_layout()
-        self.setWindowTitle("New Project")
+        self.compose_layout()
 
-    def add_widgets_to_layout(self) -> None:
-        """
-        Add widgets to the layout.
-        """
-        self.main_layout = QtWidgets.QVBoxLayout()
+    def compose_layout(self):
+        """Add widgets and layouts to the dialog's main layout."""
+        main_layout = QtWidgets.QVBoxLayout()
 
-        self.main_layout.setSpacing(20)
+        main_layout.setSpacing(20)
 
-        # Add project name widgets
-        layout = QtWidgets.QGridLayout()
-        layout.setVerticalSpacing(2)
-        layout.addWidget(self.project_name_label, 0, 0, 1, 1)
-        layout.addWidget(self.project_name, 0, 1, 1, 5)
-        layout.addWidget(self.project_name_error, 1, 1, 1, 5)
-        self.main_layout.addLayout(layout)
+        widgets = self.create_form()
+        for item in widgets:
+            if isinstance(item, QtWidgets.QWidget):
+                main_layout.addWidget(item)
+            elif isinstance(item, QtWidgets.QLayout):
+                main_layout.addLayout(item)
 
-        # Add project folder widgets
-        layout = QtWidgets.QGridLayout()
-        layout.setVerticalSpacing(2)
-        layout.addWidget(self.project_folder_label, 0, 0, 1, 1)
-        layout.addWidget(self.project_folder, 0, 1, 1, 4)
-        layout.addWidget(self.browse_button, 0, 5, 1, 1)
-        layout.addWidget(self.project_folder_error, 1, 1, 1, 4)
-        self.main_layout.addLayout(layout)
-
-        # Add the create and cancel buttons
         layout = QtWidgets.QHBoxLayout()
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        layout.addWidget(self.create_button)
-        layout.addWidget(self.cancel_button)
-        self.main_layout.addStretch(1)
-        self.main_layout.addLayout(layout)
+        buttons = self.create_buttons()
+        for button in buttons:
+            layout.addWidget(button)
+        main_layout.addStretch(1)
+        main_layout.addLayout(layout)
 
-        self.setLayout(self.main_layout)
+        self.setLayout(main_layout)
 
-    def create_form(self) -> None:
+    def create_buttons(self) -> list[QtWidgets.QWidget]:
+        """Create buttons for the bottom of the dialog.
+
+        This is kept as a separate method so that it can be reimplemented by subclasses.
+
+        Returns
+        -------
+        list[QtWidgets.QWidget]
+            A list of the widgets to be added to the bottom of the dialog, from left to right.
         """
-        Create form widgets.
+        cancel_button = QtWidgets.QPushButton(" Cancel", self)
+        cancel_button.setIcon(QtGui.QIcon(path_for("cancel.png")))
+        cancel_button.clicked.connect(self.reject)
+        cancel_button.setStyleSheet(self._button_style.format("#E34234"))
+
+        return [cancel_button]
+
+    def create_form(self) -> list[QtWidgets.QWidget | QtWidgets.QLayout]:
+        """Create the widgets and layout for the dialog form.
+
+        This is kept as a separate method so that it can be reimplemented by subclasses.
+
+        Returns
+        -------
+        list[QtWidgets.QWidget, QtWidgets.QLayout]
+            A list of widgets and layouts to add to the form, ordered top to bottom.
+
         """
-        # Project name widgets
-        self.project_name_label = QtWidgets.QLabel("Project Name:", self)
-        self.project_name_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
-        self.project_name_label.setStyleSheet(self._label_style)
-
-        self.project_name = QtWidgets.QLineEdit(self)
-        self.project_name.setPlaceholderText("Enter project name")
-
-        self.project_name_error = QtWidgets.QLabel("Project name needs to be specified.", self)
-        self.project_name_error.setStyleSheet(self._error_style)
-        self.project_name_error.hide()
-
-        # Project folder widgets
         self.project_folder_label = QtWidgets.QLabel("Project Folder:", self)
         self.project_folder_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
         self.project_folder_label.setStyleSheet(self._label_style)
@@ -103,28 +100,23 @@ class ProjectDialog(QtWidgets.QDialog):
         self.project_folder.setReadOnly(True)
         self.project_folder.setPlaceholderText("Select project folder")
 
-        self.project_folder_error = QtWidgets.QLabel("An empty project folder needs to be selected.", self)
-        self.project_folder_error.setStyleSheet(self._error_style)
-        self.project_folder_error.hide()
-
-    def create_buttons(self) -> None:
-        """
-        Create buttons.
-        """
         self.browse_button = QtWidgets.QPushButton(" Browse", self)
         self.browse_button.setIcon(QtGui.QIcon(path_for("browse-light.png")))
         self.browse_button.clicked.connect(self.open_folder_selector)
         self.browse_button.setStyleSheet(self._button_style.format("#403F3F"))
 
-        self.create_button = QtWidgets.QPushButton(" Create", self)
-        self.create_button.setIcon(QtGui.QIcon(path_for("create.png")))
-        self.create_button.clicked.connect(self.create_project)
-        self.create_button.setStyleSheet(self._button_style.format("#0D69BB"))
+        self.project_folder_error = QtWidgets.QLabel("", self)
+        self.project_folder_error.setStyleSheet(self._error_style)
+        self.project_folder_error.hide()
 
-        self.cancel_button = QtWidgets.QPushButton(" Cancel", self)
-        self.cancel_button.setIcon(QtGui.QIcon(path_for("cancel.png")))
-        self.cancel_button.clicked.connect(self.reject)
-        self.cancel_button.setStyleSheet(self._button_style.format("#E34234"))
+        project_folder_layout = QtWidgets.QGridLayout()
+        project_folder_layout.setVerticalSpacing(2)
+        project_folder_layout.addWidget(self.project_folder_label, 0, 0, 1, 1)
+        project_folder_layout.addWidget(self.project_folder, 0, 1, 1, 4)
+        project_folder_layout.addWidget(self.browse_button, 0, 5, 1, 1)
+        project_folder_layout.addWidget(self.project_folder_error, 1, 1, 1, 4)
+
+        return [project_folder_layout]
 
     def open_folder_selector(self) -> None:
         """
@@ -132,28 +124,72 @@ class ProjectDialog(QtWidgets.QDialog):
         """
         self.folder_path = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder")
         if self.folder_path:
-            self.verify_folder()
+            try:
+                self.verify_folder()
+            except ValueError as err:
+                self.project_folder.setStyleSheet(self._line_edit_error_style)
+                self.project_folder_error.show()
+                self.project_folder_error.setText(str(err))
+                self.project_folder.setText("")
+            else:
+                self.project_folder.setStyleSheet("")
+                self.project_folder_error.hide()
+                self.project_folder.setText(self.folder_path)
+
+    def verify_folder(self):
+        """Verify that the path is valid for the current dialog, and raise an error otherwise.
+
+        This is an abstract method and must be reimplemented by subclasses.
+
+        Raises
+        ------
+        ValueError
+            If the folder path is not valid for the current operation.
+
+        """
+        raise NotImplementedError
+
+
+class CreateDialog(AbstractStartupDialog):
+    """
+    The dialog to create a new project.
+    """
+
+    def create_form(self) -> list[QtWidgets.QWidget | QtWidgets.QLayout]:
+        # Project name widgets
+        self.project_name_label = QtWidgets.QLabel("Project Name:", self)
+        self.project_name_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
+        self.project_name_label.setStyleSheet(self._label_style)
+
+        self.project_name = QtWidgets.QLineEdit(self)
+        self.project_name.setPlaceholderText("Enter project name")
+        self.project_name.textChanged.connect(self.verify_name)
+
+        self.project_name_error = QtWidgets.QLabel("Project name needs to be specified.", self)
+        self.project_name_error.setStyleSheet(self._error_style)
+        self.project_name_error.hide()
+
+        project_name_layout = QtWidgets.QGridLayout()
+        project_name_layout.setVerticalSpacing(2)
+        project_name_layout.addWidget(self.project_name_label, 0, 0, 1, 1)
+        project_name_layout.addWidget(self.project_name, 0, 1, 1, 5)
+        project_name_layout.addWidget(self.project_name_error, 1, 1, 1, 5)
+
+        return [project_name_layout] + super().create_form()
+
+    def create_buttons(self) -> list[QtWidgets.QWidget]:
+        create_button = QtWidgets.QPushButton(" Create", self)
+        create_button.setIcon(QtGui.QIcon(path_for("create.png")))
+        create_button.clicked.connect(self.create_project)
+        create_button.setStyleSheet(self._button_style.format("#0D69BB"))
+
+        standard_buttons = super().create_buttons()
+
+        return [create_button] + standard_buttons
 
     def verify_folder(self) -> None:
-        """
-        Verify the project folder.
-        """
-        error = False
-        if self.folder_path:
-            files_in_folder = [file for file in os.listdir(self.folder_path) if not file.startswith(".")]
-            if files_in_folder:
-                error = True
-        elif self.project_folder.text() == "":
-            error = True
-
-        if error:
-            self.project_folder.setStyleSheet(self._line_edit_error_style)
-            self.project_folder_error.show()
-            self.project_folder.setText("")
-        else:
-            self.project_folder.setStyleSheet("")
-            self.project_folder_error.hide()
-            self.project_folder.setText(self.folder_path)
+        if any(Path(self.folder_path, file).exists() for file in PROJECT_FILES):
+            raise ValueError("Folder already contains a project.")
 
     def verify_name(self) -> None:
         """
@@ -168,10 +204,9 @@ class ProjectDialog(QtWidgets.QDialog):
 
     def create_project(self) -> None:
         """
-        Create project if inputs verified.
+        Create project if inputs are valid.
         """
         self.verify_name()
-        self.verify_folder()
         if self.project_name_error.isHidden() and self.project_folder_error.isHidden():
             self.parent().presenter.create_project(self.project_name.text(), self.project_folder.text())
             self.accept()

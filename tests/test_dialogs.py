@@ -4,7 +4,7 @@ import pytest
 from PyQt6 import QtCore, QtWidgets
 
 from rascal2.core.settings import Settings, SettingsGroups
-from rascal2.dialogs.project_dialog import ProjectDialog
+from rascal2.dialogs.project_dialog import CreateDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog, SettingsTab
 from rascal2.widgets.inputs import ValidatedInputWidget
 
@@ -31,7 +31,7 @@ class MockParentWindow(QtWidgets.QMainWindow):
 @pytest.fixture
 def setup_project_dialog_widget():
     parent = MockParentWindow()
-    project_dialog = ProjectDialog(parent)
+    project_dialog = CreateDialog(parent)
     return project_dialog, parent
 
 
@@ -44,7 +44,7 @@ def settings_dialog_with_parent():
 
 def test_project_dialog_initial_state(setup_project_dialog_widget):
     """
-    Tests the initial state of the ProjectDialog class.
+    Tests the inital state of the CreateDialog class.
     """
     project_dialog, _ = setup_project_dialog_widget
 
@@ -108,7 +108,7 @@ def test_inline_error_msgs(mock_listdir, setup_project_dialog_widget):
 @patch.object(MockPresenter, "create_project")
 def test_create_button(mock_create_project, mock_listdir, setup_project_dialog_widget):
     """
-    Tests create button on the ProjectDialog class.
+    Tests create button on the CreateDialog class.
     """
     project_dialog, _ = setup_project_dialog_widget
 
@@ -123,7 +123,7 @@ def test_create_button(mock_create_project, mock_listdir, setup_project_dialog_w
 
 def test_cancel_button(setup_project_dialog_widget):
     """
-    Tests cancel button on the ProjectDialog class.
+    Tests cancel button on the CreateDialog class.
     """
     project_dialog, _ = setup_project_dialog_widget
 
@@ -136,7 +136,7 @@ def test_cancel_button(setup_project_dialog_widget):
 @patch("PyQt6.QtWidgets.QFileDialog.getExistingDirectory")
 def test_browse_button(mock_get_existing_directory, mock_listdir, setup_project_dialog_widget):
     """
-    Tests the browse button on the ProjectDialog class.
+    Tests the browse button on the CreateDialog class.
     """
     project_dialog, _ = setup_project_dialog_widget
 

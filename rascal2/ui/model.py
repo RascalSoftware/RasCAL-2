@@ -82,6 +82,8 @@ class MainWindowModel(QtCore.QObject):
 
         # TODO add saving `Project` once this is possible
         # https://github.com/RascalSoftware/python-RAT/issues/76
+        self.project = RAT.Project()
+        self.save_path = load_path
 
     def load_r1_project(self, load_path: str):
         """Load a project from a RasCAL-1 file.
@@ -92,4 +94,6 @@ class MainWindowModel(QtCore.QObject):
             The path to the RasCAL-1 file.
 
         """
-        raise NotImplementedError
+        self.project = RAT.utils.convert.r1_to_project_class(load_path)
+        self.controls = RAT.Controls()
+        self.save_path = Path(load_path).parent()

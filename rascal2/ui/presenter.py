@@ -1,6 +1,5 @@
 import re
 import warnings
-from pathlib import Path
 from typing import Any
 
 import RATapi as RAT
@@ -9,9 +8,6 @@ from rascal2.core import commands
 from rascal2.core.runner import LogData, RATRunner
 
 from .model import MainWindowModel
-
-# global variable for required project files
-PROJECT_FILES = ["controls.json"]
 
 
 class MainWindowPresenter:
@@ -38,6 +34,11 @@ class MainWindowPresenter:
         save_path : str
             The save path of the project.
 
+        Raises
+        ------
+        FileExistsError
+            If a project already exists in the folder.
+
         """
         self.model.create_project(name, save_path)
         self.initialise_ui(name, save_path)
@@ -51,9 +52,6 @@ class MainWindowPresenter:
             The path from which to load the project.
 
         """
-        for file in PROJECT_FILES:
-            if not Path(load_path, file).exists():
-                raise ValueError("This folder does not contain a valid RasCAL-2 project.")
         self.model.load_project(load_path)
         self.initialise_ui()
 

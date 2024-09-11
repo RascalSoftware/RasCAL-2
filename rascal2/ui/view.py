@@ -4,7 +4,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 from rascal2.config import path_for, setup_logging, setup_settings
 from rascal2.core.settings import MDIGeometries, Settings
-from rascal2.dialogs.project_dialog import ProjectDialog
+from rascal2.dialogs.project_dialog import CreateDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog
 from rascal2.widgets import ControlsWidget, TerminalWidget
 from rascal2.widgets.startup_widget import StartUpWidget
@@ -53,15 +53,14 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         self.settings = Settings()
         self.startup_dlg = StartUpWidget(self)
-        self.project_dlg = ProjectDialog(self)
-
+        self.project_dlg = CreateDialog(self)
         self.setCentralWidget(self.startup_dlg)
 
     def show_project_dialog(self):
         """Shows the project dialog to create a new project"""
         if self.startup_dlg.isVisible():
             self.startup_dlg.hide()
-        self.project_dlg = ProjectDialog(self)
+        self.project_dlg = CreateDialog(self)
         if (
             self.project_dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted
             and self.centralWidget() is self.startup_dlg
