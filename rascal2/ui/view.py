@@ -35,7 +35,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         # TODO replace the widgets below
         # plotting: NO ISSUE YET
         # https://github.com/RascalSoftware/RasCAL-2/issues/5
-        # https://github.com/RascalSoftware/RasCAL-2/issues/7
         # project: NO ISSUE YET
         self.plotting_widget = QtWidgets.QWidget()
         self.terminal_widget = TerminalWidget(self)
@@ -56,7 +55,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.startup_dlg = StartUpWidget(self)
         self.setCentralWidget(self.startup_dlg)
 
-    def show_startup_dialog(self, type: Literal["new", "load", "r1"]):
+    def show_project_dialog(self, type: Literal["new", "load", "r1"]):
         """Shows a startup dialog of a given type.
 
         Parameters
@@ -81,16 +80,21 @@ class MainWindowView(QtWidgets.QMainWindow):
     def create_actions(self):
         """Creates the menu and toolbar actions"""
 
-        self.new_project_action = QtGui.QAction("&New", self)
+        self.new_project_action = QtGui.QAction("&New Project", self)
         self.new_project_action.setStatusTip("Create a new project")
         self.new_project_action.setIcon(QtGui.QIcon(path_for("new-project.png")))
-        self.new_project_action.triggered.connect(lambda: self.show_startup_dialog("new"))
+        self.new_project_action.triggered.connect(lambda: self.show_project_dialog("new"))
         self.new_project_action.setShortcut(QtGui.QKeySequence.StandardKey.New)
 
-        self.open_project_action = QtGui.QAction("&Open", self)
+        self.open_project_action = QtGui.QAction("&Open Project", self)
         self.open_project_action.setStatusTip("Open an existing project")
         self.open_project_action.setIcon(QtGui.QIcon(path_for("browse-dark.png")))
+        self.open_project_action.triggered.connect(lambda: self.show_project_dialog("load"))
         self.open_project_action.setShortcut(QtGui.QKeySequence.StandardKey.Open)
+
+        self.open_r1_action = QtGui.QAction("Open &RasCAL-1 Project")
+        self.open_r1_action.setStatusTip("Open a RasCAL-1 project")
+        self.open_r1_action.triggered.connect(lambda: self.show_project_dialog("r1"))
 
         self.save_project_action = QtGui.QAction("&Save", self)
         self.save_project_action.setStatusTip("Save project")
@@ -179,8 +183,13 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.main_menu = self.menuBar()
         self.main_menu.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
 
-        self.file_menu = self.main_menu.addMenu("&File")
         self.file_menu.addAction(self.new_project_action)
+        self.file_menu = self.main_menu.addMenu("&File")
+        self.file_menu.addSeparator()
+        self.file_menu.addAction(self.open_project_action)
+        self.file_menu.addAction(self.open_r1_action)
+        self.file_menu.addSeparator()
+        self.file_menu.addAction(self.save_project_action)
         self.file_menu.addSeparator()
         self.file_menu.addAction(self.settings_action)
         self.file_menu.addSeparator()
@@ -233,6 +242,12 @@ class MainWindowView(QtWidgets.QMainWindow):
 
     def setup_mdi(self):
         """Creates the multi-document interface"""
+        # if windows are already created, don't set them up again,
+        # just refresh the widget data
+        if len(self.mdi.subWindowList()) == 4:
+            self.controls_widget.setup_controls()
+            return
+
         widgets = {
             "Plots": self.plotting_widget,
             "Project": self.project_widget,

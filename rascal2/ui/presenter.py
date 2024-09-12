@@ -34,11 +34,6 @@ class MainWindowPresenter:
         save_path : str
             The save path of the project.
 
-        Raises
-        ------
-        FileExistsError
-            If a project already exists in the folder.
-
         """
         self.model.create_project(name, save_path)
         self.initialise_ui(name, save_path)

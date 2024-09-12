@@ -78,17 +78,17 @@ class StartUpWidget(QtWidgets.QWidget):
         """
         self.new_project_button = QtWidgets.QPushButton(self)
         self.new_project_button.setIcon(QtGui.QIcon(path_for("create.png")))
-        self.new_project_button.clicked.connect(lambda: self.parent().show_startup_dialog("new"))
+        self.new_project_button.clicked.connect(lambda: self.parent().show_project_dialog("new"))
         self.new_project_button.setStyleSheet(self._button_style)
 
         self.import_project_button = QtWidgets.QPushButton(self)
         self.import_project_button.setIcon(QtGui.QIcon(path_for("browse-light.png")))
-        self.import_project_button.clicked.connect(lambda: self.parent().show_startup_dialog("load"))
+        self.import_project_button.clicked.connect(lambda: self.parent().show_project_dialog("load"))
         self.import_project_button.setStyleSheet(self._button_style)
 
         self.import_r1_button = QtWidgets.QPushButton(self)
         self.import_r1_button.setIcon(QtGui.QIcon(path_for("import-r1.png")))
-        self.import_r1_button.clicked.connect(lambda: self.parent().show_startup_dialog("r1"))
+        self.import_r1_button.clicked.connect(lambda: self.parent().show_project_dialog("r1"))
         self.import_r1_button.setStyleSheet(self._button_style)
 
     def create_labels(self) -> None:
