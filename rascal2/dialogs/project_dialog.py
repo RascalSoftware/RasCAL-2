@@ -3,6 +3,7 @@ from pathlib import Path
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from rascal2.config import path_for
+from rascal2.core.settings import update_recent_projects
 
 # global variable for required project files
 PROJECT_FILES = ["controls.json"]
@@ -128,14 +129,28 @@ class StartupDialog(QtWidgets.QDialog):
             try:
                 self.verify_folder()
             except ValueError as err:
-                self.project_folder.setStyleSheet(self._line_edit_error_style)
-                self.project_folder_error.show()
-                self.project_folder_error.setText(str(err))
+                self.set_folder_error(str(err))
                 self.project_folder.setText("")
             else:
-                self.project_folder.setStyleSheet("")
-                self.project_folder_error.hide()
+                self.set_folder_error("")
                 self.project_folder.setText(self.folder_path)
+
+    def set_folder_error(self, msg: str):
+        """Show or remove an error on the project folder dialog.
+
+        Parameters
+        ----------
+        msg : str
+            The message to show as the error. If blank, will remove the error.
+
+        """
+        if msg:
+            self.project_folder.setStyleSheet(self._line_edit_error_style)
+            self.project_folder_error.show()
+            self.project_folder_error.setText(msg)
+        else:
+            self.project_folder.setStyleSheet("")
+            self.project_folder_error.hide()
 
     def verify_folder(self):
         """Verify that the path is valid for the current dialog, and raise an error otherwise.
@@ -188,9 +203,9 @@ class NewProjectDialog(StartupDialog):
         if any(Path(self.folder_path, file).exists() for file in PROJECT_FILES):
             raise ValueError("Folder already contains a project.")
 
-    def verify_name(self) -> None:
+    def create_project(self) -> None:
         """
-        Verify the project name.
+        Create project if inputs are valid.
         """
         if self.project_name.text() == "":
             self.project_name.setStyleSheet(self._line_edit_error_style)
@@ -199,11 +214,6 @@ class NewProjectDialog(StartupDialog):
             self.project_name.setStyleSheet("")
             self.project_name_error.hide()
 
-    def create_project(self) -> None:
-        """
-        Create project if inputs are valid.
-        """
-        self.verify_name()
         if self.project_folder.text() == "":
             self.project_folder.setStyleSheet(self._line_edit_error_style)
             self.project_folder_error.show()
@@ -216,7 +226,43 @@ class NewProjectDialog(StartupDialog):
 class LoadDialog(StartupDialog):
     """Dialog to load an existing project."""
 
-    def create_buttons(self):
+    def create_form(self) -> list[QtWidgets.QWidget | QtWidgets.QLayout]:
+        recent_projects = update_recent_projects()
+        recent_projects.reverse()
+        recent_projects = recent_projects[0:3]
+
+        if not recent_projects:
+            return super().create_form()
+
+        recent_projects_layout = QtWidgets.QVBoxLayout()
+        recent_projects_title = QtWidgets.QLabel("Recent projects:")
+        recent_projects_title.setStyleSheet(self._label_style)
+        recent_projects_layout.addWidget(recent_projects_title)
+
+        for project in recent_projects:
+            button = QtWidgets.QPushButton(f"  {project}")
+            button.setStyleSheet(
+                """
+            font: bold italic underline;
+            text-align: left;
+            """
+                + self._button_style.format("#403F3F")
+            )
+            button.pressed.connect(self.load_recent_project(project))
+            recent_projects_layout.addWidget(button)
+
+        return super().create_form() + [recent_projects_layout]
+
+    def load_recent_project(self, path: str):
+        # use internal function so we can use it as a parameter-free slot
+        def _load():
+            self.project_folder_error.hide()
+            self.project_folder.setText(path)
+            self.load_project()
+
+        return _load
+
+    def create_buttons(self) -> list[QtWidgets.QWidget]:
         load_button = QtWidgets.QPushButton(" Load", self)
         load_button.setIcon(QtGui.QIcon(path_for("browse-dark.png")))
         load_button.clicked.connect(self.load_project)
@@ -231,16 +277,12 @@ class LoadDialog(StartupDialog):
     def load_project(self):
         """Load the project if inputs are valid."""
         if self.project_folder.text() == "":
-            self.project_folder.setStyleSheet(self._line_edit_error_style)
-            self.project_folder_error.show()
-            self.project_folder_error.setText("Please specify a project folder.")
+            self.set_folder_error("Please specify a project folder.")
         if self.project_folder_error.isHidden():
             try:
                 self.parent().presenter.load_project(self.project_folder.text())
             except ValueError as err:
-                self.project_folder.setStyleSheet(self._line_edit_error_style)
-                self.project_folder_error.show()
-                self.project_folder_error.setText(str(err))
+                self.set_folder_error(str(err))
             else:
                 if not self.parent().toolbar.isEnabled():
                     self.parent().toolbar.setEnabled(True)
@@ -275,9 +317,7 @@ class LoadR1Dialog(StartupDialog):
     def load_project(self):
         """Load the project if inputs are valid."""
         if self.project_folder.text() == "":
-            self.project_folder.setStyleSheet(self._line_edit_error_style)
-            self.project_folder_error.show()
-            self.project_folder_error.setText("Please specify a project file.")
+            self.set_folder_error("Please specify a project file.")
         if self.project_folder_error.isHidden():
             self.parent().presenter.load_r1_project(self.project_folder.text())
             if not self.parent().toolbar.isEnabled():

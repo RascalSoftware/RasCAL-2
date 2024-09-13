@@ -3,6 +3,8 @@ from pathlib import Path
 import RATapi as RAT
 from PyQt6 import QtCore
 
+from rascal2.core.settings import update_recent_projects
+
 
 class MainWindowModel(QtCore.QObject):
     """Manages project data and communicates to view via signals"""
@@ -51,6 +53,7 @@ class MainWindowModel(QtCore.QObject):
 
         controls_file = Path(self.save_path, "controls.json")
         controls_file.write_text(self.controls.model_dump_json())
+        update_recent_projects(self.save_path)
 
         # TODO add saving `Project` once this is possible
         # https://github.com/RascalSoftware/python-RAT/issues/76

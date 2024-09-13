@@ -25,10 +25,11 @@ def test_startup_widget_initial_state(setup_startup_widget):
     assert startup_widget.import_r1_label.text() == "Import RasCAL-1\nProject"
 
 
-def test_show_project_dialog_called(setup_startup_widget):
+@pytest.mark.parametrize("button", ["new_project_button", "import_project_button", "import_r1_button"])
+def test_show_project_dialog_called(setup_startup_widget, button):
     """
     Tests the show_project_dialog method is called once.
     """
     startup_widget, parent = setup_startup_widget
-    startup_widget.new_project_button.click()
+    getattr(startup_widget, button).click()
     parent.show_project_dialog.assert_called_once()

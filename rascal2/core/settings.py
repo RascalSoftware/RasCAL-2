@@ -3,7 +3,7 @@
 import logging
 from enum import IntEnum, StrEnum
 from os import PathLike
-from pathlib import Path, PurePath
+from pathlib import Path
 from typing import Any, TypeAlias
 
 from pydantic import BaseModel, Field
@@ -136,9 +136,7 @@ class Settings(BaseModel, validate_assignment=True, arbitrary_types_allowed=True
             The path to the folder where settings will be saved.
 
         """
-        file = PurePath(path, "settings.json")
-        with open(file, "w") as f:
-            f.write(self.model_dump_json(exclude_unset=True))
+        Path(path, "settings.json").write_text(self.model_dump_json(exclude_unset=True))
 
     def set_global_settings(self):
         """Set manually-set local settings as global settings."""
@@ -165,3 +163,40 @@ def global_name(key: str) -> str:
     if group:
         return f"{group}/{key}"
     return key
+
+
+def update_recent_projects(path: str | None = None) -> list[str]:
+    """Update the saved recent project paths.
+
+    Recent projects are stored as a list of the ten most recent, ordered oldest to newest.
+    Only the most recent three will be visible; the rest are a buffer for projects being
+    deleted.
+
+    Parameters
+    ----------
+    path : str, optional
+        The path of the most recently saved project to add, or None if no project is being saved.
+
+    Returns
+    -------
+    str
+        The updated recent project list.
+
+    """
+    recent_projects: list[str] = get_global_settings().value("internal/recent_projects")
+    if not recent_projects:
+        recent_projects = []
+
+    if path is not None:
+        if path in recent_projects:
+            recent_projects.remove(path)
+        recent_projects.append(str(path))
+
+    for project in recent_projects:
+        if not Path(project).exists():
+            recent_projects.remove(project)
+
+    recent_projects = recent_projects[-10:]
+
+    get_global_settings().setValue("internal/recent_projects", recent_projects)
+    return recent_projects
