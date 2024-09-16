@@ -1,7 +1,7 @@
 import pytest
 
 from rascal2.widgets.startup_widget import StartUpWidget
-from tests.test_dialogs import MockParentWindow
+from tests.dialogs.test_project_dialog import MockParentWindow
 
 
 @pytest.fixture

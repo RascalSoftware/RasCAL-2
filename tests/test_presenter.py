@@ -42,6 +42,8 @@ def presenter():
     pr.runner = MagicMock()
     pr.model = MagicMock()
     pr.model.controls = Controls()
+    pr.model.project = MagicMock()
+    pr.model.save_path = "some_path/"
 
     return pr
 
@@ -136,3 +138,19 @@ def test_handle_log_data(presenter):
     presenter.runner.events = [LogData(10, "Test log!")]
     presenter.handle_event()
     presenter.view.logging.log.assert_called_with(10, "Test log!")
+
+@pytest.mark.parametrize("function", ["create_project", "load_project", "load_r1_project"])
+def test_load_project(presenter, function):
+    """All the project initialisation functions should run the corresponding model function and initialise UI."""
+    presenter.initialise_ui = MagicMock()
+    setattr(presenter.model, function, MagicMock())
+    if function == "create_project":
+        params = ("proj_name", "some_path/")
+    else:
+        presenter.model.project.name = "proj_name"
+        params = ("some_path/",)
+
+    getattr(presenter, function)(*params)
+
+    presenter.initialise_ui.assert_called_once_with("proj_name", "some_path/")
+    getattr(presenter.model, function).assert_called_once_with(*params)
