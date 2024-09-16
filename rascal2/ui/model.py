@@ -30,7 +30,7 @@ class MainWindowModel(QtCore.QObject):
         """
         self.project = RAT.Project(name=name)
         self.controls = RAT.Controls()
-        self.save_path = Path(save_path)
+        self.save_path = save_path
 
     def update_project(self, problem_definition: RAT.rat_core.ProblemDefinition):
         """Update the project given a set of results."""
@@ -70,8 +70,6 @@ class MainWindowModel(QtCore.QObject):
         ------
         ValueError
             If the project files are not in a valid format.
-        ValidationError
-            If the project files contain invalid parameter values.
 
         """
         controls_file = Path(load_path, "controls.json")

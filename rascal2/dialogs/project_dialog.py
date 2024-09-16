@@ -56,13 +56,13 @@ class StartupDialog(QtWidgets.QDialog):
             elif isinstance(item, QtWidgets.QLayout):
                 main_layout.addLayout(item)
 
-        layout = QtWidgets.QHBoxLayout()
-        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         buttons = self.create_buttons()
         for button in buttons:
-            layout.addWidget(button)
+            button_layout.addWidget(button)
         main_layout.addStretch(1)
-        main_layout.addLayout(layout)
+        main_layout.addLayout(button_layout)
 
         self.setLayout(main_layout)
 
@@ -124,16 +124,16 @@ class StartupDialog(QtWidgets.QDialog):
         """
         Open folder selector.
         """
-        self.folder_path = self.folder_selector(self, "Select Folder")
-        if self.folder_path:
+        folder_path = self.folder_selector(self, "Select Folder")
+        if folder_path:
             try:
-                self.verify_folder()
+                self.verify_folder(folder_path)
             except ValueError as err:
                 self.set_folder_error(str(err))
                 self.project_folder.setText("")
             else:
                 self.set_folder_error("")
-                self.project_folder.setText(self.folder_path)
+                self.project_folder.setText(folder_path)
 
     def set_folder_error(self, msg: str):
         """Show or remove an error on the project folder dialog.
@@ -152,7 +152,8 @@ class StartupDialog(QtWidgets.QDialog):
             self.project_folder.setStyleSheet("")
             self.project_folder_error.hide()
 
-    def verify_folder(self):
+    @staticmethod
+    def verify_folder(folder_path: str):
         """Verify that the path is valid for the current dialog, and raise an error otherwise.
 
         This is an empty method to be reimplemented by subclasses.
@@ -199,14 +200,12 @@ class NewProjectDialog(StartupDialog):
 
         return [create_button] + super().create_buttons()
 
-    def verify_folder(self) -> None:
-        if any(Path(self.folder_path, file).exists() for file in PROJECT_FILES):
+    @staticmethod
+    def verify_folder(folder_path: str) -> None:
+        if any(Path(folder_path, file).exists() for file in PROJECT_FILES):
             raise ValueError("Folder already contains a project.")
 
-    def create_project(self) -> None:
-        """
-        Create project if inputs are valid.
-        """
+    def verify_name(self) -> None:
         if self.project_name.text() == "":
             self.project_name.setStyleSheet(self._line_edit_error_style)
             self.project_name_error.show()
@@ -214,10 +213,13 @@ class NewProjectDialog(StartupDialog):
             self.project_name.setStyleSheet("")
             self.project_name_error.hide()
 
+    def create_project(self) -> None:
+        """
+        Create project if inputs are valid.
+        """
+        self.verify_name()
         if self.project_folder.text() == "":
-            self.project_folder.setStyleSheet(self._line_edit_error_style)
-            self.project_folder_error.show()
-            self.project_folder_error.setText("Please specify a project folder.")
+            self.set_folder_error("Please specify a project folder.")
         if self.project_name_error.isHidden() and self.project_folder_error.isHidden():
             self.parent().presenter.create_project(self.project_name.text(), self.project_folder.text())
             self.accept()
@@ -270,8 +272,9 @@ class LoadDialog(StartupDialog):
 
         return [load_button] + super().create_buttons()
 
-    def verify_folder(self):
-        if not all(Path(self.folder_path, file).exists() for file in PROJECT_FILES):
+    @staticmethod
+    def verify_folder(folder_path: str):
+        if not all(Path(folder_path, file).exists() for file in PROJECT_FILES):
             raise ValueError("No project found in this folder.")
 
     def load_project(self):
