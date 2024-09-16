@@ -110,6 +110,22 @@ class MainWindowPresenter:
             self.view.undo_stack.push(commands.EditControls(self.model.controls, setting, value))
             return True
 
+    def save_project(self, to_path: str | None = None):
+        """Save the model.
+
+        Parameters
+        ----------
+        to_path : str or None
+            If not None, save the model to the specified folder.
+
+        """
+        # we use this isinstance rather than `is not None`
+        # because some PyQt signals will send bools and so on to this as a slot!
+        if isinstance(to_path, str):
+            self.model.save_path = to_path
+
+        self.model.save_project()
+
     def interrupt_terminal(self):
         """Sends an interrupt signal to the RAT runner."""
         self.runner.interrupt()

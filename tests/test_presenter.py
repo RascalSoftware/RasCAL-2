@@ -154,3 +154,16 @@ def test_load_project(presenter, function):
 
     presenter.initialise_ui.assert_called_once_with("proj_name", "some_path/")
     getattr(presenter.model, function).assert_called_once_with(*params)
+
+
+def test_save_project(presenter):
+    """Test that projects can be saved, optionally saved as a new folder."""
+    presenter.model.save_project = MagicMock()
+    presenter.save_project()
+    presenter.model.save_project.assert_called_once()
+
+    presenter.model.save_project.reset_mock()
+
+    presenter.save_project(to_path="new path/")
+    assert presenter.model.save_path == "new path/"
+    presenter.model.save_project.assert_called_once()

@@ -97,4 +97,4 @@ class MainWindowModel(QtCore.QObject):
         """
         self.project = RAT.utils.convert.r1_to_project_class(load_path)
         self.controls = RAT.Controls()
-        self.save_path = Path(load_path).parent
+        self.save_path = str(Path(load_path).parent)

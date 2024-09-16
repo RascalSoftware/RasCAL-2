@@ -1,13 +1,14 @@
-import pathlib
+from pathlib import Path
 from typing import Literal
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from rascal2.config import path_for, setup_logging, setup_settings
 from rascal2.core.settings import MDIGeometries, Settings
-from rascal2.dialogs.project_dialog import LoadDialog, LoadR1Dialog, NewProjectDialog
+from rascal2.dialogs.project_dialog import PROJECT_FILES, LoadDialog, LoadR1Dialog, NewProjectDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog
 from rascal2.widgets import ControlsWidget, TerminalWidget
+from rascal2.dialogs.confirm import ConfirmDialog
 from rascal2.widgets.startup_widget import StartUpWidget
 
 from .presenter import MainWindowPresenter
@@ -99,7 +100,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.save_project_action = QtGui.QAction("&Save", self)
         self.save_project_action.setStatusTip("Save project")
         self.save_project_action.setIcon(QtGui.QIcon(path_for("save-project.png")))
-        self.save_project_action.triggered.connect(self.presenter.model.save_project)
+        self.save_project_action.triggered.connect(self.presenter.save_project)
         self.save_project_action.setShortcut(QtGui.QKeySequence.StandardKey.Save)
         self.save_project_action.setEnabled(False)
         self.disabled_elements.append(self.save_project_action)
@@ -110,6 +111,15 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.undo_action.setShortcut(QtGui.QKeySequence.StandardKey.Undo)
         self.undo_action.setEnabled(False)
         self.disabled_elements.append(self.undo_action)
+
+        self.save_as_action = QtGui.QAction("Save To &Folder...", self)
+        self.save_as_action.setStatusTip("Save project to a specified folder.")
+        self.save_as_action.setIcon(QtGui.QIcon(path_for("save-project.png")))
+        self.save_as_action.triggered.connect(self.save_as)
+        self.save_as_action.setShortcut(QtGui.QKeySequence.StandardKey.SaveAs)
+
+        self.undo_action = QtGui.QAction("&Undo", self)
+        self.undo_action.setStatusTip("Undo")
 
         self.redo_action = self.undo_stack.createRedoAction(self, "&Redo")
         self.redo_action.setStatusTip("Redo the last undone action")
@@ -183,13 +193,14 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.main_menu = self.menuBar()
         self.main_menu.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
 
-        self.file_menu.addAction(self.new_project_action)
         self.file_menu = self.main_menu.addMenu("&File")
-        self.file_menu.addSeparator()
-        self.file_menu.addAction(self.open_project_action)
-        self.file_menu.addAction(self.open_r1_action)
-        self.file_menu.addSeparator()
-        self.file_menu.addAction(self.save_project_action)
+        file_menu.addAction(self.new_project_action)
+        file_menu.addSeparator()
+        file_menu.addAction(self.open_project_action)
+        file_menu.addAction(self.open_r1_action)
+        file_menu.addSeparator()
+        file_menu.addAction(self.save_project_action)
+        file_menu.addAction(self.save_as_action)
         self.file_menu.addSeparator()
         self.file_menu.addAction(self.settings_action)
         self.file_menu.addSeparator()
@@ -304,10 +315,9 @@ class MainWindowView(QtWidgets.QMainWindow):
             The save path for the project.
 
         """
-        self.save_path = save_path
-        proj_path = pathlib.Path(save_path)
+        proj_path = Path(save_path)
         self.settings = setup_settings(proj_path)
-        log_path = pathlib.Path(self.settings.log_path)
+        log_path = Path(self.settings.log_path)
         if not log_path.is_absolute():
             log_path = proj_path / log_path
 
@@ -328,3 +338,20 @@ class MainWindowView(QtWidgets.QMainWindow):
     def reset_widgets(self):
         """Reset widgets after a run."""
         self.controls_widget.run_button.setChecked(False)
+
+    def save_as(self):
+        """Save a project to a specified folder."""
+        project_folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder")
+        if project_folder:
+            if any(Path(project_folder, file).exists() for file in PROJECT_FILES):
+                overwrite_dlg = ConfirmDialog(
+                    title="Confirm Overwrite",
+                    text="A project already exists in this folder, do you want to replace it?",
+                    parent=self,
+                )
+                if not overwrite_dlg.exec():
+                    # return to file selection
+                    self.save_as()
+                    return  # must manually return else all the rejected overwrites will save at once!!
+
+            self.presenter.save_project(to_path=project_folder)
