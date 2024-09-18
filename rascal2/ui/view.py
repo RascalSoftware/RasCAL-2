@@ -5,6 +5,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from rascal2.config import path_for, setup_logging, setup_settings
 from rascal2.core.settings import MDIGeometries
 from rascal2.dialogs.project_dialog import ProjectDialog
+from rascal2.dialogs.settings_dialog import SettingsDialog
 from rascal2.widgets import ControlsWidget
 from rascal2.widgets.startup_widget import StartUpWidget
 
@@ -48,7 +49,9 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.setMinimumSize(1024, 900)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
 
-        self.startup_dlg, self.project_dlg = StartUpWidget(self), ProjectDialog(self)
+        self.startup_dlg = StartUpWidget(self)
+        self.project_dlg = ProjectDialog(self)
+        self.settings_dlg = SettingsDialog(self)
 
         self.setCentralWidget(self.startup_dlg)
 
@@ -62,6 +65,10 @@ class MainWindowView(QtWidgets.QMainWindow):
             and self.centralWidget() is self.startup_dlg
         ):
             self.startup_dlg.show()
+
+    def show_settings_dialog(self):
+        """Shows the settings dialog to adjust program settings"""
+        self.settings_dlg.show()
 
     def create_actions(self):
         """Creates the menu and toolbar actions"""
@@ -99,6 +106,11 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.export_plots_action = QtGui.QAction("Export", self)
         self.export_plots_action.setStatusTip("Export Plots")
         self.export_plots_action.setIcon(QtGui.QIcon(path_for("export-plots.png")))
+
+        self.settings_action = QtGui.QAction("Settings", self)
+        self.settings_action.setStatusTip("Settings")
+        self.settings_action.setIcon(QtGui.QIcon(path_for("settings.png")))
+        self.settings_action.triggered.connect(self.show_settings_dialog)
 
         self.open_help_action = QtGui.QAction("&Help", self)
         self.open_help_action.setStatusTip("Open Documentation")
@@ -144,6 +156,9 @@ class MainWindowView(QtWidgets.QMainWindow):
         windows_menu.addAction(self.reset_windows_action)
         windows_menu.addAction(self.save_default_windows_action)
 
+        settings_menu = main_menu.addMenu("&Settings")
+        settings_menu.addAction(self.settings_action)
+
         help_menu = main_menu.addMenu("&Help")
         help_menu.addAction(self.open_help_action)
 
@@ -165,6 +180,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.toolbar.addAction(self.undo_action)
         self.toolbar.addAction(self.redo_action)
         self.toolbar.addAction(self.export_plots_action)
+        self.toolbar.addAction(self.settings_action)
         self.toolbar.addAction(self.open_help_action)
 
     def create_status_bar(self):
