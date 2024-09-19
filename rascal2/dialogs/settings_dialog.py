@@ -1,6 +1,7 @@
 from PyQt6 import QtCore, QtWidgets
 
 from rascal2.core.settings import Settings
+from rascal2.config import setup_settings
 from rascal2.widgets.inputs import ValidatedInputWidget
 
 
@@ -27,45 +28,52 @@ class SettingsDialog(QtWidgets.QDialog):
         self.setModal(True)
         self.setMinimumWidth(400)
 
-        self.current_settings = parent.settings.copy()
+        self.settings = parent.settings.copy()
 
         tab_widget = QtWidgets.QTabWidget()
-        tab_widget.addTab(GeneralSettings(self, self.current_settings), "General")
-        tab_widget.addTab(LoggingSettings(self, self.current_settings), "Logging")
-        tab_widget.addTab(WindowsSettings(self, self.current_settings), "Windows")
+        tab_widget.addTab(GeneralSettings(self), "General")
+        tab_widget.addTab(LoggingSettings(self), "Logging")
+        tab_widget.addTab(WindowsSettings(self), "Windows")
 
-        button_box = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel
-        )
+        self.reset_button = QtWidgets.QPushButton("Reset Defaults", self)
+        self.reset_button.clicked.connect(self.reset_default_settings)
+        self.accept_button = QtWidgets.QPushButton("OK", self)
+        self.accept_button.clicked.connect(self.update_settings)
+        self.cancel_button = QtWidgets.QPushButton("Cancel", self)
+        self.cancel_button.clicked.connect(self.reject)
 
-        button_box.accepted.connect(self.update_settings)
-        button_box.rejected.connect(self.reject_settings)
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addWidget(self.reset_button)
+        button_layout.addStretch(1)
+        button_layout.addWidget(self.accept_button)
+        button_layout.addWidget(self.cancel_button)
 
         main_layout = QtWidgets.QVBoxLayout()
         main_layout.addWidget(tab_widget)
-        main_layout.addWidget(button_box)
+        main_layout.addLayout(button_layout)
         self.setLayout(main_layout)
         self.setWindowTitle("Settings")
 
     def update_settings(self):
         """Accept the changed settings"""
-        self.parent().settings = self.current_settings.copy()
-        print(self.current_settings)
+        self.parent().settings = self.settings.copy()
+        print(self.settings)
         print(self.parent().settings)
         self.accept()
 
-    def reject_settings(self):
-        """Accept the changed settings"""
-        print(self.current_settings)
+    def reset_default_settings(self):
+        """Reset the settings to the global defaults"""
+        self.parent().settings = Settings()
+        print(self.settings)
         print(self.parent().settings)
-        self.reject()
+        self.accept()
 
 
 class SettingsTab(QtWidgets.QWidget):
-    def __init__(self, parent: QtWidgets.QWidget, current_settings: Settings, group: str):
+    def __init__(self, parent: QtWidgets.QWidget, group: str):
         super().__init__(parent)
 
-        self.settings = current_settings
+        self.settings = parent.settings
         tab_layout = QtWidgets.QGridLayout()
 
         self.widgets = {}
@@ -74,7 +82,7 @@ class SettingsTab(QtWidgets.QWidget):
         for i, setting in enumerate(group_settings[group]):
             label_text = setting.replace("_", " ")
             tab_layout.addWidget(QtWidgets.QLabel(label_text), i, 0)
-            self.widgets[setting] = ValidatedInputWidget(getattr(current_settings, "model_fields")[setting])
+            self.widgets[setting] = ValidatedInputWidget(getattr(self.settings, "model_fields")[setting])
             try:
                 self.widgets[setting].set_data(getattr(self.settings, setting))
             except TypeError:
@@ -87,7 +95,10 @@ class SettingsTab(QtWidgets.QWidget):
         self.setLayout(tab_layout)
 
     def create_slot(self, setting):
-        """Returns a slot that updates the settings to connect to the edited_signal of the given widget."""
+        """Returns a slot that updates the settings.
+
+        Connect this to the "edited_signal" of the given widget.
+        """
 
         def modify_settings():
             setattr(self.settings, setting, self.widgets[setting].get_data())
@@ -96,15 +107,15 @@ class SettingsTab(QtWidgets.QWidget):
 
 
 class GeneralSettings(SettingsTab):
-    def __init__(self, parent: QtWidgets.QWidget, current_settings: Settings):
-        super().__init__(parent, current_settings, "General")
+    def __init__(self, parent: QtWidgets.QWidget):
+        super().__init__(parent, "General")
 
 
 class LoggingSettings(SettingsTab):
-    def __init__(self, parent: QtWidgets.QWidget, current_settings: Settings):
-        super().__init__(parent, current_settings, "Logging")
+    def __init__(self, parent: QtWidgets.QWidget):
+        super().__init__(parent, "Logging")
 
 
 class WindowsSettings(SettingsTab):
-    def __init__(self, parent: QtWidgets.QWidget, current_settings: Settings):
-        super().__init__(parent, current_settings, "Windows")
+    def __init__(self, parent: QtWidgets.QWidget):
+        super().__init__(parent, "Windows")

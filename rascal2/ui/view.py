@@ -52,7 +52,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.settings = Settings()
         self.startup_dlg = StartUpWidget(self)
         self.project_dlg = ProjectDialog(self)
-        self.settings_dlg = SettingsDialog(self)
+        self.settings_dlg = None
 
         self.setCentralWidget(self.startup_dlg)
 
@@ -69,6 +69,9 @@ class MainWindowView(QtWidgets.QMainWindow):
 
     def show_settings_dialog(self):
         """Shows the settings dialog to adjust program settings"""
+        if self.settings_dlg is not None:
+            self.settings_dlg.close()
+        self.settings_dlg = SettingsDialog(self)
         self.settings_dlg.show()
 
     def create_actions(self):
