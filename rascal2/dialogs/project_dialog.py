@@ -41,6 +41,7 @@ class ProjectDialog(QtWidgets.QDialog):
         self.create_buttons()
         self.create_form()
         self.add_widgets_to_layout()
+        self.setWindowTitle("New Project")
 
     def add_widgets_to_layout(self) -> None:
         """

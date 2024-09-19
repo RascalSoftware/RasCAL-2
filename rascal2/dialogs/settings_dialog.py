@@ -1,15 +1,8 @@
 from PyQt6 import QtCore, QtWidgets
 
-from rascal2.core.settings import Settings
+from rascal2.core.settings import Settings, SettingsGroups
 from rascal2.config import setup_settings
 from rascal2.widgets.inputs import ValidatedInputWidget
-
-
-group_settings = {
-    "General": ["style", "editor_fontsize", "terminal_fontsize"],
-    "Logging": ["log_path", "log_level"],
-    "Windows": ["mdi_defaults"]
-}
 
 
 class SettingsDialog(QtWidgets.QDialog):
@@ -31,9 +24,8 @@ class SettingsDialog(QtWidgets.QDialog):
         self.settings = parent.settings.copy()
 
         tab_widget = QtWidgets.QTabWidget()
-        tab_widget.addTab(GeneralSettings(self), "General")
-        tab_widget.addTab(LoggingSettings(self), "Logging")
-        tab_widget.addTab(WindowsSettings(self), "Windows")
+        tab_widget.addTab(GeneralSettings(self), SettingsGroups.General)
+        tab_widget.addTab(LoggingSettings(self), SettingsGroups.Logging)
 
         self.reset_button = QtWidgets.QPushButton("Reset Defaults", self)
         self.reset_button.clicked.connect(self.reset_default_settings)
@@ -57,38 +49,34 @@ class SettingsDialog(QtWidgets.QDialog):
     def update_settings(self):
         """Accept the changed settings"""
         self.parent().settings = self.settings.copy()
-        print(self.settings)
-        print(self.parent().settings)
         self.accept()
 
     def reset_default_settings(self):
         """Reset the settings to the global defaults"""
         self.parent().settings = Settings()
-        print(self.settings)
-        print(self.parent().settings)
         self.accept()
 
 
 class SettingsTab(QtWidgets.QWidget):
-    def __init__(self, parent: QtWidgets.QWidget, group: str):
+    def __init__(self, parent: SettingsDialog, group: str):
         super().__init__(parent)
 
         self.settings = parent.settings
+        self.widgets = {}
         tab_layout = QtWidgets.QGridLayout()
 
-        self.widgets = {}
-        self.slots = {}
+        field_info = getattr(self.settings, "model_fields")
+        group_settings = [key for (key, value) in field_info.items() if value.title == group]
 
-        for i, setting in enumerate(group_settings[group]):
+        for i, setting in enumerate(group_settings):
             label_text = setting.replace("_", " ")
             tab_layout.addWidget(QtWidgets.QLabel(label_text), i, 0)
-            self.widgets[setting] = ValidatedInputWidget(getattr(self.settings, "model_fields")[setting])
+            self.widgets[setting] = ValidatedInputWidget(field_info[setting])
             try:
                 self.widgets[setting].set_data(getattr(self.settings, setting))
             except TypeError:
                 self.widgets[setting].set_data(str(getattr(self.settings, setting)))
-            self.slots[setting] = self.create_slot(setting)
-            self.widgets[setting].edited_signal.connect(self.slots[setting])
+            self.widgets[setting].edited_signal.connect(self.create_slot(setting))
             tab_layout.addWidget(self.widgets[setting], i, 1)
 
         tab_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
@@ -107,15 +95,10 @@ class SettingsTab(QtWidgets.QWidget):
 
 
 class GeneralSettings(SettingsTab):
-    def __init__(self, parent: QtWidgets.QWidget):
-        super().__init__(parent, "General")
+    def __init__(self, parent: SettingsDialog):
+        super().__init__(parent, SettingsGroups.General)
 
 
 class LoggingSettings(SettingsTab):
-    def __init__(self, parent: QtWidgets.QWidget):
-        super().__init__(parent, "Logging")
-
-
-class WindowsSettings(SettingsTab):
-    def __init__(self, parent: QtWidgets.QWidget):
-        super().__init__(parent, "Windows")
+    def __init__(self, parent: SettingsDialog):
+        super().__init__(parent, SettingsGroups.Logging)
