@@ -3,12 +3,10 @@ from typing import Callable
 
 from rascal2.core.settings import Settings, SettingsGroups
 from rascal2.widgets.inputs import ValidatedInputWidget
-from rascal2.ui.view import MainWindowView
 
 
 class SettingsDialog(QtWidgets.QDialog):
-
-    def __init__(self, parent: MainWindowView):
+    def __init__(self, parent):
         """
         Dialog to adjust RasCAL-2 settings.
 
@@ -25,8 +23,8 @@ class SettingsDialog(QtWidgets.QDialog):
         self.settings = parent.settings.copy()
 
         tab_widget = QtWidgets.QTabWidget()
-        tab_widget.addTab(GeneralSettings(self), SettingsGroups.General)
-        tab_widget.addTab(LoggingSettings(self), SettingsGroups.Logging)
+        tab_widget.addTab(SettingsTab(self, SettingsGroups.General), SettingsGroups.General)
+        tab_widget.addTab(SettingsTab(self, SettingsGroups.Logging), SettingsGroups.Logging)
 
         self.reset_button = QtWidgets.QPushButton("Reset Defaults", self)
         self.reset_button.clicked.connect(self.reset_default_settings)
@@ -60,7 +58,7 @@ class SettingsDialog(QtWidgets.QDialog):
 
 class SettingsTab(QtWidgets.QWidget):
     def __init__(self, parent: SettingsDialog, group: SettingsGroups):
-        """Layout of a generic tab in the Settings Dialog.
+        """A tab in the Settings Dialog tab layout.
 
         Parameters
         ----------
@@ -113,13 +111,3 @@ class SettingsTab(QtWidgets.QWidget):
             setattr(self.settings, setting, self.widgets[setting].get_data())
 
         return modify_setting
-
-
-class GeneralSettings(SettingsTab):
-    def __init__(self, parent: SettingsDialog):
-        super().__init__(parent, SettingsGroups.General)
-
-
-class LoggingSettings(SettingsTab):
-    def __init__(self, parent: SettingsDialog):
-        super().__init__(parent, SettingsGroups.Logging)

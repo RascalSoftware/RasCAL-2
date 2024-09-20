@@ -3,7 +3,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 from PyQt6 import QtWidgets
 
+from rascal2.core.settings import Settings, SettingsGroups
 from rascal2.dialogs.project_dialog import ProjectDialog
+from rascal2.dialogs.settings_dialog import SettingsDialog, SettingsTab
+from rascal2.widgets.inputs import ValidatedInputWidget
 
 
 class MockPresenter(QtWidgets.QMainWindow):
@@ -15,8 +18,7 @@ class MockParentWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.presenter = MockPresenter()
-        self.toolbar = self.addToolBar("ToolBar")
-        self.toolbar.setEnabled(False)
+        self.settings = Settings(editor_fontsize=15, terminal_fontsize=8)
         self.show_project_dialog = MagicMock()
 
 
@@ -27,9 +29,16 @@ def setup_project_dialog_widget():
     return project_dialog, parent
 
 
+@pytest.fixture
+def settings_dialog_with_parent():
+    parent = MockParentWindow()
+    settings_dialog = SettingsDialog(parent)
+    return settings_dialog, parent
+
+
 def test_project_dialog_initial_state(setup_project_dialog_widget):
     """
-    Tests the inital state of the ProjectDialog class.
+    Tests the initial state of the ProjectDialog class.
     """
     project_dialog, _ = setup_project_dialog_widget
 
@@ -141,3 +150,74 @@ def test_browse_button(mock_get_existing_directory, mock_listdir, setup_project_
 
     assert project_dialog.project_folder.text() == ""
     assert not project_dialog.project_folder_error.isHidden()
+
+
+def test_settings_dialog_initialisation(settings_dialog_with_parent):
+    """Ensure the settings dialog is initialised with the correct layout"""
+    settings_dialog, _ = settings_dialog_with_parent
+    layout = settings_dialog.layout()
+
+    # Check tab layout exists with the correct number of tabs
+    tab_layout = layout.itemAt(0).widget()
+    assert isinstance(tab_layout, QtWidgets.QTabWidget)
+    assert tab_layout.count() == 2
+
+    # Check button layout exists with the correct buttons
+    button_layout = layout.itemAt(1)
+    for button in [settings_dialog.accept_button,
+                   settings_dialog.cancel_button,
+                   settings_dialog.reset_button]:
+        assert button_layout.indexOf(button) != -1
+
+
+def test_settings_dialog_accept_button(settings_dialog_with_parent):
+    """Ensure the accept button saves the changed settings."""
+    settings_dialog, parent = settings_dialog_with_parent
+    new_font_size = 50
+    settings_dialog.settings.editor_fontsize = new_font_size
+    settings_dialog.accept_button.click()
+    assert parent.settings.editor_fontsize == new_font_size
+    assert settings_dialog.result() == 1
+
+
+def test_settings_dialog_cancel_button(settings_dialog_with_parent):
+    """Ensure the cancel button rejects the changed settings."""
+    settings_dialog, parent = settings_dialog_with_parent
+    settings_dialog.settings.editor_fontsize = 50
+    settings_dialog.cancel_button.click()
+    assert parent.settings.editor_fontsize == 15
+    assert settings_dialog.result() == 0
+
+
+def test_settings_dialog_reset_button(settings_dialog_with_parent):
+    """Ensure the reset button sets the settings to the global defaults."""
+    settings_dialog, parent = settings_dialog_with_parent
+    new_font_size = 50
+    settings_dialog.settings.editor_fontsize = new_font_size
+    settings_dialog.settings.terminal_fontsize = new_font_size
+    settings_dialog.reset_button.click()
+    assert parent.settings == Settings()
+    assert settings_dialog.result() == 1
+
+
+@pytest.mark.parametrize("tab_group, settings_labels",
+    [
+        (SettingsGroups.General, ["style", "editor fontsize", "terminal fontsize"]),
+        (SettingsGroups.Logging, ["log path", "log level"]),
+    ]
+)
+def test_settings_dialog_tabs(settings_dialog_with_parent, tab_group, settings_labels):
+    """Test the settings dialog tabs contain the correct settings"""
+    settings_dialog, _ = settings_dialog_with_parent
+    tab = SettingsTab(settings_dialog, tab_group)
+    layout = tab.layout()
+
+    num_rows = layout.rowCount()
+    assert num_rows == len(settings_labels)
+    assert layout.columnCount() == 2
+
+    for row in range(num_rows):
+        label = layout.itemAtPosition(row, 0).widget()
+        assert isinstance(label, QtWidgets.QLabel)
+        assert label.text() in settings_labels
+        assert isinstance(layout.itemAtPosition(row, 1).widget(), ValidatedInputWidget)
