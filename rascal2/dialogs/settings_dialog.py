@@ -1,20 +1,21 @@
 from PyQt6 import QtCore, QtWidgets
+from typing import Callable
 
 from rascal2.core.settings import Settings, SettingsGroups
-from rascal2.config import setup_settings
 from rascal2.widgets.inputs import ValidatedInputWidget
+from rascal2.ui.view import MainWindowView
 
 
 class SettingsDialog(QtWidgets.QDialog):
 
-    def __init__(self, parent):
+    def __init__(self, parent: MainWindowView):
         """
-        Initialize dialog.
+        Dialog to adjust RasCAL-2 settings.
 
         Parameters
         ----------
-        parent: MainWindowView
-                An instance of the MainWindowView
+        parent : MainWindowView
+            The view of the RasCAL-2 GUI
         """
         super().__init__(parent)
 
@@ -46,19 +47,29 @@ class SettingsDialog(QtWidgets.QDialog):
         self.setLayout(main_layout)
         self.setWindowTitle("Settings")
 
-    def update_settings(self):
+    def update_settings(self) -> None:
         """Accept the changed settings"""
         self.parent().settings = self.settings.copy()
         self.accept()
 
-    def reset_default_settings(self):
+    def reset_default_settings(self) -> None:
         """Reset the settings to the global defaults"""
         self.parent().settings = Settings()
         self.accept()
 
 
 class SettingsTab(QtWidgets.QWidget):
-    def __init__(self, parent: SettingsDialog, group: str):
+    def __init__(self, parent: SettingsDialog, group: SettingsGroups):
+        """Layout of a generic tab in the Settings Dialog.
+
+        Parameters
+        ----------
+        parent : SettingsDialog
+            The dialog in which this tab lies
+        group : SettingsGroups
+            The set of settings with this value in "title" field of the
+            Settings object's "field_info" will be included in this tab.
+        """
         super().__init__(parent)
 
         self.settings = parent.settings
@@ -82,16 +93,26 @@ class SettingsTab(QtWidgets.QWidget):
         tab_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         self.setLayout(tab_layout)
 
-    def create_slot(self, setting):
-        """Returns a slot that updates the settings.
+    def create_slot(self, setting: str) -> Callable:
+        """Returns a slot that updates the given setting in the dialog's copy of the Settings object.
 
-        Connect this to the "edited_signal" of the given widget.
+        Connect this to the "edited_signal" of the corresponding widget.
+
+        Parameters
+        ----------
+        setting : str
+            The name of the setting to be modified by this slot
+
+        Returns
+        -------
+        modify_setting : Callable
+            A slot to update the value of the given setting
         """
 
-        def modify_settings():
+        def modify_setting():
             setattr(self.settings, setting, self.widgets[setting].get_data())
 
-        return modify_settings
+        return modify_setting
 
 
 class GeneralSettings(SettingsTab):

@@ -174,6 +174,4 @@ class ProjectDialog(QtWidgets.QDialog):
         self.verify_folder()
         if self.project_name_error.isHidden() and self.project_folder_error.isHidden():
             self.parent().presenter.create_project(self.project_name.text(), self.project_folder.text())
-            if not self.parent().toolbar.isEnabled():
-                self.parent().toolbar.setEnabled(True)
             self.accept()

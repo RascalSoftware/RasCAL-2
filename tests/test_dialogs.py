@@ -104,7 +104,6 @@ def test_create_button(mock_create_project, mock_listdir, setup_project_dialog_w
     project_dialog.folder_path = "test-folder"
     project_dialog.create_button.click()
     mock_create_project.assert_called_once()
-    assert project_dialog.parent().toolbar.isEnabled()
 
 
 def test_cancel_button(setup_project_dialog_widget):

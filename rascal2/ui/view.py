@@ -41,6 +41,8 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.controls_widget = ControlsWidget(self)
         self.project_widget = QtWidgets.QWidget()
 
+        self.disabled_elements = []
+
         self.create_actions()
         self.create_menus()
         self.create_toolbar()
@@ -92,16 +94,22 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.save_project_action.setStatusTip("Save project")
         self.save_project_action.setIcon(QtGui.QIcon(path_for("save-project.png")))
         self.save_project_action.setShortcut(QtGui.QKeySequence.StandardKey.Save)
+        self.save_project_action.setEnabled(False)
+        self.disabled_elements.append(self.save_project_action)
 
         self.undo_action = self.undo_stack.createUndoAction(self, "&Undo")
         self.undo_action.setStatusTip("Undo the last action")
         self.undo_action.setIcon(QtGui.QIcon(path_for("undo.png")))
         self.undo_action.setShortcut(QtGui.QKeySequence.StandardKey.Undo)
+        self.undo_action.setEnabled(False)
+        self.disabled_elements.append(self.undo_action)
 
         self.redo_action = self.undo_stack.createRedoAction(self, "&Redo")
         self.redo_action.setStatusTip("Redo the last undone action")
         self.redo_action.setIcon(QtGui.QIcon(path_for("redo.png")))
         self.redo_action.setShortcut(QtGui.QKeySequence.StandardKey.Redo)
+        self.redo_action.setEnabled(False)
+        self.disabled_elements.append(self.redo_action)
 
         self.undo_view_action = QtGui.QAction("Undo &History", self)
         self.undo_view_action.setStatusTip("View undo history")
@@ -110,11 +118,15 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.export_plots_action = QtGui.QAction("Export", self)
         self.export_plots_action.setStatusTip("Export Plots")
         self.export_plots_action.setIcon(QtGui.QIcon(path_for("export-plots.png")))
+        self.export_plots_action.setEnabled(False)
+        self.disabled_elements.append(self.export_plots_action)
 
         self.settings_action = QtGui.QAction("Settings", self)
         self.settings_action.setStatusTip("Settings")
         self.settings_action.setIcon(QtGui.QIcon(path_for("settings.png")))
         self.settings_action.triggered.connect(self.show_settings_dialog)
+        self.settings_action.setEnabled(False)
+        self.disabled_elements.append(self.settings_action)
 
         self.open_help_action = QtGui.QAction("&Help", self)
         self.open_help_action.setStatusTip("Open Documentation")
@@ -131,40 +143,50 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.tile_windows_action.setStatusTip("Arrange windows in the default grid.")
         self.tile_windows_action.setIcon(QtGui.QIcon(path_for("tile.png")))
         self.tile_windows_action.triggered.connect(self.mdi.tileSubWindows)
+        self.tile_windows_action.setEnabled(False)
+        self.disabled_elements.append(self.tile_windows_action)
+
         self.reset_windows_action = QtGui.QAction("Reset to Default")
         self.reset_windows_action.setStatusTip("Reset the windows to their default arrangement.")
         self.reset_windows_action.triggered.connect(self.reset_mdi_layout)
+        self.reset_windows_action.setEnabled(False)
+        self.disabled_elements.append(self.reset_windows_action)
+
         self.save_default_windows_action = QtGui.QAction("Save Current Window Positions")
         self.save_default_windows_action.setStatusTip("Set the current window positions as default.")
         self.save_default_windows_action.triggered.connect(self.save_mdi_layout)
+        self.save_default_windows_action.setEnabled(False)
+        self.disabled_elements.append(self.save_default_windows_action)
 
     def create_menus(self):
         """Creates the main menu and sub menus"""
-        main_menu = self.menuBar()
-        main_menu.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
+        self.main_menu = self.menuBar()
+        self.main_menu.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
 
-        file_menu = main_menu.addMenu("&File")
-        file_menu.addAction(self.new_project_action)
-        file_menu.addSeparator()
-        file_menu.addAction(self.exit_action)
+        self.file_menu = self.main_menu.addMenu("&File")
+        self.file_menu.addAction(self.new_project_action)
+        self.file_menu.addSeparator()
+        self.file_menu.addAction(self.exit_action)
 
-        edit_menu = main_menu.addMenu("&Edit")
+        edit_menu = self.main_menu.addMenu("&Edit")
         edit_menu.addAction(self.undo_action)
         edit_menu.addAction(self.redo_action)
         edit_menu.addAction(self.undo_view_action)
 
         # tools_menu = main_menu.addMenu("&Tools")
 
-        windows_menu = main_menu.addMenu("&Windows")
-        windows_menu.addAction(self.tile_windows_action)
-        windows_menu.addAction(self.reset_windows_action)
-        windows_menu.addAction(self.save_default_windows_action)
+        self.windows_menu = self.main_menu.addMenu("&Windows")
+        self.windows_menu.addAction(self.tile_windows_action)
+        self.windows_menu.addAction(self.reset_windows_action)
+        self.windows_menu.addAction(self.save_default_windows_action)
+        self.windows_menu.setEnabled(False)
+        self.disabled_elements.append(self.windows_menu)
 
-        settings_menu = main_menu.addMenu("&Settings")
-        settings_menu.addAction(self.settings_action)
+        self.settings_menu = self.main_menu.addMenu("&Settings")
+        self.settings_menu.addAction(self.settings_action)
 
-        help_menu = main_menu.addMenu("&Help")
-        help_menu.addAction(self.open_help_action)
+        self.help_menu = self.main_menu.addMenu("&Help")
+        self.help_menu.addAction(self.open_help_action)
 
     def open_docs(self):
         """Opens the documentation"""
@@ -177,6 +199,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.toolbar.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
         self.toolbar.setMovable(False)
         self.toolbar.setEnabled(False)
+        self.disabled_elements.append(self.toolbar)
 
         self.toolbar.addAction(self.new_project_action)
         self.toolbar.addAction(self.open_project_action)
@@ -258,3 +281,10 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         log_path.parents[0].mkdir(parents=True, exist_ok=True)
         self.logging = setup_logging(log_path, level=self.settings.log_level)
+
+    def enable_elements(self):
+        """Enable the elements that are disabled on startup."""
+        for element in self.disabled_elements:
+            element.setEnabled(True)
+        self.disabled_elements = []
+
