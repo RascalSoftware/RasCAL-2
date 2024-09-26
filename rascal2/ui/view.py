@@ -290,4 +290,3 @@ class MainWindowView(QtWidgets.QMainWindow):
         for element in self.disabled_elements:
             element.setEnabled(True)
         self.disabled_elements = []
-

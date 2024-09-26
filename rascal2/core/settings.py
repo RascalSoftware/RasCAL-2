@@ -24,6 +24,7 @@ def get_global_settings() -> QtCore.QSettings:
 
 class SettingsGroups(StrEnum):
     """The groups of the RasCAL-2 settings, used to set tabs in the dialog"""
+
     General = "General"
     Logging = "Logging"
     Windows = "Windows"
@@ -97,7 +98,9 @@ class Settings(BaseModel, validate_assignment=True, arbitrary_types_allowed=True
     log_path: str = Field(default="logs/rascal.log", title=SettingsGroups.Logging, description="Path to Log File")
     log_level: LogLevels = Field(default=LogLevels.Info, title=SettingsGroups.Logging, description="Minimum Log Level")
 
-    mdi_defaults: MDIGeometries = Field(default=None, title=SettingsGroups.Windows, description="Default Window Geometries")
+    mdi_defaults: MDIGeometries = Field(
+        default=None, title=SettingsGroups.Windows, description="Default Window Geometries"
+    )
 
     def model_post_init(self, __context: Any):
         global_settings = get_global_settings()

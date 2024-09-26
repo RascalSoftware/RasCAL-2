@@ -1,9 +1,9 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from PyQt6 import QtWidgets
+from PyQt6 import QtCore, QtWidgets
 
-from rascal2.core.settings import Settings, SettingsGroups
+from rascal2.core.settings import LogLevels, Settings, SettingsGroups
 from rascal2.dialogs.project_dialog import ProjectDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog, SettingsTab
 from rascal2.widgets.inputs import ValidatedInputWidget
@@ -19,6 +19,7 @@ class MockParentWindow(QtWidgets.QMainWindow):
         super().__init__()
         self.presenter = MockPresenter()
         self.settings = Settings(editor_fontsize=15, terminal_fontsize=8)
+        self.save_path = ""
         self.show_project_dialog = MagicMock()
 
 
@@ -164,9 +165,7 @@ def test_settings_dialog_initialisation(settings_dialog_with_parent):
 
     # Check button layout exists with the correct buttons
     button_layout = layout.itemAt(1)
-    for button in [settings_dialog.accept_button,
-                   settings_dialog.cancel_button,
-                   settings_dialog.reset_button]:
+    for button in [settings_dialog.accept_button, settings_dialog.cancel_button, settings_dialog.reset_button]:
         assert button_layout.indexOf(button) != -1
 
 
@@ -175,7 +174,9 @@ def test_settings_dialog_accept_button(settings_dialog_with_parent):
     settings_dialog, parent = settings_dialog_with_parent
     new_font_size = 50
     settings_dialog.settings.editor_fontsize = new_font_size
-    settings_dialog.accept_button.click()
+    with patch.object(Settings, "save") as mock_save:
+        settings_dialog.accept_button.click()
+        mock_save.assert_called_once_with(parent.save_path)
     assert parent.settings.editor_fontsize == new_font_size
     assert settings_dialog.result() == 1
 
@@ -190,21 +191,21 @@ def test_settings_dialog_cancel_button(settings_dialog_with_parent):
 
 
 def test_settings_dialog_reset_button(settings_dialog_with_parent):
-    """Ensure the reset button sets the settings to the global defaults."""
+    """Ensure the reset button changes the settings to the global defaults."""
     settings_dialog, parent = settings_dialog_with_parent
     new_font_size = 50
     settings_dialog.settings.editor_fontsize = new_font_size
-    settings_dialog.settings.terminal_fontsize = new_font_size
     settings_dialog.reset_button.click()
     assert parent.settings == Settings()
     assert settings_dialog.result() == 1
 
 
-@pytest.mark.parametrize("tab_group, settings_labels",
+@pytest.mark.parametrize(
+    "tab_group, settings_labels",
     [
         (SettingsGroups.General, ["style", "editor fontsize", "terminal fontsize"]),
         (SettingsGroups.Logging, ["log path", "log level"]),
-    ]
+    ],
 )
 def test_settings_dialog_tabs(settings_dialog_with_parent, tab_group, settings_labels):
     """Test the settings dialog tabs contain the correct settings"""
@@ -219,5 +220,40 @@ def test_settings_dialog_tabs(settings_dialog_with_parent, tab_group, settings_l
     for row in range(num_rows):
         label = layout.itemAtPosition(row, 0).widget()
         assert isinstance(label, QtWidgets.QLabel)
-        assert label.text() in settings_labels
+        assert label.text() == settings_labels[row]
         assert isinstance(layout.itemAtPosition(row, 1).widget(), ValidatedInputWidget)
+
+
+@pytest.mark.parametrize(
+    "tab_group, test_values",
+    [
+        # Test for non-default style later, when another is added
+        (SettingsGroups.General, {"style": "light", "editor_fontsize": 5, "terminal_fontsize": 5}),
+        (SettingsGroups.Logging, {"log_path": "test_path/test.log", "log_level": LogLevels.Debug}),
+    ],
+)
+def test_settings_dialog_widgets(settings_dialog_with_parent, tab_group, test_values):
+    """Test the widgets are connected to a slot that correctly changes the corresponding setting."""
+    settings_dialog, _ = settings_dialog_with_parent
+    tab = SettingsTab(settings_dialog, tab_group)
+
+    # We block the signal and then emit it later as for some widgets the "edited_signal" signal
+    # is not emitted when changing through "set_data"
+    for setting, widget in tab.widgets.items():
+        widget_value = test_values[setting]
+        with QtCore.QSignalBlocker(widget):
+            try:
+                widget.set_data(widget_value)
+            except TypeError:
+                widget.set_data(str(widget_value))
+                data_input = str(widget_value)
+            else:
+                data_input = widget_value
+
+        # Some signals require the data, some do not
+        try:
+            widget.edited_signal.emit(data_input)
+        except TypeError:
+            widget.edited_signal.emit()
+
+        assert getattr(settings_dialog.settings, setting) == widget_value

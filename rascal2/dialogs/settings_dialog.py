@@ -2,7 +2,7 @@ from typing import Callable
 
 from PyQt6 import QtCore, QtWidgets
 
-from rascal2.core.settings import SettingsGroups, Settings
+from rascal2.core.settings import Settings, SettingsGroups
 from rascal2.widgets.inputs import ValidatedInputWidget
 
 
