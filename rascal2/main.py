@@ -1,3 +1,4 @@
+import logging
 import multiprocessing
 import sys
 
@@ -26,9 +27,16 @@ def ui_execute():
     return app.exec()
 
 
+def log_uncaught_exceptions(exc_type, exc_value, exc_traceback):
+    """Qt slots swallows exceptions but this ensures exceptions are logged"""
+    logging.critical("An unhandled exception occurred!", exc_info=(exc_type, exc_value, exc_traceback))
+    logging.shutdown()
+    sys.exit(1)
+
+
 def main():
     multiprocessing.freeze_support()
-
+    sys.excepthook = log_uncaught_exceptions
     exit_code = ui_execute()
     sys.exit(exit_code)
 
