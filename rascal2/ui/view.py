@@ -56,6 +56,8 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.project_dlg = ProjectDialog(self)
         self.settings_dlg = None
 
+        self.save_path = ""
+
         self.setCentralWidget(self.startup_dlg)
 
     def show_project_dialog(self):
@@ -273,6 +275,7 @@ class MainWindowView(QtWidgets.QMainWindow):
             The save path for the project.
 
         """
+        self.save_path = save_path
         proj_path = pathlib.Path(save_path)
         self.settings = setup_settings(proj_path)
         log_path = pathlib.Path(self.settings.log_path)
