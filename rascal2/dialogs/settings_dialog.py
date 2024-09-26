@@ -1,7 +1,9 @@
-from PyQt6 import QtCore, QtWidgets
 from typing import Callable
 
-from rascal2.core.settings import Settings, SettingsGroups
+from PyQt6 import QtCore, QtWidgets
+
+from rascal2.config import setup_settings
+from rascal2.core.settings import SettingsGroups, Settings
 from rascal2.widgets.inputs import ValidatedInputWidget
 
 
@@ -21,6 +23,7 @@ class SettingsDialog(QtWidgets.QDialog):
         self.setMinimumWidth(400)
 
         self.settings = parent.settings.copy()
+        self.reset_dialog = None
 
         tab_widget = QtWidgets.QTabWidget()
         tab_widget.addTab(SettingsTab(self, SettingsGroups.General), SettingsGroups.General)
@@ -52,8 +55,12 @@ class SettingsDialog(QtWidgets.QDialog):
 
     def reset_default_settings(self) -> None:
         """Reset the settings to the global defaults"""
-        self.parent().settings = Settings()
-        self.accept()
+        if self.reset_dialog is not None:
+            self.reset_dialog.close()
+        self.reset_dialog = ResetDialog(self)
+        self.reset_dialog.show()
+        print(self.settings)
+        print()
 
 
 class SettingsTab(QtWidgets.QWidget):
@@ -74,7 +81,7 @@ class SettingsTab(QtWidgets.QWidget):
         self.widgets = {}
         tab_layout = QtWidgets.QGridLayout()
 
-        field_info = getattr(self.settings, "model_fields")
+        field_info = self.settings.model_fields
         group_settings = [key for (key, value) in field_info.items() if value.title == group]
 
         for i, setting in enumerate(group_settings):
@@ -111,3 +118,56 @@ class SettingsTab(QtWidgets.QWidget):
             setattr(self.settings, setting, self.widgets[setting].get_data())
 
         return modify_setting
+
+
+class ResetDialog(QtWidgets.QDialog):
+    def __init__(self, parent):
+        """
+        Dialog to choose whether to restore the project's RasCAL-2 settings or reset to the global defaults.
+
+        Parameters
+        ----------
+        parent : SettingsDialog
+            The RasCAL-2 settings dialog
+       """
+        super().__init__(parent)
+        #self.settings = self.parent().settings
+
+        self.setModal(True)
+
+        message = QtWidgets.QLabel("Reset the settings to the global defaults or the saved project settings?")
+
+        self.global_button = QtWidgets.QPushButton("Reset to Global Defaults", self)
+        self.global_button.clicked.connect(self.global_settings)
+        self.project_button = QtWidgets.QPushButton("Reset to Project Defaults", self)
+        self.project_button.clicked.connect(self.project_settings)
+        self.cancel_button = QtWidgets.QPushButton("Cancel", self)
+        self.cancel_button.clicked.connect(self.reject)
+
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addWidget(self.global_button)
+        button_layout.addWidget(self.project_button)
+        button_layout.addWidget(self.cancel_button)
+
+        main_layout = QtWidgets.QVBoxLayout()
+        main_layout.addWidget(message)
+        main_layout.addLayout(button_layout)
+        self.setLayout(main_layout)
+        self.setWindowTitle("Reset Default Settings")
+
+    def global_settings(self) -> None:
+        """Reset the settings to the global defaults"""
+        #print(self.settings)
+        print(self.parent().settings)
+        self.parent().settings = Settings()
+        print(self.parent().settings)
+        self.accept()
+
+    def project_settings(self) -> None:
+        """Reset the settings to the project defaults"""
+        #print(self.settings)
+        print(self.parent().settings)
+        save_path = self.parent().parent().presenter.model.save_path
+        self.parent().settings = setup_settings(save_path)
+        print(self.parent().settings)
+        self.accept()
