@@ -7,6 +7,7 @@ from rascal2.core.settings import MDIGeometries, Settings
 from rascal2.dialogs.project_dialog import PROJECT_FILES, LoadDialog, LoadR1Dialog, NewProjectDialog, StartupDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog
 from rascal2.widgets import ControlsWidget, TerminalWidget
+from rascal2.widgets.project import ProjectWidget
 from rascal2.widgets.startup_widget import StartUpWidget
 
 from .presenter import MainWindowPresenter
@@ -40,8 +41,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.controls_widget = ControlsWidget(self)
         self.project_widget = QtWidgets.QWidget()
 
-        self.disabled_elements = []
-
         self.create_actions()
         self.create_menus()
         self.create_toolbar()
@@ -68,6 +67,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         project_dlg = dialog(self)
         if project_dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted and self.centralWidget() is self.startup_dlg:
             self.startup_dlg.show()
+        self.project_widget.initialize_project_mdi()
 
     def show_settings_dialog(self):
         """Shows the settings dialog to adjust program settings"""
