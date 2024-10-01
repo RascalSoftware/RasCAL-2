@@ -307,4 +307,3 @@ class MainWindowView(QtWidgets.QMainWindow):
     def end_run(self):
         """Reset widgets after a run."""
         self.controls_widget.run_button.setChecked(False)
-        self.terminal_widget.progress_bar.setVisible(False)

@@ -75,11 +75,16 @@ class MainWindowPresenter:
             return True
 
     def interrupt_terminal(self):
-        """Sends an interrupt signal to the terminal."""
+        """Sends an interrupt signal to the RAT runner."""
         self.runner.interrupt()
 
     def run(self):
         """Run RAT."""
+        # reset terminal
+        self.view.terminal_widget.progress_bar.setVisible(False)
+        if self.view.settings.clear_terminal:
+            self.view.terminal_widget.clear()
+
         rat_inputs = RAT.inputs.make_input(self.model.project, self.model.controls)
         display_on = self.model.controls.display != RAT.utils.enums.Display.Off
 
@@ -91,15 +96,15 @@ class MainWindowPresenter:
 
     def handle_results(self):
         """Handle a RAT run being finished."""
-        results = self.runner.results
-        self.view.handle_results(results)
+        self.model.update_project(self.runner.updated_problem)
+        self.view.handle_results(self.runner.results)
 
     def handle_interrupt(self):
         """Handle a RAT run being interrupted."""
         if self.runner.error is None:
             self.view.logging.info("RAT run interrupted!")
         else:
-            self.view.logging.critical(f"RAT run failed with exception:\n{self.runner.error}")
+            self.view.logging.error(f"RAT run failed with exception:\n{self.runner.error}")
         self.view.end_run()
 
     def handle_event(self):

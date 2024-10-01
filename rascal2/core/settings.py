@@ -107,8 +107,9 @@ class Settings(BaseModel, validate_assignment=True, arbitrary_types_allowed=True
     editor_fontsize: int = Field(default=12, title=SettingsGroups.General, description="Editor Font Size", gt=0)
     terminal_fontsize: int = Field(default=12, title=SettingsGroups.General, description="Terminal Font Size", gt=0)
 
-    log_path: str = Field(default="logs/rascal.log", title=SettingsGroups.Logging, description="Path to Log File")
-    log_level: LogLevels = Field(default=LogLevels.Info, title=SettingsGroups.Logging, description="Minimum Log Level")
+    log_path: str = Field(default="logs/rascal.log", title="logging", description="Path to Log File")
+    log_level: LogLevels = Field(default=LogLevels.Info, title="logging", description="Minimum Log Level")
+    clear_terminal: bool = Field(default=True, title="logging", description="Clear Terminal when Run Starts")
 
     mdi_defaults: MDIGeometries = Field(
         default=None, title=SettingsGroups.Windows, description="Default Window Geometries"

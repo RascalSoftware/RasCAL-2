@@ -1,9 +1,10 @@
 """Widget for terminal display."""
 
 import logging
-from importlib import metadata
 
 from PyQt6 import QtGui, QtWidgets
+
+from rascal2 import RASCAL2_VERSION
 
 
 class TerminalWidget(QtWidgets.QWidget):
@@ -40,26 +41,40 @@ class TerminalWidget(QtWidgets.QWidget):
         widget_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(widget_layout)
 
-        version = metadata.version("rascal2")
         self.write(
             """
- ███████████                       █████████    █████████   █████      
-░░███░░░░░███                     ███░░░░░███  ███░░░░░███ ░░███       
- ░███    ░███   ██████    █████  ███     ░░░  ░███    ░███  ░███       
- ░██████████   ░░░░░███  ███░░  ░███          ░███████████  ░███       
- ░███░░░░░███   ███████ ░░█████ ░███          ░███░░░░░███  ░███       
+ ███████████                       █████████    █████████   █████
+░░███░░░░░███                     ███░░░░░███  ███░░░░░███ ░░███
+ ░███    ░███   ██████    █████  ███     ░░░  ░███    ░███  ░███
+ ░██████████   ░░░░░███  ███░░  ░███          ░███████████  ░███
+ ░███░░░░░███   ███████ ░░█████ ░███          ░███░░░░░███  ░███
  ░███    ░███  ███░░███  ░░░░███░░███     ███ ░███    ░███  ░███      █
  █████   █████░░████████ ██████  ░░█████████  █████   █████ ███████████
-░░░░░   ░░░░░  ░░░░░░░░ ░░░░░░    ░░░░░░░░░  ░░░░░   ░░░░░ ░░░░░░░░░░░ 
+░░░░░   ░░░░░  ░░░░░░░░ ░░░░░░    ░░░░░░░░░  ░░░░░   ░░░░░ ░░░░░░░░░░░
 """
         )
-        self.write_html(f"<b>RasCAL-2:</b> software for neutron reflectivity calculations <b>v{version}</b>")
+        self.write_html(f"<b>RasCAL-2:</b> software for neutron reflectivity calculations <b>v{RASCAL2_VERSION}</b>")
 
-    def write(self, text):
+    def write(self, text: str):
+        """Append plain text to the terminal.
+
+        Parameters
+        ----------
+        text : str
+            The text to append.
+
+        """
         self.text_area.appendPlainText(text)
 
-    def write_html(self, text):
-        """Append HTML text to the terminal."""
+    def write_html(self, text: str):
+        """Append HTML text to the terminal.
+
+        Parameters
+        ----------
+        text : str
+            The HTML to append.
+
+        """
         self.text_area.appendHtml(text)
 
     def clear(self):

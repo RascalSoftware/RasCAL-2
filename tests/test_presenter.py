@@ -33,6 +33,7 @@ class MockWindowView(QtWidgets.QMainWindow):
         self.handle_results = MagicMock()
         self.end_run = MagicMock()
         self.logging = MagicMock()
+        self.settings = MagicMock()
 
 
 @pytest.fixture
@@ -101,7 +102,7 @@ def test_run_error(presenter):
     presenter.runner = MagicMock()
     presenter.runner.error = ValueError("Test error!")
     presenter.handle_interrupt()
-    presenter.view.logging.critical.assert_called_once_with("RAT run failed with exception:\nTest error!")
+    presenter.view.logging.error.assert_called_once_with("RAT run failed with exception:\nTest error!")
 
 
 @pytest.mark.parametrize(
