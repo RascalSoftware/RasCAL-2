@@ -34,6 +34,7 @@ class MockWindowView(QtWidgets.QMainWindow):
         self.reset_widgets = MagicMock()
         self.logging = MagicMock()
         self.settings = MagicMock()
+        self.get_project_folder = lambda: "new path/"
 
 
 @pytest.fixture
@@ -139,6 +140,7 @@ def test_handle_log_data(presenter):
     presenter.handle_event()
     presenter.view.logging.log.assert_called_with(10, "Test log!")
 
+
 @pytest.mark.parametrize("function", ["create_project", "load_project", "load_r1_project"])
 def test_load_project(presenter, function):
     """All the project initialisation functions should run the corresponding model function and initialise UI."""
@@ -156,7 +158,8 @@ def test_load_project(presenter, function):
     getattr(presenter.model, function).assert_called_once_with(*params)
 
 
-def test_save_project(presenter):
+@patch("rascal2.ui.presenter.update_recent_projects")
+def test_save_project(recent_projects_mock, presenter):
     """Test that projects can be saved, optionally saved as a new folder."""
     presenter.model.save_project = MagicMock()
     presenter.save_project()
@@ -164,6 +167,7 @@ def test_save_project(presenter):
 
     presenter.model.save_project.reset_mock()
 
-    presenter.save_project(to_path="new path/")
+    presenter.save_project(save_as=True)
     assert presenter.model.save_path == "new path/"
     presenter.model.save_project.assert_called_once()
+    recent_projects_mock.assert_called_with("new path/")

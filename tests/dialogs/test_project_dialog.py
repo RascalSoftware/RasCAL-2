@@ -85,7 +85,6 @@ def test_create_button(name, name_valid, folder, folder_valid, other_folder_erro
 
     if name_valid and folder_valid and not other_folder_error:
         mock_create.assert_called_once()
-        assert project_dialog.parent().toolbar.isEnabled()
     else:
         mock_create.assert_not_called()
 

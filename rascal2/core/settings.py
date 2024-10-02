@@ -168,7 +168,7 @@ def global_name(key: str) -> str:
 def update_recent_projects(path: str | None = None) -> list[str]:
     """Update the saved recent project paths.
 
-    Recent projects are stored as a list of the ten most recent, ordered oldest to newest.
+    Recent projects are stored as a list of the ten most recent, ordered newest to oldest.
     Only the most recent three will be visible; the rest are a buffer for projects being
     deleted.
 
@@ -187,16 +187,12 @@ def update_recent_projects(path: str | None = None) -> list[str]:
     if not recent_projects:
         recent_projects = []
 
-    if path is not None:
-        if path in recent_projects:
-            recent_projects.remove(path)
-        recent_projects.append(str(path))
+    new_recent_projects = [str(path)] if path is not None else []
+    for project in reversed(recent_projects):
+        if project != path and Path(project).exists():
+            recent_projects.append(str(project))
 
-    for project in recent_projects:
-        if not Path(project).exists():
-            recent_projects.remove(project)
+    new_recent_projects = new_recent_projects[:10]
 
-    recent_projects = recent_projects[-10:]
-
-    get_global_settings().setValue("internal/recent_projects", recent_projects)
-    return recent_projects
+    get_global_settings().setValue("internal/recent_projects", new_recent_projects)
+    return new_recent_projects

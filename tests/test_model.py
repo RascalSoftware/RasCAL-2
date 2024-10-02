@@ -24,8 +24,7 @@ def test_create_project():
     assert model.save_path == "C:/test"
 
 
-@patch("rascal2.ui.model.update_recent_projects")
-def test_save_project(recent_projects_mock):
+def test_save_project():
     model = MainWindowModel()
     model.controls = Controls(procedure="dream", resampleMinAngle=0.5)
     with TemporaryDirectory() as tmpdir:
@@ -36,7 +35,6 @@ def test_save_project(recent_projects_mock):
 
     assert '"resampleMinAngle":0.5' in controls
     assert '"procedure":"dream"' in controls
-    recent_projects_mock.assert_called_with(tmpdir)
 
 
 def test_load_project():

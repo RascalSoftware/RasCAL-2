@@ -78,34 +78,27 @@ def test_set_enabled(test_view):
     for element in test_view.disabled_elements:
         assert element.isEnabled()
 
+
 @patch("PyQt6.QtWidgets.QFileDialog.getExistingDirectory")
-def test_save_as(mock_get_dir: MagicMock):
-    """Test that saving to a specified folder works as expected."""
+def test_get_project_folder(mock_get_dir: MagicMock):
+    """Test that getting a specified folder works as expected."""
     view = MainWindowView()
-    save_mock = view.presenter.save_project = MagicMock()
     mock_overwrite = MagicMock(return_value=True)
 
     tmp = tempfile.mkdtemp()
     view.presenter.create_project("test", tmp)
     mock_get_dir.return_value = tmp
 
-    with patch("rascal2.ui.view.ConfirmDialog.exec", new=mock_overwrite):
-        view.save_as()
-
-    save_mock.assert_called_once()
-
-    save_mock.reset_mock()
+    with patch("rascal2.ui.view.show_confirm_dialog", new=mock_overwrite):
+        assert view.get_project_folder() == tmp
 
     # check overwrite is triggered if project already in folder
     Path(tmp, "controls.json").touch()
-    with patch("rascal2.ui.view.ConfirmDialog.exec", new=mock_overwrite):
-        view.save_as()
+    with patch("rascal2.ui.view.show_confirm_dialog", new=mock_overwrite):
+        assert view.get_project_folder() == tmp
     mock_overwrite.assert_called_once()
-    save_mock.assert_called_once()
 
-    save_mock.reset_mock()
-
-    def change_dir():
+    def change_dir(*args, **kwargs):
         """Change directory so mocked save_as doesn't recurse forever."""
         mock_get_dir.return_value = "OTHERPATH"
 
@@ -114,8 +107,7 @@ def test_save_as(mock_get_dir: MagicMock):
     # set the mock to change the directory to some other path once called
     mock_overwrite = MagicMock(return_value=False, side_effect=change_dir)
 
-    with patch("rascal2.ui.view.ConfirmDialog.exec", new=mock_overwrite):
-        view.save_as()
+    with patch("rascal2.ui.view.show_confirm_dialog", new=mock_overwrite):
+        assert view.get_project_folder() == "OTHERPATH"
 
     mock_overwrite.assert_called_once()
-    save_mock.assert_called_once_with(to_path="OTHERPATH")

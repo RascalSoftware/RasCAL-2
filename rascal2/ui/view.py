@@ -1,14 +1,12 @@
 from pathlib import Path
-from typing import Literal
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from rascal2.config import path_for, setup_logging, setup_settings
 from rascal2.core.settings import MDIGeometries, Settings
-from rascal2.dialogs.project_dialog import PROJECT_FILES, LoadDialog, LoadR1Dialog, NewProjectDialog
+from rascal2.dialogs.project_dialog import PROJECT_FILES, LoadDialog, LoadR1Dialog, NewProjectDialog, StartupDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog
 from rascal2.widgets import ControlsWidget, TerminalWidget
-from rascal2.dialogs.confirm import ConfirmDialog
 from rascal2.widgets.startup_widget import StartUpWidget
 
 from .presenter import MainWindowPresenter
@@ -56,20 +54,18 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.startup_dlg = StartUpWidget(self)
         self.setCentralWidget(self.startup_dlg)
 
-    def show_project_dialog(self, type: Literal["new", "load", "r1"]):
+    def show_project_dialog(self, dialog: StartupDialog):
         """Shows a startup dialog of a given type.
 
         Parameters
         ----------
-        type : Literal['new', 'load', 'r1']
-            Which type of dialog to display (new project, load project, load R1 project)
+        dialog : StartupDialog
+            The dialog to show.
         """
         if self.startup_dlg.isVisible():
             self.startup_dlg.hide()
 
-        dialogs = {"new": NewProjectDialog, "load": LoadDialog, "r1": LoadR1Dialog}
-
-        project_dlg = dialogs[type](self)
+        project_dlg = dialog(self)
         if project_dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted and self.centralWidget() is self.startup_dlg:
             self.startup_dlg.show()
 
@@ -84,23 +80,23 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.new_project_action = QtGui.QAction("&New Project", self)
         self.new_project_action.setStatusTip("Create a new project")
         self.new_project_action.setIcon(QtGui.QIcon(path_for("new-project.png")))
-        self.new_project_action.triggered.connect(lambda: self.show_project_dialog("new"))
+        self.new_project_action.triggered.connect(lambda: self.show_project_dialog(NewProjectDialog))
         self.new_project_action.setShortcut(QtGui.QKeySequence.StandardKey.New)
 
         self.open_project_action = QtGui.QAction("&Open Project", self)
         self.open_project_action.setStatusTip("Open an existing project")
         self.open_project_action.setIcon(QtGui.QIcon(path_for("browse-dark.png")))
-        self.open_project_action.triggered.connect(lambda: self.show_project_dialog("load"))
+        self.open_project_action.triggered.connect(lambda: self.show_project_dialog(LoadDialog))
         self.open_project_action.setShortcut(QtGui.QKeySequence.StandardKey.Open)
 
         self.open_r1_action = QtGui.QAction("Open &RasCAL-1 Project")
         self.open_r1_action.setStatusTip("Open a RasCAL-1 project")
-        self.open_r1_action.triggered.connect(lambda: self.show_project_dialog("r1"))
+        self.open_r1_action.triggered.connect(lambda: self.show_project_dialog(LoadR1Dialog))
 
         self.save_project_action = QtGui.QAction("&Save", self)
         self.save_project_action.setStatusTip("Save project")
         self.save_project_action.setIcon(QtGui.QIcon(path_for("save-project.png")))
-        self.save_project_action.triggered.connect(self.presenter.save_project)
+        self.save_project_action.triggered.connect(lambda: self.presenter.save_project())
         self.save_project_action.setShortcut(QtGui.QKeySequence.StandardKey.Save)
         self.save_project_action.setEnabled(False)
         self.disabled_elements.append(self.save_project_action)
@@ -115,11 +111,8 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.save_as_action = QtGui.QAction("Save To &Folder...", self)
         self.save_as_action.setStatusTip("Save project to a specified folder.")
         self.save_as_action.setIcon(QtGui.QIcon(path_for("save-project.png")))
-        self.save_as_action.triggered.connect(self.save_as)
+        self.save_as_action.triggered.connect(lambda: self.presenter.save_project(save_as=True))
         self.save_as_action.setShortcut(QtGui.QKeySequence.StandardKey.SaveAs)
-
-        self.undo_action = QtGui.QAction("&Undo", self)
-        self.undo_action.setStatusTip("Undo")
 
         self.redo_action = self.undo_stack.createRedoAction(self, "&Redo")
         self.redo_action.setStatusTip("Redo the last undone action")
@@ -194,13 +187,13 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.main_menu.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
 
         self.file_menu = self.main_menu.addMenu("&File")
-        file_menu.addAction(self.new_project_action)
-        file_menu.addSeparator()
-        file_menu.addAction(self.open_project_action)
-        file_menu.addAction(self.open_r1_action)
-        file_menu.addSeparator()
-        file_menu.addAction(self.save_project_action)
-        file_menu.addAction(self.save_as_action)
+        self.file_menu.addAction(self.new_project_action)
+        self.file_menu.addSeparator()
+        self.file_menu.addAction(self.open_project_action)
+        self.file_menu.addAction(self.open_r1_action)
+        self.file_menu.addSeparator()
+        self.file_menu.addAction(self.save_project_action)
+        self.file_menu.addAction(self.save_as_action)
         self.file_menu.addSeparator()
         self.file_menu.addAction(self.settings_action)
         self.file_menu.addSeparator()
@@ -339,19 +332,46 @@ class MainWindowView(QtWidgets.QMainWindow):
         """Reset widgets after a run."""
         self.controls_widget.run_button.setChecked(False)
 
-    def save_as(self):
-        """Save a project to a specified folder."""
+    def get_project_folder(self) -> str:
+        """Get a specified folder from the user.
+
+        Returns
+        -------
+        str
+            The chosen project folder.
+        """
         project_folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder")
         if project_folder:
             if any(Path(project_folder, file).exists() for file in PROJECT_FILES):
-                overwrite_dlg = ConfirmDialog(
+                overwrite = show_confirm_dialog(
                     title="Confirm Overwrite",
                     text="A project already exists in this folder, do you want to replace it?",
                     parent=self,
                 )
-                if not overwrite_dlg.exec():
+                if not overwrite:
                     # return to file selection
-                    self.save_as()
-                    return  # must manually return else all the rejected overwrites will save at once!!
+                    project_folder = self.get_project_folder()
+                    return project_folder  # must manually return else all the rejected overwrites will save at once!!
 
-            self.presenter.save_project(to_path=project_folder)
+            return project_folder
+
+
+def show_confirm_dialog(self, title: str, message: str) -> bool:
+    """Ask the user to confirm an action.
+
+    Parameters
+    ----------
+    title : str
+        The title of the confirm dialog.
+    message : str
+        The message to ask the user.
+
+    Returns
+    -------
+    bool
+        Whether the confirmation was affirmative.
+    """
+    buttons = QtWidgets.QMessageBox.StandardButton.Ok | QtWidgets.QMessageBox.StandardButton.Cancel
+    reply = QtWidgets.QMessageBox.question(self, title, message, buttons, QtWidgets.QMessageBox.StandardButton.Cancel)
+
+    return reply == QtWidgets.QMessageBox.StandardButton.Ok

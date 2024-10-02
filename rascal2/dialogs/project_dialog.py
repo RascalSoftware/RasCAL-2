@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from PyQt6 import QtCore, QtGui, QtWidgets
@@ -171,6 +172,8 @@ class NewProjectDialog(StartupDialog):
     """The dialog to create a new project."""
 
     def create_form(self) -> list[QtWidgets.QWidget | QtWidgets.QLayout]:
+        self.setWindowTitle("New Project")
+
         # Project name widgets
         self.project_name_label = QtWidgets.QLabel("Project Name:", self)
         self.project_name_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
@@ -202,6 +205,8 @@ class NewProjectDialog(StartupDialog):
 
     @staticmethod
     def verify_folder(folder_path: str) -> None:
+        if not os.access(folder_path, os.W_OK) and os.access(folder_path, os.R_OK):
+            raise ValueError("You do not have permission to access this folder.")
         if any(Path(folder_path, file).exists() for file in PROJECT_FILES):
             raise ValueError("Folder already contains a project.")
 
@@ -229,9 +234,10 @@ class LoadDialog(StartupDialog):
     """Dialog to load an existing project."""
 
     def create_form(self) -> list[QtWidgets.QWidget | QtWidgets.QLayout]:
+        self.setWindowTitle("Load Project")
+
         recent_projects = update_recent_projects()
-        recent_projects.reverse()
-        recent_projects = recent_projects[0:3]
+        recent_projects = recent_projects[:3]
 
         if not recent_projects:
             return super().create_form()
@@ -274,6 +280,8 @@ class LoadDialog(StartupDialog):
 
     @staticmethod
     def verify_folder(folder_path: str):
+        if not os.access(folder_path, os.W_OK) and os.access(folder_path, os.R_OK):
+            raise ValueError("You do not have permission to access this folder.")
         if not all(Path(folder_path, file).exists() for file in PROJECT_FILES):
             raise ValueError("No project found in this folder.")
 
@@ -303,6 +311,8 @@ class LoadR1Dialog(StartupDialog):
         super().__init__(parent)
 
     def create_form(self):
+        self.setWindowTitle("Load RasCAL-1 Project")
+
         form = super().create_form()
         self.project_folder_label.setText("RasCAL-1 file:")
         self.project_folder.setPlaceholderText("Select RasCAL-1 file")
@@ -316,6 +326,13 @@ class LoadR1Dialog(StartupDialog):
         load_button.setStyleSheet(self._button_style.format("#0D69BB"))
 
         return [load_button] + super().create_buttons()
+
+    @staticmethod
+    def verify_folder(file_path: str):
+        if not os.access(file_path, os.R_OK):
+            raise ValueError("You do not have permission to read this RasCAL-1 project.")
+        if not os.access(Path(file_path).parent(), os.W_OK):
+            raise ValueError("You do not have permission to create a project in this folder.")
 
     def load_project(self):
         """Load the project if inputs are valid."""
