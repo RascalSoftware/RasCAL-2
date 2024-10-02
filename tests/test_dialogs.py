@@ -195,7 +195,9 @@ def test_settings_dialog_reset_button(settings_dialog_with_parent):
     settings_dialog, parent = settings_dialog_with_parent
     new_font_size = 50
     settings_dialog.settings.editor_fontsize = new_font_size
-    settings_dialog.reset_button.click()
+    with patch("rascal2.dialogs.settings_dialog.delete_local_settings") as mock_delete:
+        settings_dialog.reset_button.click()
+        mock_delete.assert_called_once_with(parent.save_path)
     assert parent.settings == Settings()
     assert settings_dialog.result() == 1
 
@@ -203,8 +205,8 @@ def test_settings_dialog_reset_button(settings_dialog_with_parent):
 @pytest.mark.parametrize(
     "tab_group, settings_labels",
     [
-        (SettingsGroups.General, ["style", "editor fontsize", "terminal fontsize"]),
-        (SettingsGroups.Logging, ["log path", "log level"]),
+        (SettingsGroups.General, ["Style", "Editor Fontsize", "Terminal Fontsize"]),
+        (SettingsGroups.Logging, ["Log Path", "Log Level"]),
     ],
 )
 def test_settings_dialog_tabs(settings_dialog_with_parent, tab_group, settings_labels):

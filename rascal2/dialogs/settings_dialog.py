@@ -2,7 +2,7 @@ from typing import Callable
 
 from PyQt6 import QtCore, QtWidgets
 
-from rascal2.core.settings import Settings, SettingsGroups
+from rascal2.core.settings import Settings, SettingsGroups, delete_local_settings
 from rascal2.widgets.inputs import ValidatedInputWidget
 
 
@@ -19,10 +19,13 @@ class SettingsDialog(QtWidgets.QDialog):
         super().__init__(parent)
 
         self.setModal(True)
-        self.setMinimumWidth(400)
+        self.setMinimumWidth(600)
+        self.setMinimumHeight(400)
 
         self.settings = parent.settings.copy()
         self.reset_dialog = None
+
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
 
         tab_widget = QtWidgets.QTabWidget()
         tab_widget.addTab(SettingsTab(self, SettingsGroups.General), SettingsGroups.General)
@@ -49,12 +52,14 @@ class SettingsDialog(QtWidgets.QDialog):
 
     def update_settings(self) -> None:
         """Accept the changed settings"""
-        self.parent().settings = self.settings.copy()
+        self.parent().settings = self.settings
         self.parent().settings.save(self.parent().save_path)
+        # self.parent().settings.save(self.parent().presenter.model.save_path)
         self.accept()
 
     def reset_default_settings(self) -> None:
         """Reset the settings to the global defaults"""
+        delete_local_settings(self.parent().save_path)
         self.parent().settings = Settings()
         self.accept()
 
@@ -81,18 +86,31 @@ class SettingsTab(QtWidgets.QWidget):
         group_settings = [key for (key, value) in field_info.items() if value.title == group]
 
         for i, setting in enumerate(group_settings):
-            label_text = setting.replace("_", " ")
+            label_text = setting.replace("_", " ").title()
             tab_layout.addWidget(QtWidgets.QLabel(label_text), i, 0)
             self.widgets[setting] = ValidatedInputWidget(field_info[setting])
             try:
                 self.widgets[setting].set_data(getattr(self.settings, setting))
             except TypeError:
                 self.widgets[setting].set_data(str(getattr(self.settings, setting)))
+            # self.widgets[setting].edited_signal.connect(lambda s: self.modify_setting(s))
             self.widgets[setting].edited_signal.connect(self.create_slot(setting))
             tab_layout.addWidget(self.widgets[setting], i, 1)
 
         tab_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
         self.setLayout(tab_layout)
+
+    def modify_setting(self, setting: str):
+        """A slot that updates the given setting in the dialog's copy of the Settings object.
+
+        Connect this (via a lambda) to the "edited_signal" of the corresponding widget.
+
+        Parameters
+        ----------
+        setting : str
+            The name of the setting to be modified by this slot
+        """
+        setattr(self.settings, setting, self.widgets[setting].get_data())
 
     def create_slot(self, setting: str) -> Callable:
         """Returns a slot that updates the given setting in the dialog's copy of the Settings object.

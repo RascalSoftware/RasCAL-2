@@ -3,7 +3,7 @@
 import logging
 from enum import IntEnum, StrEnum
 from os import PathLike
-from pathlib import PurePath
+from pathlib import Path, PurePath
 from typing import Any, TypeAlias
 
 from pydantic import BaseModel, Field
@@ -20,6 +20,18 @@ def get_global_settings() -> QtCore.QSettings:
         "RasCAL-2",
         "RasCAL-2",
     )
+
+
+def delete_local_settings(path: str | PathLike) -> None:
+    """Delete the "settings.json" file.
+
+    Parameters
+    ----------
+    path: str or PathLike
+        The path to the folder where settings will be saved.
+    """
+    file = Path(path, "settings.json")
+    file.unlink(missing_ok=True)
 
 
 class SettingsGroups(StrEnum):

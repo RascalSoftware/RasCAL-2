@@ -54,7 +54,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.settings = Settings()
         self.startup_dlg = StartUpWidget(self)
         self.project_dlg = ProjectDialog(self)
-        self.settings_dlg = None
 
         self.save_path = ""
 
@@ -73,10 +72,8 @@ class MainWindowView(QtWidgets.QMainWindow):
 
     def show_settings_dialog(self):
         """Shows the settings dialog to adjust program settings"""
-        if self.settings_dlg is not None:
-            self.settings_dlg.close()
-        self.settings_dlg = SettingsDialog(self)
-        self.settings_dlg.show()
+        settings_dlg = SettingsDialog(self)
+        settings_dlg.show()
 
     def create_actions(self):
         """Creates the menu and toolbar actions"""
@@ -116,6 +113,8 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.undo_view_action = QtGui.QAction("Undo &History", self)
         self.undo_view_action.setStatusTip("View undo history")
         self.undo_view_action.triggered.connect(self.undo_view.show)
+        self.undo_view_action.setEnabled(False)
+        self.disabled_elements.append(self.undo_view_action)
 
         self.export_plots_action = QtGui.QAction("Export", self)
         self.export_plots_action.setStatusTip("Export Plots")
@@ -129,6 +128,12 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.settings_action.triggered.connect(self.show_settings_dialog)
         self.settings_action.setEnabled(False)
         self.disabled_elements.append(self.settings_action)
+
+        self.export_plots_action = QtGui.QAction("Export", self)
+        self.export_plots_action.setStatusTip("Export Plots")
+        self.export_plots_action.setIcon(QtGui.QIcon(path_for("export-plots.png")))
+        self.export_plots_action.setEnabled(False)
+        self.disabled_elements.append(self.export_plots_action)
 
         self.open_help_action = QtGui.QAction("&Help", self)
         self.open_help_action.setStatusTip("Open Documentation")
@@ -168,6 +173,8 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.file_menu = self.main_menu.addMenu("&File")
         self.file_menu.addAction(self.new_project_action)
         self.file_menu.addSeparator()
+        self.file_menu.addAction(self.settings_action)
+        self.file_menu.addSeparator()
         self.file_menu.addAction(self.exit_action)
 
         edit_menu = self.main_menu.addMenu("&Edit")
@@ -184,9 +191,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.windows_menu.setEnabled(False)
         self.disabled_elements.append(self.windows_menu)
 
-        self.settings_menu = self.main_menu.addMenu("&Settings")
-        self.settings_menu.addAction(self.settings_action)
-
         self.help_menu = self.main_menu.addMenu("&Help")
         self.help_menu.addAction(self.open_help_action)
 
@@ -200,8 +204,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.toolbar = self.addToolBar("ToolBar")
         self.toolbar.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
         self.toolbar.setMovable(False)
-        self.toolbar.setEnabled(False)
-        self.disabled_elements.append(self.toolbar)
 
         self.toolbar.addAction(self.new_project_action)
         self.toolbar.addAction(self.open_project_action)

@@ -1,6 +1,6 @@
 """Widget for validated user inputs."""
 
-from enum import Enum, StrEnum
+from enum import Enum
 from math import floor, log10
 from typing import Callable
 
@@ -39,10 +39,7 @@ class ValidatedInputWidget(QtWidgets.QWidget):
 
         if issubclass(field_info.annotation, Enum):
             self.editor = QtWidgets.QComboBox(self)
-            if isinstance(field_info.annotation, StrEnum):
-                self.editor.addItems(str(e.value) for e in field_info.annotation)
-            else:
-                self.editor.addItems(str(e) for e in field_info.annotation)
+            self.editor.addItems(str(e) for e in field_info.annotation)
             self.get_data = self.editor.currentText
             self.set_data = self.editor.setCurrentText
             self.edited_signal = self.editor.currentTextChanged
