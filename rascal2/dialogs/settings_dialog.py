@@ -1,5 +1,3 @@
-from typing import Callable
-
 from PyQt6 import QtCore, QtWidgets
 
 from rascal2.core.settings import Settings, SettingsGroups, delete_local_settings
@@ -53,13 +51,12 @@ class SettingsDialog(QtWidgets.QDialog):
     def update_settings(self) -> None:
         """Accept the changed settings"""
         self.parent().settings = self.settings
-        self.parent().settings.save(self.parent().save_path)
-        # self.parent().settings.save(self.parent().presenter.model.save_path)
+        self.parent().settings.save(self.parent().presenter.model.save_path)
         self.accept()
 
     def reset_default_settings(self) -> None:
         """Reset the settings to the global defaults"""
-        delete_local_settings(self.parent().save_path)
+        delete_local_settings(self.parent().presenter.model.save_path)
         self.parent().settings = Settings()
         self.accept()
 
@@ -93,8 +90,7 @@ class SettingsTab(QtWidgets.QWidget):
                 self.widgets[setting].set_data(getattr(self.settings, setting))
             except TypeError:
                 self.widgets[setting].set_data(str(getattr(self.settings, setting)))
-            # self.widgets[setting].edited_signal.connect(lambda s: self.modify_setting(s))
-            self.widgets[setting].edited_signal.connect(self.create_slot(setting))
+            self.widgets[setting].edited_signal.connect(lambda ignore=None, s=setting: self.modify_setting(s))
             tab_layout.addWidget(self.widgets[setting], i, 1)
 
         tab_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
@@ -111,24 +107,3 @@ class SettingsTab(QtWidgets.QWidget):
             The name of the setting to be modified by this slot
         """
         setattr(self.settings, setting, self.widgets[setting].get_data())
-
-    def create_slot(self, setting: str) -> Callable:
-        """Returns a slot that updates the given setting in the dialog's copy of the Settings object.
-
-        Connect this to the "edited_signal" of the corresponding widget.
-
-        Parameters
-        ----------
-        setting : str
-            The name of the setting to be modified by this slot
-
-        Returns
-        -------
-        modify_setting : Callable
-            A slot to update the value of the given setting
-        """
-
-        def modify_setting():
-            setattr(self.settings, setting, self.widgets[setting].get_data())
-
-        return modify_setting

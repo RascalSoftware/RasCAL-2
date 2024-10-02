@@ -10,6 +10,11 @@ from rascal2.widgets.inputs import ValidatedInputWidget
 
 
 class MockPresenter(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.model = MagicMock()
+        self.model.save_path = ""
+
     def create_project(self, name: str, folder: str):
         pass
 
