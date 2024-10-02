@@ -27,7 +27,6 @@ class SettingsDialog(QtWidgets.QDialog):
 
         tab_widget = QtWidgets.QTabWidget()
         tab_widget.addTab(SettingsTab(self, SettingsGroups.General), SettingsGroups.General)
-        tab_widget.addTab(SettingsTab(self, SettingsGroups.Logging), SettingsGroups.Logging)
 
         self.reset_button = QtWidgets.QPushButton("Reset to Defaults", self)
         self.reset_button.clicked.connect(self.reset_default_settings)

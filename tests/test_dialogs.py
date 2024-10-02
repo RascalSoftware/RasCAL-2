@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from PyQt6 import QtCore, QtWidgets
 
-from rascal2.core.settings import LogLevels, Settings, SettingsGroups
+from rascal2.core.settings import Settings, SettingsGroups
 from rascal2.dialogs.project_dialog import ProjectDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog, SettingsTab
 from rascal2.widgets.inputs import ValidatedInputWidget
@@ -166,7 +166,7 @@ def test_settings_dialog_initialisation(settings_dialog_with_parent):
     # Check tab layout exists with the correct number of tabs
     tab_layout = layout.itemAt(0).widget()
     assert isinstance(tab_layout, QtWidgets.QTabWidget)
-    assert tab_layout.count() == 2
+    assert tab_layout.count() == 1
 
     # Check button layout exists with the correct buttons
     button_layout = layout.itemAt(1)
@@ -211,7 +211,6 @@ def test_settings_dialog_reset_button(settings_dialog_with_parent):
     "tab_group, settings_labels",
     [
         (SettingsGroups.General, ["Style", "Editor Fontsize", "Terminal Fontsize"]),
-        (SettingsGroups.Logging, ["Log Path", "Log Level"]),
     ],
 )
 def test_settings_dialog_tabs(settings_dialog_with_parent, tab_group, settings_labels):
@@ -236,7 +235,6 @@ def test_settings_dialog_tabs(settings_dialog_with_parent, tab_group, settings_l
     [
         # Test for non-default style later, when another is added
         (SettingsGroups.General, {"style": "light", "editor_fontsize": 5, "terminal_fontsize": 5}),
-        (SettingsGroups.Logging, {"log_path": "test_path/test.log", "log_level": LogLevels.Debug}),
     ],
 )
 def test_settings_dialog_widgets(settings_dialog_with_parent, tab_group, test_values):
