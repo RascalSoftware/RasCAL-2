@@ -55,8 +55,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.startup_dlg = StartUpWidget(self)
         self.project_dlg = ProjectDialog(self)
 
-        self.save_path = ""
-
         self.setCentralWidget(self.startup_dlg)
 
     def show_project_dialog(self):
