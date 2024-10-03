@@ -9,7 +9,7 @@ from rascal2.dialogs.settings_dialog import SettingsDialog, SettingsTab
 from rascal2.widgets.inputs import ValidatedInputWidget
 
 
-class MockPresenter(QtWidgets.QMainWindow):
+class MockPresenter:
     def __init__(self):
         super().__init__()
         self.model = MagicMock()

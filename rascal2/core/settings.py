@@ -28,7 +28,7 @@ def delete_local_settings(path: str | PathLike) -> None:
     Parameters
     ----------
     path: str or PathLike
-        The path to the folder where settings will be saved.
+        The path to the folder where the settings are saved.
     """
     file = Path(path, "settings.json")
     file.unlink(missing_ok=True)
