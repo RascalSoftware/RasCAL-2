@@ -190,9 +190,10 @@ def update_recent_projects(path: str | None = None) -> list[str]:
     new_recent_projects = [str(path)] if path is not None else []
     for project in reversed(recent_projects):
         if project != path and Path(project).exists():
-            recent_projects.append(str(project))
+            new_recent_projects.append(str(project))
 
     new_recent_projects = new_recent_projects[:10]
 
     get_global_settings().setValue("internal/recent_projects", new_recent_projects)
+    print(get_global_settings().value("internal/recent_projects"))
     return new_recent_projects
