@@ -56,8 +56,6 @@ class RATRunner(QtCore.QObject):
                 self.error = item
                 self.stopped.emit()
             else:  # else, assume item is an event
-                if isinstance(item, str):
-                    item.rstrip()
                 self.events.append(item)
                 self.event_received.emit()
 

@@ -105,7 +105,7 @@ class MainWindowPresenter:
             self.view.logging.info("RAT run interrupted!")
         else:
             self.view.logging.error(f"RAT run failed with exception:\n{self.runner.error}")
-        self.view.end_run()
+        self.view.reset_widgets()
 
     def handle_event(self):
         """Handle event data produced by the RAT run."""

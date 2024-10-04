@@ -31,7 +31,7 @@ class MockWindowView(QtWidgets.QMainWindow):
         self.controls_widget = MagicMock()
         self.terminal_widget = MagicMock()
         self.handle_results = MagicMock()
-        self.end_run = MagicMock()
+        self.reset_widgets = MagicMock()
         self.logging = MagicMock()
         self.settings = MagicMock()
 
@@ -94,7 +94,7 @@ def test_stop_run(presenter):
     presenter.runner.error = None
     presenter.handle_interrupt()
     presenter.view.logging.info.assert_called_once_with("RAT run interrupted!")
-    presenter.view.end_run.assert_called_once()
+    presenter.view.reset_widgets.assert_called_once()
 
 
 def test_run_error(presenter):

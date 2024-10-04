@@ -1,7 +1,5 @@
 """Widget for terminal display."""
 
-import logging
-
 from PyQt6 import QtGui, QtWidgets
 
 from rascal2 import RASCAL2_VERSION
@@ -21,14 +19,9 @@ class TerminalWidget(QtWidgets.QWidget):
         self.text_area.setFont(font)
         self.text_area.setLineWrapMode(self.text_area.LineWrapMode.NoWrap)
 
-        self.logger = logging.getLogger("log")
-
         widget_layout = QtWidgets.QVBoxLayout()
 
-        self.scroll_text = QtWidgets.QScrollArea()
-        self.scroll_text.setWidget(self.text_area)
-        self.scroll_text.setWidgetResizable(True)
-        widget_layout.addWidget(self.scroll_text)
+        widget_layout.addWidget(self.text_area)
 
         self.progress_bar = QtWidgets.QProgressBar()
         self.progress_bar.setMaximumHeight(15)
@@ -53,7 +46,10 @@ class TerminalWidget(QtWidgets.QWidget):
 ░░░░░   ░░░░░  ░░░░░░░░ ░░░░░░    ░░░░░░░░░  ░░░░░   ░░░░░ ░░░░░░░░░░░
 """
         )
-        self.write_html(f"<b>RasCAL-2:</b> software for neutron reflectivity calculations <b>v{RASCAL2_VERSION}</b>")
+        self.write_html(f"\n<b>RasCAL-2:</b> software for neutron reflectivity calculations <b>v{RASCAL2_VERSION}</b>")
+
+        # set text area to be scrolled to the left at start
+        self.text_area.moveCursor(QtGui.QTextCursor.MoveOperation.StartOfLine, QtGui.QTextCursor.MoveMode.MoveAnchor)
 
     def write(self, text: str):
         """Append plain text to the terminal.
@@ -64,7 +60,7 @@ class TerminalWidget(QtWidgets.QWidget):
             The text to append.
 
         """
-        self.text_area.appendPlainText(text)
+        self.text_area.appendPlainText(text.rstrip())
 
     def write_html(self, text: str):
         """Append HTML text to the terminal.
@@ -75,7 +71,7 @@ class TerminalWidget(QtWidgets.QWidget):
             The HTML to append.
 
         """
-        self.text_area.appendHtml(text)
+        self.text_area.appendHtml(text.rstrip())
 
     def clear(self):
         """Clear the text in the terminal."""

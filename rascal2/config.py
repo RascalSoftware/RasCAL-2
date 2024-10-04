@@ -5,7 +5,6 @@ import sys
 from os import PathLike
 
 from rascal2.core import Settings, get_global_settings
-from rascal2.widgets import TerminalWidget
 
 SOURCE_PATH = pathlib.Path(__file__).parent
 STATIC_PATH = SOURCE_PATH / "static"
