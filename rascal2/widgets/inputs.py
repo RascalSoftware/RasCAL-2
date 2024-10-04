@@ -50,13 +50,17 @@ class BaseInputWidget(QtWidgets.QWidget):
 
     """
 
+    data_getter = "text"
+    data_setter = "setText"
+    edit_signal = "textChanged"
+
     def __init__(self, field_info: FieldInfo, parent=None):
         super().__init__(parent=parent)
 
-        self.editor = self.create_editor(field_info)
-        self.get_data = self.data_getter()
-        self.set_data = self.data_setter()
-        self.edited_signal = self.edit_signal()
+        self.editor: QtWidgets.QWidget = self.create_editor(field_info)
+        self.get_data: Callable = getattr(self.editor, self.data_getter)
+        self.set_data: Callable = getattr(self.editor, self.data_setter)
+        self.edited_signal: QtCore.pyqtSignal = getattr(self.editor, self.edit_signal)
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.editor)
@@ -81,21 +85,13 @@ class BaseInputWidget(QtWidgets.QWidget):
         """
         return QtWidgets.QLineEdit(self)
 
-    def data_getter(self) -> Callable:
-        """The data getter function for the editor."""
-        return self.editor.text
-
-    def data_setter(self) -> Callable:
-        """The data setter function for the editor."""
-        return self.editor.setText
-
-    def edit_signal(self) -> QtCore.pyqtSignal:
-        """The signal produced when the editor data changes."""
-        return self.editor.textChanged
-
 
 class IntInputWidget(BaseInputWidget):
     """Input widget for integer data with optional minimum and maximum values."""
+
+    data_getter = "value"
+    data_setter = "setValue"
+    edit_signal = "editingFinished"
 
     def create_editor(self, field_info: FieldInfo) -> QtWidgets.QWidget:
         editor = QtWidgets.QSpinBox(self)
@@ -111,18 +107,13 @@ class IntInputWidget(BaseInputWidget):
 
         return editor
 
-    def data_getter(self) -> Callable:
-        return self.editor.value
-
-    def data_setter(self) -> Callable:
-        return self.editor.setValue
-
-    def edit_signal(self) -> QtCore.pyqtSignal:
-        return self.editor.editingFinished
-
 
 class FloatInputWidget(BaseInputWidget):
     """Input widget for float data with optional minimum and maximum values."""
+
+    data_getter = "value"
+    data_setter = "setValue"
+    edit_signal = "editingFinished"
 
     def create_editor(self, field_info: FieldInfo) -> QtWidgets.QWidget:
         editor = AdaptiveDoubleSpinBox(self)
@@ -140,49 +131,30 @@ class FloatInputWidget(BaseInputWidget):
 
         return editor
 
-    def data_getter(self) -> Callable:
-        return self.editor.value
-
-    def data_setter(self) -> Callable:
-        return self.editor.setValue
-
-    def edit_signal(self) -> QtCore.pyqtSignal:
-        return self.editor.editingFinished
-
 
 class BoolInputWidget(BaseInputWidget):
     """Input widget for boolean data."""
 
+    data_getter = "isChecked"
+    data_setter = "setChecked"
+    edit_signal = "checkStateChanged"
+
     def create_editor(self, field_info: FieldInfo) -> QtWidgets.QWidget:
         return QtWidgets.QCheckBox(self)
-
-    def data_getter(self) -> Callable:
-        return self.editor.isChecked
-
-    def data_setter(self) -> Callable:
-        return self.editor.setChecked
-
-    def edit_signal(self) -> QtCore.pyqtSignal:
-        return self.editor.checkStateChanged
 
 
 class EnumInputWidget(BaseInputWidget):
     """Input widget for Enums."""
+
+    data_getter = "currentText"
+    data_setter = "setCurrentText"
+    edit_signal = "currentTextChanged"
 
     def create_editor(self, field_info: FieldInfo) -> QtWidgets.QWidget:
         editor = QtWidgets.QComboBox(self)
         editor.addItems(str(e) for e in field_info.annotation)
 
         return editor
-
-    def data_getter(self) -> Callable:
-        return self.editor.currentText
-
-    def data_setter(self) -> Callable:
-        return self.editor.setCurrentText
-
-    def edit_signal(self) -> QtCore.pyqtSignal:
-        return self.editor.currentTextChanged
 
 
 class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
