@@ -41,6 +41,10 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.controls_widget = ControlsWidget(self)
         self.project_widget = ProjectWidget(self)
 
+        self.presenter.model.update_project_view.connect(self.project_widget.update_model_project_view)
+
+        self.disabled_elements = []
+
         self.create_actions()
         self.create_menus()
         self.create_toolbar()
@@ -51,9 +55,6 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         self.settings = Settings()
         self.startup_dlg = StartUpWidget(self)
-
-        self.presenter.model.update_project_view.connect(self.project_widget.update_model_project_view)
-
         self.setCentralWidget(self.startup_dlg)
 
     def show_project_dialog(self, dialog: StartupDialog):
