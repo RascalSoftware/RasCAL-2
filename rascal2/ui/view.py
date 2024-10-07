@@ -39,7 +39,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.plotting_widget = QtWidgets.QWidget()
         self.terminal_widget = TerminalWidget(self)
         self.controls_widget = ControlsWidget(self)
-        self.project_widget = QtWidgets.QWidget()
+        self.project_widget = ProjectWidget(self)
 
         self.create_actions()
         self.create_menus()
@@ -51,6 +51,7 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         self.settings = Settings()
         self.startup_dlg = StartUpWidget(self)
+
         self.presenter.model.update_project_view.connect(self.project_widget.update_model_project_view)
 
         self.setCentralWidget(self.startup_dlg)
@@ -69,11 +70,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         project_dlg = dialog(self)
         if project_dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted and self.centralWidget() is self.startup_dlg:
             self.startup_dlg.show()
-
-    def show_settings_dialog(self):
-        """Shows the settings dialog to adjust program settings"""
-        settings_dlg = SettingsDialog(self)
-        settings_dlg.show()
 
     def show_settings_dialog(self):
         """Shows the settings dialog to adjust program settings"""

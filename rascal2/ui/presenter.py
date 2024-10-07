@@ -2,9 +2,8 @@ import re
 import warnings
 from typing import Any
 
-from RATapi.utils.enums import Calculations, Geometries, LayerModels
-
 import RATapi as RAT
+from RATapi.utils.enums import Calculations, Geometries, LayerModels
 
 from rascal2.core import commands
 from rascal2.core.runner import LogData, RATRunner
@@ -179,6 +178,20 @@ class MainWindowPresenter:
         elif isinstance(event, LogData):
             self.view.logging.log(event.level, event.msg)
 
+    def edit_project(self, calculation: Calculations, model: LayerModels, geometry: Geometries) -> None:
+        """Updates the project parameters.
+
+        Parameters
+        ----------
+        calculation : Calculations
+            The updated calculation of the project.
+        model : LayerModels
+            The updated model of the project.
+        geometry : Geometries
+            The updated geometry type of the project.
+        """
+        self.model.update_project_general_settings(calculation, model, geometry)
+
 
 # '\d+\.\d+' is the regex for
 # 'some integer, then a decimal point, then another integer'
@@ -212,17 +225,3 @@ def get_live_chi_squared(item: str, procedure: str) -> str | None:
         return None
     # match returns None if no match found, so whether one is found can be checked via 'if match'
     return match.group(1) if (match := chi_squared_patterns[procedure].search(item)) else None
-
-    def edit_project(self, calculation: Calculations, model: LayerModels, geometry: Geometries) -> None:
-        """Updates the project parameters.
-
-        Parameters
-        ----------
-        calculation : Calculations
-            The updated calculation of the project.
-        model : LayerModels
-            The updated model of the project.
-        geometry : Geometries
-            The updated geometry type of the project.
-        """
-        self.model.update_project_general_settings(calculation, model, geometry)
