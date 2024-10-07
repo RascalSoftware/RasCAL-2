@@ -8,7 +8,7 @@ from rascal2.dialogs.project_dialog import PROJECT_FILES, LoadDialog, LoadR1Dial
 from rascal2.dialogs.settings_dialog import SettingsDialog
 from rascal2.widgets import ControlsWidget, TerminalWidget
 from rascal2.widgets.project import ProjectWidget
-from rascal2.widgets.startup_widget import StartUpWidget
+from rascal2.widgets.startup import StartUpWidget
 
 from .presenter import MainWindowPresenter
 
@@ -51,6 +51,8 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         self.settings = Settings()
         self.startup_dlg = StartUpWidget(self)
+        self.presenter.model.update_project_view.connect(self.project_widget.update_model_project_view)
+
         self.setCentralWidget(self.startup_dlg)
 
     def show_project_dialog(self, dialog: StartupDialog):
@@ -67,7 +69,11 @@ class MainWindowView(QtWidgets.QMainWindow):
         project_dlg = dialog(self)
         if project_dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted and self.centralWidget() is self.startup_dlg:
             self.startup_dlg.show()
-        self.project_widget.initialize_project_mdi()
+
+    def show_settings_dialog(self):
+        """Shows the settings dialog to adjust program settings"""
+        settings_dlg = SettingsDialog(self)
+        settings_dlg.show()
 
     def show_settings_dialog(self):
         """Shows the settings dialog to adjust program settings"""
