@@ -331,7 +331,7 @@ class LoadR1Dialog(StartupDialog):
     def verify_folder(file_path: str):
         if not os.access(file_path, os.R_OK):
             raise ValueError("You do not have permission to read this RasCAL-1 project.")
-        if not os.access(Path(file_path).parent(), os.W_OK):
+        if not os.access(Path(file_path).parent, os.W_OK):
             raise ValueError("You do not have permission to create a project in this folder.")
 
     def load_project(self):
