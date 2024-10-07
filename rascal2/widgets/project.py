@@ -7,13 +7,28 @@ from rascal2.config import path_for
 
 
 class UndoComboBoxUpdates(QtGui.QUndoCommand):
+    """Combobox that saves previous value"""
+
     def __init__(self, combo_box: QtWidgets.QComboBox, selected_value: str, previous_value: str):
+        """
+        Initialize combobox.
+
+        Parameters
+        ----------
+        combo_box: QtWidgets.QComboBox
+                The combobox whose value needs to be updated.
+        selected_value: str
+                The new value of the combobox.
+        previous_value: str
+                The previous value of the combobox.
+        """
         super().__init__()
         self.combo_box = combo_box
         self.selected_value = selected_value
         self.previous_value = previous_value
 
-    def undo(self):
+    def undo(self) -> None:
+        """Method to undo the last change"""
         self.combo_box.setCurrentText(self.previous_value)
 
 
@@ -199,7 +214,7 @@ class ProjectWidget(QtWidgets.QWidget):
 
         self.edit_project_widget.setLayout(main_layout)
 
-    def on_combobox_update(self, combo_box: QtWidgets.QComboBox, attr_name: str, selected_value: str):
+    def on_combobox_update(self, combo_box: QtWidgets.QComboBox, attr_name: str, selected_value: str) -> None:
         """
         Tracks changes in combo boxes and pushes them to the undo stack.
 
