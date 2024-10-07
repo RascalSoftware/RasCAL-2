@@ -2,6 +2,8 @@ import re
 import warnings
 from typing import Any
 
+from RATapi.utils.enums import Calculations, Geometries, LayerModels
+
 import RATapi as RAT
 
 from rascal2.core import commands
@@ -210,3 +212,17 @@ def get_live_chi_squared(item: str, procedure: str) -> str | None:
         return None
     # match returns None if no match found, so whether one is found can be checked via 'if match'
     return match.group(1) if (match := chi_squared_patterns[procedure].search(item)) else None
+
+    def edit_project(self, calculation: Calculations, model: LayerModels, geometry: Geometries) -> None:
+        """Updates the project parameters.
+
+        Parameters
+        ----------
+        calculation : Calculations
+            The updated calculation of the project.
+        model : LayerModels
+            The updated model of the project.
+        geometry : Geometries
+            The updated geometry type of the project.
+        """
+        self.model.update_project_general_settings(calculation, model, geometry)
