@@ -29,8 +29,8 @@ def get_validated_input(field_info: FieldInfo) -> QtWidgets.QWidget:
         Enum: EnumInputWidget,
     }
 
-    for type, widget in class_widgets.items():
-        if issubclass(field_info.annotation, type):
+    for input_type, widget in class_widgets.items():
+        if issubclass(field_info.annotation, input_type):
             return widget(field_info)
 
     return BaseInputWidget(field_info)
@@ -183,14 +183,14 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         """
         return f"{round(value, self.decimals()):.{self.decimals()}g}"
 
-    def validate(self, input, pos) -> tuple[QtGui.QValidator.State, str, int]:
+    def validate(self, input_text, pos) -> tuple[QtGui.QValidator.State, str, int]:
         """Validate a string written into the spinbox.
 
         Override of QtWidgets.QDoubleSpinBox.validate.
 
         Parameters
         ----------
-        input : str
+        input_text : str
             The string written into the spinbox.
         pos : int
             The current cursor position.
@@ -201,13 +201,13 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
             The validation state of the input, the input string, and position.
 
         """
-        if "e" in input:
+        if "e" in input_text:
             try:
-                self.setDecimals(-int(input.split("e")[-1]))
-                return (QtGui.QValidator.State.Acceptable, input, pos)
+                self.setDecimals(-int(input_text.split("e")[-1]))
+                return (QtGui.QValidator.State.Acceptable, input_text, pos)
             except ValueError:
-                return (QtGui.QValidator.State.Intermediate, input, pos)
-        if "." in input and len(input.split(".")[-1]) != self.decimals():
-            self.setDecimals(len(input.split(".")[-1]))
-            return (QtGui.QValidator.State.Acceptable, input, pos)
-        return super().validate(input, pos)
+                return (QtGui.QValidator.State.Intermediate, input_text, pos)
+        if "." in input_text and len(input_text.split(".")[-1]) != self.decimals():
+            self.setDecimals(len(input_text.split(".")[-1]))
+            return (QtGui.QValidator.State.Acceptable, input_text, pos)
+        return super().validate(input_text, pos)
