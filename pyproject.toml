@@ -43,5 +43,6 @@ extend-ignore-names = ['allKeys',
                        'setData',
                        'setEditorData',
                        'setModelData',
+                       'setValue',
                        'textFromValue',
                        'valueFromText',]
