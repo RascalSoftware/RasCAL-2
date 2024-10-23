@@ -41,8 +41,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.controls_widget = ControlsWidget(self)
         self.project_widget = ProjectWidget(self)
 
-        self.presenter.model.update_project_view.connect(self.project_widget.update_model_project_view)
-
         self.disabled_elements = []
 
         self.create_actions()
@@ -262,6 +260,7 @@ class MainWindowView(QtWidgets.QMainWindow):
             "Fitting Controls": self.controls_widget,
         }
         self.controls_widget.setup_controls()
+        self.project_widget.update_project_view()
 
         for title, widget in reversed(widgets.items()):
             widget.setWindowTitle(title)

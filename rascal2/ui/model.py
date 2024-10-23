@@ -2,13 +2,12 @@ from pathlib import Path
 
 import RATapi as RAT
 from PyQt6 import QtCore
-from RATapi.utils.enums import Calculations, Geometries, LayerModels
 
 
 class MainWindowModel(QtCore.QObject):
     """Manages project data and communicates to view via signals"""
 
-    update_project_view = QtCore.pyqtSignal()
+    project_updated = QtCore.pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -30,7 +29,6 @@ class MainWindowModel(QtCore.QObject):
             The save path of the project.
         """
         self.project = RAT.Project(name=name)
-        self.update_project_view.emit()
         self.controls = RAT.Controls()
         self.save_path = save_path
 
@@ -100,21 +98,13 @@ class MainWindowModel(QtCore.QObject):
         self.controls = RAT.Controls()
         self.save_path = str(Path(load_path).parent)
 
-    def update_project_general_settings(
-        self, calculation: Calculations, model: LayerModels, geometry: Geometries
-    ) -> None:
-        """Updates the project general settings.
+    def edit_project(self, updated_project) -> None:
+        """Updates the project.
 
         Parameters
         ----------
-        calculation : Calculations
-            The updated calculation of the project.
-        model : LayerModels
-            The updated model of the project.
-        geometry : Geometries
-            The updated geometry type of the project.
+        updated_project : RAT.Project
+            The updated project.
         """
-        self.project.calculation = calculation
-        self.project.model = model
-        self.project.geometry = geometry
-        self.update_project_view.emit()
+        self.project = updated_project
+        self.project_updated.emit()

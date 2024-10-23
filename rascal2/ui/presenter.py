@@ -3,7 +3,6 @@ import warnings
 from typing import Any
 
 import RATapi as RAT
-from RATapi.utils.enums import Calculations, Geometries, LayerModels
 
 from rascal2.core import commands
 from rascal2.core.runner import LogData, RATRunner
@@ -178,19 +177,15 @@ class MainWindowPresenter:
         elif isinstance(event, LogData):
             self.view.logging.log(event.level, event.msg)
 
-    def edit_project(self, calculation: Calculations, model: LayerModels, geometry: Geometries) -> None:
-        """Updates the project parameters.
+    def edit_project(self, updated_project) -> None:
+        """Updates the project.
 
         Parameters
         ----------
-        calculation : Calculations
-            The updated calculation of the project.
-        model : LayerModels
-            The updated model of the project.
-        geometry : Geometries
-            The updated geometry type of the project.
+        updated_project : RAT.Project
+            The updated project.
         """
-        self.model.update_project_general_settings(calculation, model, geometry)
+        self.model.edit_project(updated_project)
 
 
 # '\d+\.\d+' is the regex for

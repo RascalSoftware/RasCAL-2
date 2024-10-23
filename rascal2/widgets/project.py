@@ -1,35 +1,7 @@
-from functools import partial
-
 from PyQt6 import QtCore, QtGui, QtWidgets
 from RATapi.utils.enums import Calculations, Geometries, LayerModels
 
 from rascal2.config import path_for
-
-
-class UndoComboBoxUpdates(QtGui.QUndoCommand):
-    """Combobox that saves previous value"""
-
-    def __init__(self, combo_box: QtWidgets.QComboBox, selected_value: str, previous_value: str):
-        """
-        Initialize combobox.
-
-        Parameters
-        ----------
-        combo_box: QtWidgets.QComboBox
-                The combobox whose value needs to be updated.
-        selected_value: str
-                The new value of the combobox.
-        previous_value: str
-                The previous value of the combobox.
-        """
-        super().__init__()
-        self.combo_box = combo_box
-        self.selected_value = selected_value
-        self.previous_value = previous_value
-
-    def undo(self) -> None:
-        """Method to undo the last change"""
-        self.combo_box.setCurrentText(self.previous_value)
 
 
 class ProjectWidget(QtWidgets.QWidget):
@@ -50,12 +22,11 @@ class ProjectWidget(QtWidgets.QWidget):
         self.parent = parent
         self.presenter = self.parent.presenter
         self.model = self.parent.presenter.model
-        self.undo_stack = QtGui.QUndoStack(self)
+
+        self.presenter.model.project_updated.connect(self.update_project_view)
 
         self.create_project_view()
         self.create_edit_view()
-        self.handle_domains_tab()
-        self.update_model_project_view()
 
         self.stacked_widget = QtWidgets.QStackedWidget()
         self.stacked_widget.addWidget(self.project_widget)
@@ -65,31 +36,19 @@ class ProjectWidget(QtWidgets.QWidget):
         layout.addWidget(self.stacked_widget)
         self.setLayout(layout)
 
-    def update_model_project_view(self) -> None:
-        """Updates the project view when a new project is created or values are updated in the model."""
-        if self.model.project:
-            self.project_calculation = self.model.project.calculation
-            self.project_model = self.model.project.model
-            self.project_geometry = self.model.project.geometry
+    def update_project_view(self) -> None:
+        """Updates the project view."""
+        self.modified_project = self.presenter.model.project.model_copy(deep=True)
 
-            self.inter_calculation = self.model.project.calculation
-            self.inter_model = self.model.project.model
-            self.inter_geometry = self.model.project.geometry
-        else:
-            self.project_calculation = ""
-            self.project_model = ""
-            self.project_geometry = ""
-            self.inter_calculation = ""
-            self.inter_model = ""
-            self.inter_geometry = ""
+        self.calculation_type.setText(self.model.project.calculation)
+        self.model_type.setText(self.model.project.model)
+        self.geometry_type.setText(self.model.project.geometry)
 
-        self.calculation_type.setText(self.project_calculation)
-        self.model_type.setText(self.project_model)
-        self.geometry_type.setText(self.project_geometry)
+        self.calculation_combobox.setCurrentText(self.model.project.calculation)
+        self.model_combobox.setCurrentText(self.model.project.model)
+        self.geometry_combobox.setCurrentText(self.model.project.geometry)
 
-        self.calculation_combobox.setCurrentText(self.project_calculation)
-        self.model_combobox.setCurrentText(self.project_model)
-        self.geometry_combobox.setCurrentText(self.project_geometry)
+        self.handle_domains_tab()
 
     def create_project_view(self) -> None:
         """Creates the project (non-edit) veiw"""
@@ -135,6 +94,7 @@ class ProjectWidget(QtWidgets.QWidget):
         # Replace QtWidgets.QWidget() with methods to create
         # the tabs in project view.
         self.project_tab.addTab(QtWidgets.QWidget(), "Parameters")
+        self.project_tab.addTab(QtWidgets.QWidget(), "Backgrounds")
         self.project_tab.addTab(QtWidgets.QWidget(), "Experimental Parameters")
         self.project_tab.addTab(QtWidgets.QWidget(), "Layers")
         self.project_tab.addTab(QtWidgets.QWidget(), "Data")
@@ -144,7 +104,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.project_widget.setLayout(main_layout)
 
     def create_edit_view(self) -> None:
-        """Creates the project widget in edit mode"""
+        """Creates the project edit veiw"""
 
         self.edit_project_widget = QtWidgets.QWidget()
         main_layout = QtWidgets.QVBoxLayout()
@@ -186,15 +146,9 @@ class ProjectWidget(QtWidgets.QWidget):
         self.geometry_combobox = QtWidgets.QComboBox(self)
         self.geometry_combobox.addItems([geo for geo in Geometries])
 
-        self.calculation_combobox.currentTextChanged.connect(
-            partial(self.on_combobox_update, self.calculation_combobox, "inter_calculation")
-        )
-        self.model_combobox.currentTextChanged.connect(
-            partial(self.on_combobox_update, self.model_combobox, "inter_model")
-        )
-        self.geometry_combobox.currentTextChanged.connect(
-            partial(self.on_combobox_update, self.geometry_combobox, "inter_geometry")
-        )
+        self.calculation_combobox.currentTextChanged.connect(lambda s: self.process_combobox_update("calculation", s))
+        self.model_combobox.currentTextChanged.connect(lambda s: self.process_combobox_update("model", s))
+        self.geometry_combobox.currentTextChanged.connect(lambda s: self.process_combobox_update("geometry", s))
 
         layout.addWidget(self.edit_geometry_label)
         layout.addWidget(self.geometry_combobox)
@@ -205,6 +159,7 @@ class ProjectWidget(QtWidgets.QWidget):
         # Replace QtWidgets.QWidget() with methods to create
         # the tabs in edit view.
         self.edit_project_tab.addTab(QtWidgets.QWidget(), "Parameters")
+        self.edit_project_tab.addTab(QtWidgets.QWidget(), "Backgrounds")
         self.edit_project_tab.addTab(QtWidgets.QWidget(), "Experimental Parameters")
         self.edit_project_tab.addTab(QtWidgets.QWidget(), "Layers")
         self.edit_project_tab.addTab(QtWidgets.QWidget(), "Data")
@@ -214,28 +169,22 @@ class ProjectWidget(QtWidgets.QWidget):
 
         self.edit_project_widget.setLayout(main_layout)
 
-    def on_combobox_update(self, combo_box: QtWidgets.QComboBox, attr_name: str, selected_value: str) -> None:
+    def process_combobox_update(self, attr_name: str, selected_value: str) -> None:
         """
-        Tracks changes in combo boxes and pushes them to the undo stack.
+        Updates the copy of the project.
 
         Parameters
         ----------
-        combo_box: QtWidgets.QComboBox
-                The combobox on which the value is updated.
         attr_name: str
-                The attr that stores the previous value selected.
+                The attr that needs to be updated.
         selected_value: str
                 The new selected value from the combobox.
         """
-        previous_value = getattr(self, attr_name)
-        if previous_value != selected_value:
-            command = UndoComboBoxUpdates(combo_box, selected_value, previous_value)
-            self.undo_stack.push(command)
-            setattr(self, attr_name, selected_value)
+        setattr(self.modified_project, attr_name, selected_value)
 
     def handle_domains_tab(self) -> None:
         """Displays or hides the domains tab"""
-        domain_tab_ix = 5
+        domain_tab_ix = 6
         if (
             self.calculation_type.text() == Calculations.Domains
             and self.project_tab.tabText(domain_tab_ix) != "Domains"
@@ -252,27 +201,19 @@ class ProjectWidget(QtWidgets.QWidget):
     def show_project_view(self) -> None:
         """Show project view"""
         self.setWindowTitle("Project")
-        self.handle_domains_tab()
         self.stacked_widget.setCurrentIndex(0)
 
     def show_edit_view(self) -> None:
         """Show edit view"""
         self.setWindowTitle("Edit Project")
-        self.handle_domains_tab()
         self.stacked_widget.setCurrentIndex(1)
 
     def save_changes(self) -> None:
-        """Save changes and clear undo stack."""
-        self.undo_stack.clear()
-        self.presenter.edit_project(
-            self.calculation_combobox.currentText(),
-            self.model_combobox.currentText(),
-            self.geometry_combobox.currentText(),
-        )
+        """Save changes to the project."""
+        self.presenter.edit_project(self.modified_project)
         self.show_project_view()
 
     def cancel_changes(self) -> None:
-        """Cancel changes to project."""
-        while self.undo_stack.canUndo():
-            self.undo_stack.undo()
+        """Cancel changes to the project."""
+        self.update_project_view()
         self.show_project_view()
