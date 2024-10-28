@@ -102,25 +102,21 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.save_project_action.setEnabled(False)
         self.disabled_elements.append(self.save_project_action)
 
-        self.undo_action = self.undo_stack.createUndoAction(self, "&Undo")
-        self.undo_action.setStatusTip("Undo the last action")
-        self.undo_action.setIcon(QtGui.QIcon(path_for("undo.png")))
-        self.undo_action.setShortcut(QtGui.QKeySequence.StandardKey.Undo)
-        self.undo_action.setEnabled(False)
-        self.disabled_elements.append(self.undo_action)
-
         self.save_as_action = QtGui.QAction("Save To &Folder...", self)
         self.save_as_action.setStatusTip("Save project to a specified folder.")
         self.save_as_action.setIcon(QtGui.QIcon(path_for("save-project.png")))
         self.save_as_action.triggered.connect(lambda: self.presenter.save_project(save_as=True))
         self.save_as_action.setShortcut(QtGui.QKeySequence.StandardKey.SaveAs)
 
+        self.undo_action = self.undo_stack.createUndoAction(self, "&Undo")
+        self.undo_action.setStatusTip("Undo the last action")
+        self.undo_action.setIcon(QtGui.QIcon(path_for("undo.png")))
+        self.undo_action.setShortcut(QtGui.QKeySequence.StandardKey.Undo)
+
         self.redo_action = self.undo_stack.createRedoAction(self, "&Redo")
         self.redo_action.setStatusTip("Redo the last undone action")
         self.redo_action.setIcon(QtGui.QIcon(path_for("redo.png")))
         self.redo_action.setShortcut(QtGui.QKeySequence.StandardKey.Redo)
-        self.redo_action.setEnabled(False)
-        self.disabled_elements.append(self.redo_action)
 
         self.undo_view_action = QtGui.QAction("Undo &History", self)
         self.undo_view_action.setStatusTip("View undo history")
