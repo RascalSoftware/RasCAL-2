@@ -1,4 +1,5 @@
 """Delegates for items in Qt tables."""
+
 from typing import Literal
 
 from PyQt6 import QtCore, QtGui, QtWidgets

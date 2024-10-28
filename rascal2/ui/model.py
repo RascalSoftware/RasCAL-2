@@ -49,16 +49,17 @@ class MainWindowModel(QtCore.QObject):
             for index, value in enumerate(getattr(problem_definition, parameter_field[class_list])):
                 getattr(self.project, class_list)[index].value = value
 
-    def update_controls(self, new_values):
-        """
+    def replace_project(self, updated_project: RAT.Project) -> None:
+        """Replaces the project with a new project.
 
         Parameters
         ----------
-        new_values: Dict
-            The attribute name-value pair to updated on the controls.
+        updated_project : RAT.Project
+            The updated project.
+
         """
-        vars(self.controls).update(new_values)
-        self.controls_updated.emit()
+        self.project = updated_project
+        self.project_updated.emit()
 
     def save_project(self):
         """Save the project to the save path."""
@@ -110,13 +111,14 @@ class MainWindowModel(QtCore.QObject):
         self.controls = RAT.Controls()
         self.save_path = str(Path(load_path).parent)
 
-    def edit_project(self, updated_project) -> None:
-        """Updates the project.
+
+    def update_controls(self, new_values):
+        """
 
         Parameters
         ----------
-        updated_project : RAT.Project
-            The updated project.
+        new_values: Dict
+            The attribute name-value pair to updated on the controls.
         """
-        self.project = updated_project
-        self.project_updated.emit()
+        vars(self.controls).update(new_values)
+        self.controls_updated.emit()

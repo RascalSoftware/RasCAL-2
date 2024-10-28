@@ -35,7 +35,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         # TODO replace the widgets below
         # plotting: NO ISSUE YET
         # https://github.com/RascalSoftware/RasCAL-2/issues/5
-        # project: NO ISSUE YET
         self.plotting_widget = QtWidgets.QWidget()
         self.terminal_widget = TerminalWidget(self)
         self.controls_widget = ControlsWidget(self)

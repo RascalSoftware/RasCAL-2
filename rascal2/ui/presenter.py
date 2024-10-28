@@ -174,15 +174,22 @@ class MainWindowPresenter:
         elif isinstance(event, LogData):
             self.view.logging.log(event.level, event.msg)
 
-    def edit_project(self, updated_project) -> None:
-        """Updates the project.
+    def replace_project(self, updated_project: dict) -> None:
+        """Replace the Project with a new project from a dictionary of attributes.
 
         Parameters
         ----------
-        updated_project : RAT.Project
-            The updated project.
+        updated_project : dict
+            The updated project attributes.
+
+        Raises
+        ------
+        ValidationError
+            If the updated project attributes are not valid.
+
         """
-        self.model.edit_project(updated_project)
+        new_project = RAT.Project.model_validate(updated_project)
+        self.model.replace_project(new_project)
 
 
 # '\d+\.\d+' is the regex for
