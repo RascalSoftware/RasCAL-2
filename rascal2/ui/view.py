@@ -245,7 +245,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         # if windows are already created, don't set them up again,
         # just refresh the widget data
         if len(self.mdi.subWindowList()) == 4:
-            self.controls_widget.setup_controls()
+            self.setup_mdi_widgets()
             return
 
         widgets = {
@@ -254,8 +254,7 @@ class MainWindowView(QtWidgets.QMainWindow):
             "Terminal": self.terminal_widget,
             "Fitting Controls": self.controls_widget,
         }
-        self.controls_widget.setup_controls()
-        self.project_widget.update_project_view()
+        self.setup_mdi_widgets()
         self.terminal_widget.text_area.setVisible(True)
 
         for title, widget in reversed(widgets.items()):
@@ -267,6 +266,12 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.reset_mdi_layout()
         self.startup_dlg = self.takeCentralWidget()
         self.setCentralWidget(self.mdi)
+
+    def setup_mdi_widgets(self):
+        """Performs setup of MDI widgets that relies on the Project existing."""
+        self.controls_widget.setup_controls()
+        self.project_widget.update_project_view()
+        self.presenter.model.controls_updated.connect(self.project_widget.update_project_view)
 
     def reset_mdi_layout(self):
         """Reset MDI layout to the default."""
