@@ -1,10 +1,10 @@
 """Widget for the Project window."""
 
-from enum import Enum
 from copy import deepcopy
+from enum import Enum
 
+import pydantic
 import RATapi
-from pydantic import ValidationError
 from PyQt6 import QtCore, QtGui, QtWidgets
 from RATapi.utils.enums import Calculations, Geometries, LayerModels
 
@@ -173,7 +173,7 @@ class ProjectWidget(QtWidgets.QWidget):
         """Updates the project view."""
         # draft project is a dict containing all the attributes of the parent model,
         # because we don't want validation errors going off while editing the model is in-progress
-        self.draft_project: dict = create_draft_project(self.parent_model.project) 
+        self.draft_project: dict = create_draft_project(self.parent_model.project)
 
         self.calculation_type.setText(self.parent_model.project.calculation)
         self.model_type.setText(self.parent_model.project.model)
@@ -247,6 +247,8 @@ class ClassListModel(QtCore.QAbstractTableModel):
         super().__init__(parent)
         self.classlist = classlist
         self.item_type = classlist._class_handle
+        if not issubclass(self.item_type, pydantic.BaseModel):
+            raise NotImplementedError("ClassListModel only works for classlists of Pydantic models!")
         self.headers = list(self.item_type.model_fields)
         self.edit_mode = False
 
@@ -258,13 +260,15 @@ class ClassListModel(QtCore.QAbstractTableModel):
 
     def flags(self, index):
         flags = super().flags(index)
+        # disable mu, sigma if prior type is not Gaussian
         if (
             self.item_type is RATapi.models.Parameter
             and self.classlist[index.row()].prior_type != "gaussian"
             and self.headers[index.column() - 1] in ["mu", "sigma"]
         ):
             return QtCore.Qt.ItemFlag.NoItemFlags
-        if not (self.edit_mode and index.row() in self.protected_indices and index.column() == 1):
+        #
+        if (index.column() != 1) or (self.edit_mode and index.row() not in self.protected_indices):
             flags |= QtCore.Qt.ItemFlag.ItemIsEditable
 
         return flags
@@ -275,7 +279,7 @@ class ClassListModel(QtCore.QAbstractTableModel):
     def columnCount(self, parent=None) -> int:
         return len(self.headers) + 1
 
-    def data(self, index, role):
+    def data(self, index, role=QtCore.Qt.ItemDataRole.DisplayRole):
         if role == QtCore.Qt.ItemDataRole.DisplayRole:
             row = index.row()
             col = index.column()
@@ -285,12 +289,12 @@ class ClassListModel(QtCore.QAbstractTableModel):
 
             param = self.headers[col - 1]
             data = getattr(self.classlist[row], param)
-            # pyqt can't manually coerce enums to strings...
+            # pyqt can't automatically coerce enums to strings...
             if isinstance(data, Enum):
                 return str(data)
             return data
 
-    def setData(self, index, value, role) -> bool:
+    def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole) -> bool:
         if role == QtCore.Qt.ItemDataRole.EditRole:
             row = index.row()
             col = index.column()
@@ -298,11 +302,11 @@ class ClassListModel(QtCore.QAbstractTableModel):
                 param = self.headers[col - 1]
                 try:
                     setattr(self.classlist[row], param, value)
-                except ValidationError:
+                except pydantic.ValidationError:
                     return False
                 return True
 
-    def headerData(self, section, orientation, role):
+    def headerData(self, section, orientation, role=QtCore.Qt.ItemDataRole.DisplayRole):
         if (
             orientation == QtCore.Qt.Orientation.Horizontal
             and role == QtCore.Qt.ItemDataRole.DisplayRole
@@ -362,7 +366,7 @@ class ProjectFieldWidget(QtWidgets.QWidget):
             )
         for i in range(0, self.model.rowCount()):
             for j in range(2, self.model.columnCount()):
-                self.table.openPersistentEditor(self.model.createIndex(i, j))
+                self.table.openPersistentEditor(self.model.index(i, j))
 
     def append_item(self):
         """Append an item to the model if the model exists."""
@@ -395,8 +399,8 @@ class ProjectFieldWidget(QtWidgets.QWidget):
         self.set_item_delegates()
         for i in range(0, self.model.rowCount()):
             if i not in self.model.protected_indices:
-                self.table.setIndexWidget(self.model.createIndex(i, 0), self.make_delete_button(i))
-                self.table.openPersistentEditor(self.model.createIndex(i, 1))
+                self.table.setIndexWidget(self.model.index(i, 0), self.make_delete_button(i))
+                self.table.openPersistentEditor(self.model.index(i, 1))
 
     def make_delete_button(self, index):
         """Make a button that deletes index `index` from the list."""
@@ -424,7 +428,7 @@ class ParameterFieldWidget(ProjectFieldWidget):
                 )
         for i in range(0, self.model.rowCount()):
             for j in range(2, self.model.columnCount()):
-                self.table.openPersistentEditor(self.model.createIndex(i, j))
+                self.table.openPersistentEditor(self.model.index(i, j))
 
     def update_model(self, classlist):
         super().update_model(classlist)
@@ -532,15 +536,16 @@ def create_draft_project(project: RATapi.Project) -> dict:
     # project.model_copy(deep=True).model_dump()
     # but some references get shared for some reason: e.g. draft_project['parameters'].append
     # will point towards project.parameters.append (???) and so on
-   
+
     draft_project = {}
     for field in RATapi.Project.model_fields:
         attr = getattr(project, field)
         if isinstance(attr, RATapi.ClassList):
             draft_project[field] = RATapi.ClassList(deepcopy(attr.data))
-            if hasattr(draft_project[field], '_class_handle') and issubclass(draft_project[field]._class_handle, RATapi.models.ProtectedParameter):
+            if hasattr(draft_project[field], "_class_handle") and issubclass(
+                draft_project[field]._class_handle, RATapi.models.ProtectedParameter
+            ):
                 draft_project[field]._class_handle = RATapi.models.Parameter
         else:
             draft_project[field] = attr
     return draft_project
-

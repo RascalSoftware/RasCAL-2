@@ -111,7 +111,6 @@ class MainWindowModel(QtCore.QObject):
         self.controls = RAT.Controls()
         self.save_path = str(Path(load_path).parent)
 
-
     def update_controls(self, new_values):
         """
 
