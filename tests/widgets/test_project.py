@@ -31,7 +31,7 @@ class MockPresenter(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.model = MockModel()
-        self.replace_project = MagicMock()
+        self.edit_project = MagicMock()
 
 
 class MockMainWindow(QtWidgets.QMainWindow):
@@ -185,7 +185,7 @@ def test_save_changes_to_model_project(setup_project_widget):
     assert project_widget.draft_project["calculation"] == Calculations.Domains
 
     project_widget.save_changes()
-    assert project_widget.parent.presenter.replace_project.call_count == 1
+    assert project_widget.parent.presenter.edit_project.call_count == 1
 
 
 def test_cancel_changes_to_model_project(setup_project_widget):
@@ -206,7 +206,7 @@ def test_cancel_changes_to_model_project(setup_project_widget):
     assert project_widget.draft_project["calculation"] == Calculations.Domains
 
     project_widget.cancel_button.click()
-    assert project_widget.parent.presenter.replace_project.call_count == 0
+    assert project_widget.parent.presenter.edit_project.call_count == 0
 
     assert project_widget.calculation_combobox.currentText() == Calculations.NonPolarised
     assert project_widget.calculation_type.text() == Calculations.NonPolarised

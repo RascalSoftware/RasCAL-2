@@ -33,7 +33,7 @@ class MainWindowModel(QtCore.QObject):
         self.controls = RAT.Controls()
         self.save_path = save_path
 
-    def update_project(self, problem_definition: RAT.rat_core.ProblemDefinition):
+    def handle_results(self, problem_definition: RAT.rat_core.ProblemDefinition):
         """Update the project given a set of results."""
         parameter_field = {
             "parameters": "params",
@@ -49,16 +49,16 @@ class MainWindowModel(QtCore.QObject):
             for index, value in enumerate(getattr(problem_definition, parameter_field[class_list])):
                 getattr(self.project, class_list)[index].value = value
 
-    def replace_project(self, updated_project: RAT.Project) -> None:
+    def update_project(self, new_values: dict) -> None:
         """Replaces the project with a new project.
 
         Parameters
         ----------
-        updated_project : RAT.Project
-            The updated project.
+        new_values : dict
+            New values to set in the project.
 
         """
-        self.project = updated_project
+        vars(self.project).update(new_values)
         self.project_updated.emit()
 
     def save_project(self):

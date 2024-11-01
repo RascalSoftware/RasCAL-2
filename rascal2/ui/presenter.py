@@ -106,7 +106,7 @@ class MainWindowPresenter:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self.model.controls.model_validate({setting: value})
-            self.view.undo_stack.push(commands.EditControls(setting, value, self))
+            self.view.undo_stack.push(commands.EditControls({setting: value}, self))
 
     def save_project(self, save_as: bool = False):
         """Save the model.
@@ -150,7 +150,7 @@ class MainWindowPresenter:
 
     def handle_results(self):
         """Handle a RAT run being finished."""
-        self.model.update_project(self.runner.updated_problem)
+        self.model.handle_results(self.runner.updated_problem)
         self.view.handle_results(self.runner.results)
 
     def handle_interrupt(self):
@@ -174,8 +174,8 @@ class MainWindowPresenter:
         elif isinstance(event, LogData):
             self.view.logging.log(event.level, event.msg)
 
-    def replace_project(self, updated_project: dict) -> None:
-        """Replace the Project with a new project from a dictionary of attributes.
+    def edit_project(self, updated_project: dict) -> None:
+        """Edit the Project with a dictionary of attributes.
 
         Parameters
         ----------
@@ -188,8 +188,8 @@ class MainWindowPresenter:
             If the updated project attributes are not valid.
 
         """
-        new_project = RAT.Project.model_validate(updated_project)
-        self.model.replace_project(new_project)
+        self.model.project.model_validate(updated_project)
+        self.view.undo_stack.push(commands.EditProject(updated_project, self))
 
 
 # '\d+\.\d+' is the regex for

@@ -221,7 +221,7 @@ class ProjectWidget(QtWidgets.QWidget):
 
     def save_changes(self) -> None:
         """Save changes to the project."""
-        self.parent.presenter.replace_project(self.draft_project)
+        self.parent.presenter.edit_project(self.draft_project)
         self.update_project_view()
         self.show_project_view()
 
