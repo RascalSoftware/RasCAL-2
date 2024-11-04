@@ -6,7 +6,7 @@ from rascal2.config import path_for, setup_logging, setup_settings
 from rascal2.core.settings import MDIGeometries, Settings
 from rascal2.dialogs.project_dialog import PROJECT_FILES, LoadDialog, LoadR1Dialog, NewProjectDialog, StartupDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog
-from rascal2.widgets import ControlsWidget, TerminalWidget
+from rascal2.widgets import ControlsWidget, PlotWidget, TerminalWidget
 from rascal2.widgets.project import ProjectWidget
 from rascal2.widgets.startup import StartUpWidget
 
@@ -32,11 +32,9 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         self.presenter = MainWindowPresenter(self)
         self.mdi = QtWidgets.QMdiArea()
-        # TODO replace the widgets below
-        # plotting: NO ISSUE YET
-        # https://github.com/RascalSoftware/RasCAL-2/issues/5
-        self.plotting_widget = QtWidgets.QWidget()
-        self.terminal_widget = TerminalWidget(self)
+
+        self.plotting_widget = PlotWidget(self)
+        self.terminal_widget = TerminalWidget()
         self.controls_widget = ControlsWidget(self)
         self.project_widget = ProjectWidget(self)
 
@@ -255,7 +253,6 @@ class MainWindowView(QtWidgets.QMainWindow):
             "Fitting Controls": self.controls_widget,
         }
         self.setup_mdi_widgets()
-        self.terminal_widget.text_area.setVisible(True)
 
         for title, widget in reversed(widgets.items()):
             widget.setWindowTitle(title)

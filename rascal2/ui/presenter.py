@@ -150,7 +150,14 @@ class MainWindowPresenter:
 
     def handle_results(self):
         """Handle a RAT run being finished."""
-        self.model.handle_results(self.runner.updated_problem)
+        self.view.undo_stack.push(
+            commands.SaveResults(
+                self.runner.updated_problem,
+                self.runner.results,
+                self.view.terminal_widget.text_area.toPlainText(),
+                self,
+            )
+        )
         self.view.handle_results(self.runner.results)
 
     def handle_interrupt(self):
@@ -171,6 +178,8 @@ class MainWindowPresenter:
                 self.view.controls_widget.chi_squared.setText(chi_squared)
         elif isinstance(event, RAT.events.ProgressEventData):
             self.view.terminal_widget.update_progress(event)
+        elif isinstance(event, RAT.events.PlotEventData):
+            self.view.plotting_widget.plot_event(event)
         elif isinstance(event, LogData):
             self.view.logging.log(event.level, event.msg)
 

@@ -1,8 +1,10 @@
 """File for Qt commands."""
 
+import copy
 from enum import IntEnum, unique
 from typing import Callable
 
+import RATapi
 from PyQt6 import QtGui
 from RATapi import ClassList
 
@@ -96,3 +98,80 @@ class EditProject(AbstractModelEdit):
 
     def id(self):
         return CommandID.EditProject
+
+
+class SaveResults(QtGui.QUndoCommand):
+    """Command for saving the Results object.
+
+    Parameters
+    ----------
+    problem : RATapi.rat_core.ProblemDefinition
+        The problem
+    results : Union[RATapi.outputs.Results, RATapi.outputs.BayesResults]
+        The calculation results.
+    log : str
+        log text from the given calculation.
+    """
+
+    def __init__(self, problem, results, log: str, presenter):
+        super().__init__()
+        self.presenter = presenter
+        self.results = results
+        self.log = log
+        self.problem = self.get_parameter_values(problem)
+        self.old_problem = self.get_parameter_values(RATapi.inputs.make_problem(self.presenter.model.project))
+        self.old_results = copy.deepcopy(self.presenter.model.results)
+        self.old_log = self.presenter.model.result_log
+        self.setText("Save calculation results")
+
+    def get_parameter_values(self, problem_definition: RATapi.rat_core.ProblemDefinition):
+        """Get parameter values from problem definition."""
+        parameter_field = {
+            "parameters": "params",
+            "bulk_in": "bulkIn",
+            "bulk_out": "bulkOut",
+            "scalefactors": "scalefactors",
+            "domain_ratios": "domainRatio",
+            "background_parameters": "backgroundParams",
+            "resolution_parameters": "resolutionParams",
+        }
+
+        values = {}
+        for class_list in RATapi.project.parameter_class_lists:
+            entry = values.setdefault(class_list, [])
+            entry.extend(getattr(problem_definition, parameter_field[class_list]))
+        return values
+
+    def set_parameter_values(self, values):
+        """Update the project given a set of results."""
+
+        for key, value in values.items():
+            for index in range(len(value)):
+                getattr(self.presenter.model.project, key)[index].value = value[index]
+        return values
+
+    def undo(self):
+        self.swap_results(self.old_problem, self.old_results, self.old_log)
+
+    def redo(self):
+        self.swap_results(self.problem, self.results, self.log)
+
+    def swap_results(self, problem, results, log):
+        """Swap problem, result and log in model with given one
+
+        Parameters
+        ----------
+        problem : RATapi.rat_core.ProblemDefinition
+            The problem definition
+        results : Union[RATapi.outputs.Results, RATapi.outputs.BayesResults]
+            The calculation results.
+        log : str
+            log text from the given calculation.
+        """
+        self.set_parameter_values(problem)
+        self.presenter.model.update_results(copy.deepcopy(results))
+        self.presenter.model.result_log = log
+        chi_text = "" if results is None else f"{results.calculationResults.sumChi:.6g}"
+        self.presenter.view.controls_widget.chi_squared.setText(chi_text)
+        self.presenter.view.terminal_widget.clear()
+        self.presenter.view.terminal_widget.write(log)
