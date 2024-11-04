@@ -19,9 +19,6 @@ class ValidatedInputDelegate(QtWidgets.QStyledItemDelegate):
         widget = get_validated_input(self.field_info, parent)
         widget.set_data(index.data(QtCore.Qt.ItemDataRole.DisplayRole))
 
-        # without this signal, data isn't committed unless the user presses 'enter' on the cell
-        widget.edited_signal.connect(lambda: self.table.commitData(widget))
-
         # fill in background as otherwise you can see the original View text underneath
         widget.setAutoFillBackground(True)
         widget.setBackgroundRole(QtGui.QPalette.ColorRole.Base)
@@ -46,9 +43,6 @@ class ValueSpinBoxDelegate(QtWidgets.QStyledItemDelegate):
         The field of the parameter
 
     """
-
-    _error_style = "color: #E34234"
-
     def __init__(self, field: Literal["min", "value", "max"], parent):
         super().__init__(parent)
         self.table = parent
@@ -57,8 +51,16 @@ class ValueSpinBoxDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         widget = AdaptiveDoubleSpinBox(parent)
 
-        # without this signal, data isn't committed unless the user presses 'enter' on the cell
-        widget.valueChanged.connect(lambda: self.table.commitData(widget))
+        max_val = float("inf")
+        min_val = -float("inf")
+
+        if self.field in ["min", "value"]:
+            max_val = index.siblingAtColumn(index.column() + 1).data(QtCore.Qt.ItemDataRole.DisplayRole)
+        if self.field in ["value", "max"]:
+            min_val = index.siblingAtColumn(index.column() - 1).data(QtCore.Qt.ItemDataRole.DisplayRole)
+
+        widget.setMinimum(min_val)
+        widget.setMaximum(max_val)
 
         # fill in background as otherwise you can see the original View text underneath
         widget.setAutoFillBackground(True)
@@ -71,18 +73,7 @@ class ValueSpinBoxDelegate(QtWidgets.QStyledItemDelegate):
 
         editor.setValue(data)
 
-    def setModelData(self, editor: AdaptiveDoubleSpinBox, model, index):
+    def setModelData(self, editor, model, index):
         data = editor.value()
-        max_val = float("inf")
-        min_val = -float("inf")
-
-        if self.field in ["min", "value"]:
-            max_val = index.siblingAtColumn(index.column() + 1).data(QtCore.Qt.ItemDataRole.DisplayRole)
-        if self.field in ["value", "max"]:
-            min_val = index.siblingAtColumn(index.column() - 1).data(QtCore.Qt.ItemDataRole.DisplayRole)
-        if data > max_val:
-            editor.setValue(max_val)
-        elif data < min_val:
-            editor.setValue(min_val)
-        else:
-            model.setData(index, data, QtCore.Qt.ItemDataRole.EditRole)
+        print(data)
+        model.setData(index, data, QtCore.Qt.ItemDataRole.EditRole)

@@ -6,7 +6,7 @@ from enum import Enum
 import pydantic
 import RATapi
 from PyQt6 import QtCore, QtGui, QtWidgets
-from RATapi.utils.enums import Calculations, Geometries, LayerModels
+from RATapi.utils.enums import Calculations, Geometries, LayerModels, Procedures
 
 from rascal2.config import path_for
 from rascal2.widgets.delegates import ValidatedInputDelegate, ValueSpinBoxDelegate
@@ -41,6 +41,7 @@ class ProjectWidget(QtWidgets.QWidget):
             "Contrasts": [],
             "Domains": [],
         }
+
         self.view_tabs = {}
         self.edit_tabs = {}
         self.draft_project = None
@@ -188,6 +189,7 @@ class ProjectWidget(QtWidgets.QWidget):
             self.edit_tabs[tab].update_model(self.draft_project)
 
         self.handle_domains_tab()
+        self.handle_controls_update()
 
     def update_draft_project(self, new_values: dict) -> None:
         """
@@ -207,6 +209,15 @@ class ProjectWidget(QtWidgets.QWidget):
         is_domains = self.calculation_combobox.currentText() == Calculations.Domains
         self.project_tab.setTabVisible(domain_tab_index, is_domains)
         self.edit_project_tab.setTabVisible(domain_tab_index, is_domains)
+
+    def handle_controls_update(self):
+        """Handle updates to Controls that need to be reflected in the project."""
+        controls = self.parent_model.controls
+
+        for tab in self.tabs:
+            self.view_tabs[tab].handle_controls_update(controls)
+            self.edit_tabs[tab].handle_controls_update(controls)
+        
 
     def show_project_view(self) -> None:
         """Show project view"""
@@ -259,29 +270,36 @@ class ClassListModel(QtCore.QAbstractTableModel):
         return len(self.headers) + 1
 
     def data(self, index, role=QtCore.Qt.ItemDataRole.DisplayRole):
-        if role == QtCore.Qt.ItemDataRole.DisplayRole:
-            param = self.index_header(index)
+        param = self.index_header(index)
 
-            if param == "":
-                return ""
+        if param is None:
+            return None
 
+        data = getattr(self.classlist[index.row()], param)
+
+        if role == QtCore.Qt.ItemDataRole.DisplayRole and self.index_header(index) != "fit":
             data = getattr(self.classlist[index.row()], param)
             # pyqt can't automatically coerce enums to strings...
             if isinstance(data, Enum):
                 return str(data)
             return data
+        elif role == QtCore.Qt.ItemDataRole.CheckStateRole and self.index_header(index) == "fit":
+            return QtCore.Qt.CheckState.Checked if data else QtCore.Qt.CheckState.Unchecked
 
     def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole) -> bool:
-        if role == QtCore.Qt.ItemDataRole.EditRole:
+        if role == QtCore.Qt.ItemDataRole.EditRole or role == QtCore.Qt.ItemDataRole.CheckStateRole:
             row = index.row()
             param = self.index_header(index)
-            if param != "":
+            if self.index_header(index) == "fit":
+                value = QtCore.Qt.CheckState(value) == QtCore.Qt.CheckState.Checked
+            if param is not None:
                 try:
                     setattr(self.classlist[row], param, value)
                 except pydantic.ValidationError:
                     return False
                 return True
-            return False
+        return False
+            
 
     def headerData(self, section, orientation, role=QtCore.Qt.ItemDataRole.DisplayRole):
         if (
@@ -289,7 +307,7 @@ class ClassListModel(QtCore.QAbstractTableModel):
             and role == QtCore.Qt.ItemDataRole.DisplayRole
             and section != 0
         ):
-            return self.headers[section - 1]
+            return self.headers[section - 1].replace("_", " ")
         return None
 
     def append_item(self):
@@ -317,10 +335,15 @@ class ClassListModel(QtCore.QAbstractTableModel):
         index : QModelIndex
             The model index for the header.
 
+        Returns
+        -------
+        str or None
+            Either the name of the header, or None if none exists.
+
         """
         col = index.column()
         if col == 0:
-            return ""
+            return None
         return self.headers[col - 1]
 
 
@@ -343,7 +366,9 @@ class ParametersModel(ClassListModel):
         if self.classlist[index.row()].prior_type != "gaussian" and header in ["mu", "sigma"]:
             return QtCore.Qt.ItemFlag.NoItemFlags
         # never allow name editing for protected parameters, allow everything else to be edited by default
-        if header != "name" or (self.edit_mode and index.row() not in self.protected_indices):
+        if header == "fit":
+            flags |= QtCore.Qt.ItemFlag.ItemIsUserCheckable
+        elif header != "name" or (self.edit_mode and index.row() not in self.protected_indices):
             flags |= QtCore.Qt.ItemFlag.ItemIsEditable
 
         return flags
@@ -389,16 +414,13 @@ class ProjectFieldWidget(QtWidgets.QWidget):
             self.table.setItemDelegateForColumn(
                 i + 1, ValidatedInputDelegate(self.model.item_type.model_fields[header], self.table)
             )
-        for i in range(0, self.model.rowCount()):
-            for j in range(2, self.model.columnCount()):
-                self.table.openPersistentEditor(self.model.index(i, j))
 
     def append_item(self):
         """Append an item to the model if the model exists."""
         if self.model is not None:
             self.model.append_item()
 
-        # call edit again to fix persistent editors
+        # call edit again to recreate delete buttons
         self.edit()
 
     def delete_item(self, index):
@@ -413,7 +435,7 @@ class ProjectFieldWidget(QtWidgets.QWidget):
         if self.model is not None:
             self.model.delete_item(index)
 
-        # call edit again to fix persistent editors
+        # call edit again to recreate delete buttons 
         self.edit()
 
     def edit(self):
@@ -424,7 +446,6 @@ class ProjectFieldWidget(QtWidgets.QWidget):
         self.set_item_delegates()
         for i in range(0, self.model.rowCount()):
             self.table.setIndexWidget(self.model.index(i, 0), self.make_delete_button(i))
-            self.table.openPersistentEditor(self.model.index(i, 1))
 
     def make_delete_button(self, index):
         """Make a button that deletes index `index` from the list."""
@@ -440,10 +461,6 @@ class ParameterFieldWidget(ProjectFieldWidget):
 
     classlist_model = ParametersModel
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent = parent
-
     def set_item_delegates(self):
         for i, header in enumerate(self.model.headers):
             if header in ["min", "value", "max"]:
@@ -452,13 +469,20 @@ class ParameterFieldWidget(ProjectFieldWidget):
                 self.table.setItemDelegateForColumn(
                     i + 1, ValidatedInputDelegate(self.model.item_type.model_fields[header], self.table)
                 )
-        for i in range(0, self.model.rowCount()):
-            for j in range(2, self.model.columnCount()):
-                self.table.openPersistentEditor(self.model.index(i, j))
 
     def update_model(self, classlist):
         super().update_model(classlist)
-        procedure = self.parent.parent.parent_model.controls.procedure
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(self.model.headers.index("fit")+1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents) 
+
+    def handle_bayesian_columns(self, procedure: Procedures):
+        """Hide or show Bayes-related columns based on procedure.
+
+        Parameters
+        ----------
+        procedure : Procedure
+            The procedure in Controls.
+        """
         is_bayesian = procedure in ["ns", "dream"]
         bayesian_columns = ["prior_type", "mu", "sigma"]
         for item in bayesian_columns:
@@ -473,7 +497,6 @@ class ParameterFieldWidget(ProjectFieldWidget):
         for i in range(0, self.model.rowCount()):
             if i in self.model.protected_indices:
                 self.table.setIndexWidget(self.model.index(i, 0), None)
-                self.table.closePersistentEditor(self.model.index(i, 1))
 
 
 class AbstractProjectTabWidget(QtWidgets.QWidget):
@@ -530,6 +553,12 @@ class AbstractProjectTabWidget(QtWidgets.QWidget):
 
         """
         raise NotImplementedError
+
+    def handle_controls_update(self, controls):
+        """Reflect changes to the Controls object."""
+        for field in RATapi.project.parameter_class_lists:
+            if field in self.tables:
+                self.tables[field].handle_bayesian_columns(controls.procedure)
 
 
 class ProjectTabViewWidget(AbstractProjectTabWidget):

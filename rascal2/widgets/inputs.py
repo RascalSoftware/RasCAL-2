@@ -66,7 +66,7 @@ class BaseInputWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.editor)
-        layout.setContentsMargins(5, 0, 0, 0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self.setLayout(layout)
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Fixed)

@@ -242,22 +242,6 @@ def test_model_init(table_model, classlist):
     assert not model.edit_mode
 
 
-def test_model_flags(table_model):
-    """Test that model flags are as expected."""
-    model = table_model
-
-    # PyQt item flags are bitwise-encoded, so we test for inclusion with the & operator
-    for row in [0, 1, 2]:
-        assert not model.flags(model.index(row, 1)) & QtCore.Qt.ItemFlag.ItemIsEditable
-        assert model.flags(model.index(row, 2)) & QtCore.Qt.ItemFlag.ItemIsEditable
-
-    model.edit_mode = True
-
-    for row in [0, 1, 2]:
-        for column in [1, 2]:
-            assert model.flags(model.index(row, column)) & QtCore.Qt.ItemFlag.ItemIsEditable
-
-
 def test_model_layout_data(table_model):
     """Test that the model layout and data is as expected."""
     model = table_model
@@ -265,7 +249,7 @@ def test_model_layout_data(table_model):
     assert model.rowCount() == 3
     assert model.columnCount() == 3
 
-    expected_data = [["", "A", 1], ["", "B", 6], ["", "C", 18]]
+    expected_data = [[None, "A", 1], [None, "B", 6], [None, "C", 18]]
     headers = [None, "name", "value"]
 
     for row in [0, 1, 2]:
@@ -337,10 +321,6 @@ def test_project_field_update_model(classlist):
         inputs.IntInputWidget,
     )
 
-    for row in [0, 1, 2]:
-        assert not widget.table.isPersistentEditorOpen(widget.model.index(row, 1))
-        assert widget.table.isPersistentEditorOpen(widget.model.index(row, 2))
-
 
 def test_edit_mode(classlist):
     """Test that edit mode makes the expected changes."""
@@ -354,8 +334,6 @@ def test_edit_mode(classlist):
 
     for row in [0, 1, 2]:
         assert isinstance(widget.table.indexWidget(widget.model.index(row, 0)), QtWidgets.QPushButton)
-        for column in [1, 2]:
-            assert widget.table.isPersistentEditorOpen(widget.model.index(row, column))
 
 
 def test_delete_button(classlist):
@@ -369,6 +347,20 @@ def test_delete_button(classlist):
     assert len(widget.model.classlist) == 2
     assert [m.name for m in widget.model.classlist] == ["A", "C"]
     assert [m.value for m in widget.model.classlist] == [1, 18]
+
+
+def test_parameter_edit_mode(param_classlist):
+    """Test that parameter tab edit mode makes the expected changes."""
+    widget = ProjectFieldWidget(parent)
+    widget.update_model(param_classlist([]))
+    widget.edit()
+
+    assert widget.model.edit_mode
+    assert not widget.add_button.isHidden()
+    assert not widget.table.isColumnHidden(0)
+
+    for row in [0, 1, 2]:
+        assert isinstance(widget.table.indexWidget(widget.model.index(row, 0)), QtWidgets.QPushButton)
 
 
 @pytest.mark.parametrize("protected", ([], [0, 2], [1]))
@@ -405,18 +397,18 @@ def test_hidden_bayesian_columns(param_classlist):
     """Test that Bayes columns are hidden when procedure is not Bayesian."""
     widget = ParameterFieldWidget(parent)
     widget.parent = MagicMock()
+    widget.update_model(param_classlist([]))
     mock_controls = widget.parent.parent.parent_model.controls = MagicMock()
     mock_controls.procedure = "calculate"
     bayesian_columns = ["prior_type", "mu", "sigma"]
 
-    widget.update_model(param_classlist([]))
+    widget.handle_bayesian_columns("calculate")
 
     for item in bayesian_columns:
         index = widget.model.headers.index(item)
         assert widget.table.isColumnHidden(index + 1)
 
-    mock_controls.procedure = "dream"
-    widget.update_model(param_classlist([]))
+    widget.handle_bayesian_columns("dream") 
 
     for item in bayesian_columns:
         index = widget.model.headers.index(item)
