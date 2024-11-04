@@ -38,8 +38,8 @@ class ProjectWidget(QtWidgets.QWidget):
             "Layers": [],
             "Data": [],
             "Backgrounds": [],
-            "Domains": [],
             "Contrasts": [],
+            "Domains": [],
         }
         self.view_tabs = {}
         self.edit_tabs = {}
@@ -149,14 +149,14 @@ class ProjectWidget(QtWidgets.QWidget):
         self.geometry_combobox = QtWidgets.QComboBox(self)
         self.geometry_combobox.addItems([geo for geo in Geometries])
 
-        self.calculation_combobox.currentTextChanged.connect(lambda s: self.update_draft_project({"calculation": s}))
-        self.model_combobox.currentTextChanged.connect(lambda s: self.update_draft_project({"model": s}))
-        self.geometry_combobox.currentTextChanged.connect(lambda s: self.update_draft_project({"geometry": s}))
-
         layout.addWidget(self.edit_geometry_label)
         layout.addWidget(self.geometry_combobox)
         main_layout.addLayout(layout)
 
+        self.calculation_combobox.currentTextChanged.connect(lambda s: self.update_draft_project({"calculation": s}))
+        self.calculation_combobox.currentTextChanged.connect(lambda: self.handle_domains_tab())
+        self.model_combobox.currentTextChanged.connect(lambda s: self.update_draft_project({"model": s}))
+        self.geometry_combobox.currentTextChanged.connect(lambda s: self.update_draft_project({"geometry": s}))
         self.edit_project_tab = QtWidgets.QTabWidget()
 
         for tab, fields in self.tabs.items():
@@ -203,10 +203,10 @@ class ProjectWidget(QtWidgets.QWidget):
 
     def handle_domains_tab(self) -> None:
         """Displays or hides the domains tab"""
-        domain_tab_index = 5
-        self.project_tab.setTabVisible(
-            domain_tab_index, self.calculation_combobox.currentText() == Calculations.Domains
-        )
+        domain_tab_index = list(self.view_tabs).index("Domains")
+        is_domains = self.calculation_combobox.currentText() == Calculations.Domains
+        self.project_tab.setTabVisible(domain_tab_index, is_domains)
+        self.edit_project_tab.setTabVisible(domain_tab_index, is_domains)
 
     def show_project_view(self) -> None:
         """Show project view"""
@@ -252,23 +252,10 @@ class ClassListModel(QtCore.QAbstractTableModel):
         self.headers = list(self.item_type.model_fields)
         self.edit_mode = False
 
-        self.protected_indices = []
-        if self.item_type is RATapi.models.Parameter:
-            for i, item in enumerate(classlist):
-                if isinstance(item, RATapi.models.ProtectedParameter):
-                    self.protected_indices.append(i)
-
     def flags(self, index):
         flags = super().flags(index)
-        # disable mu, sigma if prior type is not Gaussian
-        if (
-            self.item_type is RATapi.models.Parameter
-            and self.classlist[index.row()].prior_type != "gaussian"
-            and self.headers[index.column() - 1] in ["mu", "sigma"]
-        ):
-            return QtCore.Qt.ItemFlag.NoItemFlags
-        #
-        if (index.column() != 1) or (self.edit_mode and index.row() not in self.protected_indices):
+        # allow editing of everything except name by default, and never allow name editing for protected parameters
+        if self.index_header(index) != "name" or (self.edit_mode):
             flags |= QtCore.Qt.ItemFlag.ItemIsEditable
 
         return flags
@@ -281,14 +268,12 @@ class ClassListModel(QtCore.QAbstractTableModel):
 
     def data(self, index, role=QtCore.Qt.ItemDataRole.DisplayRole):
         if role == QtCore.Qt.ItemDataRole.DisplayRole:
-            row = index.row()
-            col = index.column()
+            param = self.index_header(index)
 
-            if col == 0:
+            if param == "":
                 return ""
 
-            param = self.headers[col - 1]
-            data = getattr(self.classlist[row], param)
+            data = getattr(self.classlist[index.row()], param)
             # pyqt can't automatically coerce enums to strings...
             if isinstance(data, Enum):
                 return str(data)
@@ -297,14 +282,14 @@ class ClassListModel(QtCore.QAbstractTableModel):
     def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole) -> bool:
         if role == QtCore.Qt.ItemDataRole.EditRole:
             row = index.row()
-            col = index.column()
-            if col > 0:
-                param = self.headers[col - 1]
+            param = self.index_header(index)
+            if param != "":
                 try:
                     setattr(self.classlist[row], param, value)
                 except pydantic.ValidationError:
                     return False
                 return True
+            return False
 
     def headerData(self, section, orientation, role=QtCore.Qt.ItemDataRole.DisplayRole):
         if (
@@ -320,14 +305,62 @@ class ClassListModel(QtCore.QAbstractTableModel):
         self.classlist.append(self.item_type())
         self.endResetModel()
 
-    def delete_item(self, i):
-        """Delete an item in the ClassList."""
-        self.classlist.pop(i)
+    def delete_item(self, row: int):
+        """Delete an item in the ClassList.
+
+        Parameters
+        ----------
+        row : int
+            The row containing the item to delete.
+
+        """
+        self.classlist.pop(row)
         self.endResetModel()
+
+    def index_header(self, index):
+        """Get the header for an index.
+
+        Parameters:
+        -----------
+        index : QModelIndex
+            The model index for the header.
+
+        """
+        col = index.column()
+        if col == 0:
+            return ""
+        return self.headers[col - 1]
+
+
+class ParametersModel(ClassListModel):
+    """Classlist model for Parameters."""
+
+    def __init__(self, classlist: RATapi.ClassList, parent: QtWidgets.QWidget):
+        super().__init__(classlist, parent)
+
+        self.protected_indices = []
+        if self.item_type is RATapi.models.Parameter:
+            for i, item in enumerate(classlist):
+                if isinstance(item, RATapi.models.ProtectedParameter):
+                    self.protected_indices.append(i)
+
+    def flags(self, index):
+        flags = super().flags(index)
+        header = self.index_header(index)
+        # disable mu, sigma if prior type is not Gaussian
+        if self.classlist[index.row()].prior_type != "gaussian" and header in ["mu", "sigma"]:
+            return QtCore.Qt.ItemFlag.NoItemFlags
+        # never allow name editing for protected parameters
+        if header == "name" and index.row() in self.protected_indices:
+            flags &= ~QtCore.Qt.ItemFlag.ItemIsEditable
+
+        return flags
 
 
 class ProjectFieldWidget(QtWidgets.QWidget):
     """Widget to show a project ClassList."""
+
+    classlist_model = ClassListModel
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -348,7 +381,7 @@ class ProjectFieldWidget(QtWidgets.QWidget):
 
     def update_model(self, classlist):
         """Update the table model to synchronise with the project field."""
-        self.model = ClassListModel(classlist, self)
+        self.model = self.classlist_model(classlist, self)
 
         self.table.setModel(self.model)
         self.table.hideColumn(0)
@@ -398,9 +431,8 @@ class ProjectFieldWidget(QtWidgets.QWidget):
         self.table.showColumn(0)
         self.set_item_delegates()
         for i in range(0, self.model.rowCount()):
-            if i not in self.model.protected_indices:
-                self.table.setIndexWidget(self.model.index(i, 0), self.make_delete_button(i))
-                self.table.openPersistentEditor(self.model.index(i, 1))
+            self.table.setIndexWidget(self.model.index(i, 0), self.make_delete_button(i))
+            self.table.openPersistentEditor(self.model.index(i, 1))
 
     def make_delete_button(self, index):
         """Make a button that deletes index `index` from the list."""
@@ -413,6 +445,8 @@ class ProjectFieldWidget(QtWidgets.QWidget):
 
 class ParameterFieldWidget(ProjectFieldWidget):
     """Subclass of field widgets for parameters."""
+
+    classlist_model = ParametersModel
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -441,6 +475,13 @@ class ParameterFieldWidget(ProjectFieldWidget):
                 self.table.showColumn(index + 1)
             else:
                 self.table.hideColumn(index + 1)
+
+    def edit(self):
+        super().edit()
+        for i in range(0, self.model.rowCount()):
+            if i in self.model.protected_indices:
+                self.table.setIndexWidget(self.model.index(i, 0), None)
+                self.table.closePersistentEditor(self.model.index(i, 1))
 
 
 class AbstractProjectTabWidget(QtWidgets.QWidget):
