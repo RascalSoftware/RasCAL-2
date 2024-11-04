@@ -408,7 +408,7 @@ def test_hidden_bayesian_columns(param_classlist):
         index = widget.model.headers.index(item)
         assert widget.table.isColumnHidden(index + 1)
 
-    widget.handle_bayesian_columns("dream") 
+    widget.handle_bayesian_columns("dream")
 
     for item in bayesian_columns:
         index = widget.model.headers.index(item)

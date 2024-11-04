@@ -43,6 +43,7 @@ class ValueSpinBoxDelegate(QtWidgets.QStyledItemDelegate):
         The field of the parameter
 
     """
+
     def __init__(self, field: Literal["min", "value", "max"], parent):
         super().__init__(parent)
         self.table = parent
@@ -70,10 +71,8 @@ class ValueSpinBoxDelegate(QtWidgets.QStyledItemDelegate):
 
     def setEditorData(self, editor: AdaptiveDoubleSpinBox, index):
         data = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
-
         editor.setValue(data)
 
     def setModelData(self, editor, model, index):
         data = editor.value()
-        print(data)
         model.setData(index, data, QtCore.Qt.ItemDataRole.EditRole)

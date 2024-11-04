@@ -217,7 +217,6 @@ class ProjectWidget(QtWidgets.QWidget):
         for tab in self.tabs:
             self.view_tabs[tab].handle_controls_update(controls)
             self.edit_tabs[tab].handle_controls_update(controls)
-        
 
     def show_project_view(self) -> None:
         """Show project view"""
@@ -299,7 +298,6 @@ class ClassListModel(QtCore.QAbstractTableModel):
                     return False
                 return True
         return False
-            
 
     def headerData(self, section, orientation, role=QtCore.Qt.ItemDataRole.DisplayRole):
         if (
@@ -435,7 +433,7 @@ class ProjectFieldWidget(QtWidgets.QWidget):
         if self.model is not None:
             self.model.delete_item(index)
 
-        # call edit again to recreate delete buttons 
+        # call edit again to recreate delete buttons
         self.edit()
 
     def edit(self):
@@ -473,7 +471,9 @@ class ParameterFieldWidget(ProjectFieldWidget):
     def update_model(self, classlist):
         super().update_model(classlist)
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(self.model.headers.index("fit")+1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents) 
+        header.setSectionResizeMode(
+            self.model.headers.index("fit") + 1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents
+        )
 
     def handle_bayesian_columns(self, procedure: Procedures):
         """Hide or show Bayes-related columns based on procedure.
