@@ -252,14 +252,6 @@ class ClassListModel(QtCore.QAbstractTableModel):
         self.headers = list(self.item_type.model_fields)
         self.edit_mode = False
 
-    def flags(self, index):
-        flags = super().flags(index)
-        # allow editing of everything except name by default, and never allow name editing for protected parameters
-        if self.index_header(index) != "name" or (self.edit_mode):
-            flags |= QtCore.Qt.ItemFlag.ItemIsEditable
-
-        return flags
-
     def rowCount(self, parent=None) -> int:
         return len(self.classlist)
 
@@ -350,9 +342,9 @@ class ParametersModel(ClassListModel):
         # disable mu, sigma if prior type is not Gaussian
         if self.classlist[index.row()].prior_type != "gaussian" and header in ["mu", "sigma"]:
             return QtCore.Qt.ItemFlag.NoItemFlags
-        # never allow name editing for protected parameters
-        if header == "name" and index.row() in self.protected_indices:
-            flags &= ~QtCore.Qt.ItemFlag.ItemIsEditable
+        # never allow name editing for protected parameters, allow everything else to be edited by default
+        if header != "name" or (self.edit_mode and index.row() not in self.protected_indices):
+            flags |= QtCore.Qt.ItemFlag.ItemIsEditable
 
         return flags
 
