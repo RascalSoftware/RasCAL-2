@@ -7,7 +7,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from RATapi.utils.enums import Calculations, Geometries, LayerModels
 
 from rascal2.config import path_for
-from rascal2.widgets.project.models import LayerFieldWidget, ParameterFieldWidget, ProjectFieldWidget
+from rascal2.widgets.project.models import DomainContrastWidget, LayerFieldWidget, ParameterFieldWidget, ProjectFieldWidget
 
 
 class ProjectWidget(QtWidgets.QWidget):
@@ -38,7 +38,7 @@ class ProjectWidget(QtWidgets.QWidget):
             "Data": [],
             "Backgrounds": [],
             "Contrasts": [],
-            "Domains": [],
+            "Domains": ["domain_ratios", "domain_contrasts"],
         }
 
         self.view_tabs = {}
@@ -362,6 +362,8 @@ class ProjectTabWidget(QtWidgets.QWidget):
                 self.tables[field] = ParameterFieldWidget(field, self)
             elif field == "layers":
                 self.tables[field] = LayerFieldWidget(field, self)
+            elif field == "domain_contrasts":
+                self.tables[field] = DomainContrastWidget(field, self)
             else:
                 self.tables[field] = ProjectFieldWidget(field, self)
             layout.addWidget(self.tables[field])
