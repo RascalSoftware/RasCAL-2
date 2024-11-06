@@ -19,6 +19,7 @@ class MockMainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.presenter = MagicMock()
+        self.update_project = MagicMock()
 
 
 class DataModel(pydantic.BaseModel, validate_assignment=True):
@@ -131,7 +132,7 @@ def test_delete(table_model):
 
 def test_project_field_init():
     """Test that the ProjectFieldWidget is initialised correctly."""
-    widget = ProjectFieldWidget(parent)
+    widget = ProjectFieldWidget("test", parent)
 
     assert widget.table.model() is None
     assert widget.add_button.isHidden()
@@ -139,7 +140,7 @@ def test_project_field_init():
 
 def test_project_field_update_model(classlist):
     """Test that the correct changes are made when the model is updated in the ProjectFieldWidget."""
-    widget = ProjectFieldWidget(parent)
+    widget = ProjectFieldWidget("test", parent)
     widget.update_model(classlist)
 
     assert widget.table.isColumnHidden(0)
@@ -157,7 +158,7 @@ def test_project_field_update_model(classlist):
 
 def test_edit_mode(classlist):
     """Test that edit mode makes the expected changes."""
-    widget = ProjectFieldWidget(parent)
+    widget = ProjectFieldWidget("test", parent)
     widget.update_model(classlist)
     widget.edit()
 
@@ -171,7 +172,7 @@ def test_edit_mode(classlist):
 
 def test_delete_button(classlist):
     """Test that delete buttons work as expected."""
-    widget = ProjectFieldWidget(parent)
+    widget = ProjectFieldWidget("Test", parent)
     widget.update_model(classlist)
 
     delete_button = widget.make_delete_button(1)
@@ -184,7 +185,7 @@ def test_delete_button(classlist):
 
 def test_parameter_edit_mode(param_classlist):
     """Test that parameter tab edit mode makes the expected changes."""
-    widget = ProjectFieldWidget(parent)
+    widget = ProjectFieldWidget("Test", parent)
     widget.update_model(param_classlist([]))
     widget.edit()
 
@@ -197,25 +198,38 @@ def test_parameter_edit_mode(param_classlist):
 
 
 @pytest.mark.parametrize("protected", ([], [0, 2], [1]))
-def test_model_protected_parameters(param_model, protected):
-    """Test that protected parameters are successfully recorded and flagged."""
+@pytest.mark.parametrize("prior_type", ("uniform", "gaussian"))
+def test_parameter_flags(param_model, prior_type, protected):
+    """Test that protected parameters are successfully recorded and flagged, and parameter flags are set correctly."""
     model = param_model(protected)
+    for param in model.classlist:
+        param.prior_type = prior_type
 
     assert model.protected_indices == protected
 
     model.edit_mode = True
 
     for row in [0, 1, 2]:
-        for column in [1, 2]:
-            if row in protected and column == 1:
-                assert not model.flags(model.index(row, column)) & QtCore.Qt.ItemFlag.ItemIsEditable
-            else:
-                assert model.flags(model.index(row, column)) & QtCore.Qt.ItemFlag.ItemIsEditable
+        for column in range(1, model.columnCount()):
+            item_flags = model.flags(model.index(row, column))
+            match model.headers[column - 1]:
+                case "name":
+                    if row in protected:
+                        assert not item_flags & QtCore.Qt.ItemFlag.ItemIsEditable
+                    else:
+                        assert item_flags & QtCore.Qt.ItemFlag.ItemIsEditable
+                case "fit":
+                    assert item_flags & QtCore.Qt.ItemFlag.ItemIsUserCheckable
+                case "mu" | "sigma":
+                    if prior_type == "uniform":
+                        assert item_flags == QtCore.Qt.ItemFlag.NoItemFlags
+                    else:
+                        assert item_flags & QtCore.Qt.ItemFlag.ItemIsEditable
 
 
 def test_param_item_delegates(param_classlist):
     """Test that parameter models have the expected item delegates."""
-    widget = ParameterFieldWidget(parent)
+    widget = ParameterFieldWidget("Test", parent)
     widget.parent = MagicMock()
     widget.update_model(param_classlist([]))
 
@@ -228,7 +242,7 @@ def test_param_item_delegates(param_classlist):
 
 def test_hidden_bayesian_columns(param_classlist):
     """Test that Bayes columns are hidden when procedure is not Bayesian."""
-    widget = ParameterFieldWidget(parent)
+    widget = ParameterFieldWidget("Test", parent)
     widget.parent = MagicMock()
     widget.update_model(param_classlist([]))
     mock_controls = widget.parent.parent.parent_model.controls = MagicMock()

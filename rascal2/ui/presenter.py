@@ -188,7 +188,9 @@ class MainWindowPresenter:
             If the updated project attributes are not valid.
 
         """
-        self.model.project.model_validate(updated_project)
+        project_dict = self.model.project.model_dump()
+        project_dict.update(updated_project)
+        self.model.project.model_validate(project_dict)
         self.view.undo_stack.push(commands.EditProject(updated_project, self))
 
 

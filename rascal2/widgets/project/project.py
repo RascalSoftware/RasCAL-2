@@ -47,6 +47,9 @@ class ProjectWidget(QtWidgets.QWidget):
         project_view = self.create_project_view()
         project_edit = self.create_edit_view()
 
+        self.project_tab.currentChanged.connect(self.edit_project_tab.setCurrentIndex)
+        self.edit_project_tab.currentChanged.connect(self.project_tab.setCurrentIndex)
+
         self.stacked_widget = QtWidgets.QStackedWidget()
         self.stacked_widget.addWidget(project_view)
         self.stacked_widget.addWidget(project_edit)
@@ -97,7 +100,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.project_tab = QtWidgets.QTabWidget()
 
         for tab, fields in self.tabs.items():
-            widget = self.view_tabs[tab] = ProjectTabViewWidget(fields, self)
+            widget = self.view_tabs[tab] = ProjectTabWidget(fields, self)
             self.project_tab.addTab(widget, tab)
 
         main_layout.addWidget(self.project_tab, 2, 0, 1, 6)
@@ -159,7 +162,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.edit_project_tab = QtWidgets.QTabWidget()
 
         for tab, fields in self.tabs.items():
-            widget = self.edit_tabs[tab] = ProjectTabEditWidget(fields, self)
+            widget = self.edit_tabs[tab] = ProjectTabWidget(fields, self, edit_mode=True)
             self.edit_project_tab.addTab(widget, tab)
 
         main_layout.addWidget(self.edit_project_tab)
@@ -184,7 +187,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.geometry_combobox.setCurrentText(self.parent_model.project.geometry)
 
         for tab in self.tabs:
-            self.view_tabs[tab].update_model(self.parent_model.project)
+            self.view_tabs[tab].update_model(self.draft_project)
             self.edit_tabs[tab].update_model(self.draft_project)
 
         self.handle_domains_tab()
@@ -240,7 +243,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.show_project_view()
 
 
-class AbstractProjectTabWidget(QtWidgets.QWidget):
+class ProjectTabWidget(QtWidgets.QWidget):
     """Widget that combines multiple ProjectFieldWidgets to create a tab of the project window.
 
     Subclasses must reimplement the function update_model.
@@ -254,21 +257,19 @@ class AbstractProjectTabWidget(QtWidgets.QWidget):
 
     """
 
-    def __init__(self, fields: list[str], parent):
+    def __init__(self, fields: list[str], parent, edit_mode: bool = False):
         super().__init__(parent)
         self.parent = parent
         self.fields = fields
-        headers = [f.replace("_", " ").title() for f in self.fields]
+        self.edit_mode = edit_mode
         self.tables = {}
 
         layout = QtWidgets.QVBoxLayout()
-        for field, header in zip(self.fields, headers):
-            header = QtWidgets.QLabel(header)
+        for field in self.fields:
             if field in RATapi.project.parameter_class_lists:
-                self.tables[field] = ParameterFieldWidget(self)
+                self.tables[field] = ParameterFieldWidget(field, self)
             else:
-                self.tables[field] = ProjectFieldWidget(self)
-            layout.addWidget(header)
+                self.tables[field] = ProjectFieldWidget(field, self)
             layout.addWidget(self.tables[field])
 
         scroll_area = QtWidgets.QScrollArea()
@@ -293,32 +294,17 @@ class AbstractProjectTabWidget(QtWidgets.QWidget):
             The new model data.
 
         """
-        raise NotImplementedError
+        for field, table in self.tables.items():
+            classlist = new_model[field]
+            table.update_model(classlist)
+            if self.edit_mode:
+                table.edit()
 
     def handle_controls_update(self, controls):
         """Reflect changes to the Controls object."""
         for field in RATapi.project.parameter_class_lists:
             if field in self.tables:
                 self.tables[field].handle_bayesian_columns(controls.procedure)
-
-
-class ProjectTabViewWidget(AbstractProjectTabWidget):
-    """Widget for a project tab in display mode."""
-
-    def update_model(self, new_model: RATapi.Project):
-        for field, table in self.tables.items():
-            classlist = getattr(new_model, field)
-            table.update_model(classlist)
-
-
-class ProjectTabEditWidget(AbstractProjectTabWidget):
-    """Widget for a project tab in edit mode."""
-
-    def update_model(self, new_model: dict):
-        for field, table in self.tables.items():
-            classlist = new_model[field]
-            table.update_model(classlist)
-            table.edit()
 
 
 def create_draft_project(project: RATapi.Project) -> dict:

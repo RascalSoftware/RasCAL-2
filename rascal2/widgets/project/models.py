@@ -18,6 +18,8 @@ class ClassListModel(QtCore.QAbstractTableModel):
     ----------
     classlist : ClassList
         The initial classlist to represent in this model.
+    field : str
+        The name of the field represented by this model.
     parent : QtWidgets.QWidget
         The parent widget for the model.
 
@@ -25,6 +27,7 @@ class ClassListModel(QtCore.QAbstractTableModel):
 
     def __init__(self, classlist: RATapi.ClassList, parent: QtWidgets.QWidget):
         super().__init__(parent)
+        self.parent = parent
         self.classlist = classlist
         self.item_type = classlist._class_handle
         if not issubclass(self.item_type, pydantic.BaseModel):
@@ -66,6 +69,8 @@ class ClassListModel(QtCore.QAbstractTableModel):
                     setattr(self.classlist[row], param, value)
                 except pydantic.ValidationError:
                     return False
+                if not self.edit_mode:
+                    self.parent.update_project()
                 return True
         return False
 
@@ -116,25 +121,40 @@ class ClassListModel(QtCore.QAbstractTableModel):
 
 
 class ProjectFieldWidget(QtWidgets.QWidget):
-    """Widget to show a project ClassList."""
+    """Widget to show a project ClassList.
+
+    Parameters
+    ----------
+    field : str
+        The field of the project represented by this widget.
+    parent : ProjectTabWidget
+        The tab this field belongs to.
+
+    """
 
     classlist_model = ClassListModel
 
-    def __init__(self, parent):
+    def __init__(self, field: str, parent):
         super().__init__(parent)
+        self.field = field
+        header = field.replace("_", " ").title()
+        self.parent = parent
         self.table = QtWidgets.QTableView(parent)
         self.table.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.MinimumExpanding
         )
 
         layout = QtWidgets.QVBoxLayout()
+        topbar = QtWidgets.QHBoxLayout()
+        topbar.addWidget(QtWidgets.QLabel(header))
         # change to icon: remember to mention that plus.png in the icons is wonky
-        self.add_button = QtWidgets.QPushButton("+")
+        self.add_button = QtWidgets.QPushButton(f"+ Add new {header[:-1] if header[-1] == 's' else header}")
         self.add_button.setHidden(True)
         self.add_button.pressed.connect(self.append_item)
+        topbar.addWidget(self.add_button)
 
+        layout.addLayout(topbar)
         layout.addWidget(self.table)
-        layout.addWidget(self.add_button)
         self.setLayout(layout)
 
     def update_model(self, classlist):
@@ -146,8 +166,8 @@ class ProjectFieldWidget(QtWidgets.QWidget):
         self.set_item_delegates()
         header = self.table.horizontalHeader()
 
+        header.setSectionResizeMode(self.model.headers.index("name") + 1, QtWidgets.QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Stretch)
 
     def set_item_delegates(self):
         """Set item delegates and open persistent editors for the table."""
@@ -196,12 +216,18 @@ class ProjectFieldWidget(QtWidgets.QWidget):
 
         return button
 
+    def update_project(self):
+        """Update the field in the parent Project."""
+        presenter = self.parent.parent.parent.presenter
+        presenter.edit_project({self.field: self.model.classlist})
+
 
 class ParametersModel(ClassListModel):
     """Classlist model for Parameters."""
 
     def __init__(self, classlist: RATapi.ClassList, parent: QtWidgets.QWidget):
         super().__init__(classlist, parent)
+        self.headers.insert(0, self.headers.pop(self.headers.index("fit")))
 
         self.protected_indices = []
         if self.item_type is RATapi.models.Parameter:
@@ -212,8 +238,11 @@ class ParametersModel(ClassListModel):
     def flags(self, index):
         flags = super().flags(index)
         header = self.index_header(index)
-        # disable mu, sigma if prior type is not Gaussian
-        if self.classlist[index.row()].prior_type != "gaussian" and header in ["mu", "sigma"]:
+        # disable editing on the delete widget column
+        # and disable mu, sigma if prior type is not Gaussian
+        if (index.column() == 0) or (
+            self.classlist[index.row()].prior_type != "gaussian" and header in ["mu", "sigma"]
+        ):
             return QtCore.Qt.ItemFlag.NoItemFlags
         # never allow name editing for protected parameters, allow everything else to be edited by default
         if header == "fit":

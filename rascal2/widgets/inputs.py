@@ -218,6 +218,24 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
             value = float(text)
             super().setValue(value)
 
+    def stepBy(self, steps: int):
+        """Step the value up or down by some amount.
+
+        Override of QtWidgets.QDoubleSpinBox.stepBy to handle infs.
+
+        Parameters
+        ----------
+        steps : int
+            The number of linesteps to step by.
+
+        """
+        if self.value() == float("inf") and steps < 0:
+            self.setValue(1e12)  # largest possible float that doesn't look ugly in the box
+        if self.value() == -float("inf") and steps > 0:
+            self.setValue(1e-12)  # smallest possible float that pyqt doesn't round to 0
+        else:
+            super().stepBy(steps)
+
     def validate(self, input_text, pos) -> tuple[QtGui.QValidator.State, str, int]:
         """Validate a string written into the spinbox.
 

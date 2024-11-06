@@ -13,9 +13,7 @@ from rascal2.widgets.project.models import (
     ProjectFieldWidget,
 )
 from rascal2.widgets.project.project import (
-    AbstractProjectTabWidget,
-    ProjectTabEditWidget,
-    ProjectTabViewWidget,
+    ProjectTabWidget,
     ProjectWidget,
 )
 
@@ -237,13 +235,7 @@ def test_project_tab_init():
     """Test that the project tab correctly creates field widgets."""
     fields = ["my_field", "parameters", "bulk_in"]
 
-    tab = AbstractProjectTabWidget(fields, parent)
-    layout = tab.layout().itemAt(0).widget().widget().layout()
-
-    for item, expected_header in zip([0, 2, 4], ["My Field", "Parameters", "Bulk In"]):
-        widget = layout.itemAt(item).widget()
-        assert isinstance(widget, QtWidgets.QLabel)
-        assert widget.text() == expected_header
+    tab = ProjectTabWidget(fields, parent)
 
     for field in fields:
         if field in RATapi.project.parameter_class_lists:
@@ -252,12 +244,13 @@ def test_project_tab_init():
             assert isinstance(tab.tables[field], ProjectFieldWidget)
 
 
-def test_project_tab_edit_update_model(classlist, param_classlist):
+@pytest.mark.parametrize("edit_mode", [True, False])
+def test_project_tab_update_model(classlist, param_classlist, edit_mode):
     """Test that updating a ProjectTabEditWidget produces the desired models."""
 
     new_model = {"my_field": classlist, "parameters": param_classlist([])}
 
-    tab = ProjectTabEditWidget(list(new_model), parent)
+    tab = ProjectTabWidget(list(new_model), parent, edit_mode=edit_mode)
     # change the parent to a mock to avoid spec issues
     for table in tab.tables.values():
         table.parent = MagicMock()
@@ -265,17 +258,4 @@ def test_project_tab_edit_update_model(classlist, param_classlist):
 
     for field in new_model:
         assert tab.tables[field].model.classlist == new_model[field]
-        assert tab.tables[field].model.edit_mode
-
-
-def test_project_tab_view_update_model():
-    """Test that updating a ProjectTabViewWidget produces the desired models."""
-
-    project = RATapi.Project()
-    tab = ProjectTabViewWidget(["parameters", "bulk_in", "backgrounds"], parent)
-    for table in tab.tables.values():
-        table.parent = MagicMock()
-    tab.update_model(project)
-
-    for field in tab.tables:
-        assert tab.tables[field].model.classlist == getattr(project, field)
+        assert tab.tables[field].model.edit_mode == edit_mode

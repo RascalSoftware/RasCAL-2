@@ -4,6 +4,7 @@ from enum import IntEnum, unique
 from typing import Callable
 
 from PyQt6 import QtGui
+from RATapi import ClassList
 
 
 @unique
@@ -34,7 +35,10 @@ class AbstractModelEdit(QtGui.QUndoCommand):
         """Update the undo command text."""
         if len(self.new_values) == 1:
             attr, value = list(self.new_values.items())[0]
-            text = f"Set {self.attribute} {attr} to {value}"
+            if isinstance(list(self.new_values.values())[0], ClassList):
+                text = f"Changed values in {attr}"
+            else:
+                text = f"Set {self.attribute} {attr} to {value}"
         else:
             text = f"Save update to {self.attribute}"
 
