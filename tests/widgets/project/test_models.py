@@ -84,7 +84,7 @@ def test_model_layout_data(table_model):
     assert model.columnCount() == 3
 
     expected_data = [[None, "A", 1], [None, "B", 6], [None, "C", 18]]
-    headers = [None, "name", "value"]
+    headers = [None, "Name", "Value"]
 
     for row in [0, 1, 2]:
         for column in [0, 1, 2]:

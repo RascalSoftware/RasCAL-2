@@ -29,6 +29,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.parent_model = self.parent.presenter.model
 
         self.parent_model.project_updated.connect(self.update_project_view)
+        self.parent_model.controls_updated.connect(self.handle_controls_update)
 
         self.tabs = {
             "Parameters": ["parameters"],
@@ -176,7 +177,6 @@ class ProjectWidget(QtWidgets.QWidget):
         # draft project is a dict containing all the attributes of the parent model,
         # because we don't want validation errors going off while editing the model is in-progress
         self.draft_project: dict = create_draft_project(self.parent_model.project)
-        self.parent_model.controls_updated.connect(self.handle_controls_update)
 
         self.calculation_type.setText(self.parent_model.project.calculation)
         self.model_type.setText(self.parent_model.project.model)
@@ -214,6 +214,9 @@ class ProjectWidget(QtWidgets.QWidget):
 
     def handle_controls_update(self):
         """Handle updates to Controls that need to be reflected in the project."""
+        if self.draft_project is None:
+            return
+
         controls = self.parent_model.controls
 
         for tab in self.tabs:
@@ -331,10 +334,7 @@ def create_draft_project(project: RATapi.Project) -> dict:
         attr = getattr(project, field)
         if isinstance(attr, RATapi.ClassList):
             draft_project[field] = RATapi.ClassList(deepcopy(attr.data))
-            if hasattr(draft_project[field], "_class_handle") and issubclass(
-                draft_project[field]._class_handle, RATapi.models.ProtectedParameter
-            ):
-                draft_project[field]._class_handle = RATapi.models.Parameter
+            draft_project[field]._class_handle = getattr(project, field)._class_handle
         else:
             draft_project[field] = attr
     return draft_project
