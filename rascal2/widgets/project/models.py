@@ -424,8 +424,8 @@ class LayerFieldWidget(ProjectFieldWidget):
             self.edit()
 
 
-class ContrastsModel(ClassListModel):
-    """Classlist model for Contrasts."""
+class DomainsModel(ClassListModel):
+    """Classlist model for domain contrasts."""
 
     def flags(self, index):
         flags = super().flags(index)
@@ -437,7 +437,7 @@ class ContrastsModel(ClassListModel):
 class DomainContrastWidget(ProjectFieldWidget):
     """Subclass of field widgets for domain contrasts."""
 
-    classlist_model = ContrastsModel
+    classlist_model = DomainsModel
 
     def __init__(self, field, parent):
         super().__init__(field, parent)
