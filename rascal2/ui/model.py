@@ -7,7 +7,18 @@ from PyQt6 import QtCore
 
 
 class MainWindowModel(QtCore.QObject):
-    """Manages project data and communicates to view via signals"""
+    """Manages project data and communicates to view via signals
+
+    Emits
+    -----
+    project_updated
+        A signal that indicates the project has been updated.
+    controls_updated
+        A signal that indicates the control has been updated.
+    results_updated
+        A signal that indicates the project and results have been updated.
+
+    """
 
     project_updated = QtCore.pyqtSignal()
     controls_updated = QtCore.pyqtSignal()
@@ -111,7 +122,7 @@ class MainWindowModel(QtCore.QObject):
         self.save_path = str(Path(load_path).parent)
 
     def update_controls(self, new_values: dict):
-        """Updates the control attributes.
+        """Update the control attributes.
 
         Parameters
         ----------

@@ -33,7 +33,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.presenter = MainWindowPresenter(self)
         self.mdi = QtWidgets.QMdiArea()
 
-        self.plotting_widget = PlotWidget(self)
+        self.plot_widget = PlotWidget(self)
         self.terminal_widget = TerminalWidget()
         self.controls_widget = ControlsWidget(self)
         self.project_widget = ProjectWidget(self)
@@ -247,7 +247,7 @@ class MainWindowView(QtWidgets.QMainWindow):
             return
 
         widgets = {
-            "Plots": self.plotting_widget,
+            "Plots": self.plot_widget,
             "Project": self.project_widget,
             "Terminal": self.terminal_widget,
             "Fitting Controls": self.controls_widget,

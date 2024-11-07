@@ -14,7 +14,7 @@ from rascal2.ui.view import MainWindowView
 @pytest.fixture
 def test_view():
     """An instance of MainWindowView."""
-    with patch("rascal2.widgets.plotter.FigureCanvas", return_value=QtWidgets.QWidget()):
+    with patch("rascal2.widgets.plot.FigureCanvas", return_value=QtWidgets.QWidget()):
         yield MainWindowView()
 
 

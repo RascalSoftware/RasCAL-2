@@ -2,7 +2,7 @@
 
 import copy
 from enum import IntEnum, unique
-from typing import Callable
+from typing import Callable, Union
 
 import RATapi
 from PyQt6 import QtGui
@@ -100,20 +100,28 @@ class EditProject(AbstractModelEdit):
         return CommandID.EditProject
 
 
-class SaveResults(QtGui.QUndoCommand):
-    """Command for saving the Results object.
+class SaveCalculationOutputs(QtGui.QUndoCommand):
+    """Command for saving the updated problem, results, and log text from a calculation run.
 
     Parameters
     ----------
     problem : RATapi.rat_core.ProblemDefinition
-        The problem
+        The updated parameter values from a RAT run
     results : Union[RATapi.outputs.Results, RATapi.outputs.BayesResults]
         The calculation results.
     log : str
         log text from the given calculation.
+    presenter : MainWindowPresenter
+        The RasCAL main window presenter
     """
 
-    def __init__(self, problem, results, log: str, presenter):
+    def __init__(
+        self,
+        problem: RATapi.rat_core.ProblemDefinition,
+        results: Union[RATapi.outputs.Results, RATapi.outputs.BayesResults],
+        log: str,
+        presenter,
+    ):
         super().__init__()
         self.presenter = presenter
         self.results = results
@@ -124,8 +132,19 @@ class SaveResults(QtGui.QUndoCommand):
         self.old_log = self.presenter.model.result_log
         self.setText("Save calculation results")
 
-    def get_parameter_values(self, problem_definition: RATapi.rat_core.ProblemDefinition):
-        """Get parameter values from problem definition."""
+    def get_parameter_values(self, problem: RATapi.rat_core.ProblemDefinition):
+        """Gets updated parameter values from problem definition.
+
+        Parameters
+        ----------
+        problem : RATapi.rat_core.ProblemDefinition
+            The updated parameter values from a RAT run.
+
+        Returns
+        -------
+        values : dict
+            A dict with updated parameter values from a RAT run.
+        """
         parameter_field = {
             "parameters": "params",
             "bulk_in": "bulkIn",
@@ -139,30 +158,39 @@ class SaveResults(QtGui.QUndoCommand):
         values = {}
         for class_list in RATapi.project.parameter_class_lists:
             entry = values.setdefault(class_list, [])
-            entry.extend(getattr(problem_definition, parameter_field[class_list]))
+            entry.extend(getattr(problem, parameter_field[class_list]))
         return values
 
-    def set_parameter_values(self, values):
-        """Update the project given a set of results."""
+    def set_parameter_values(self, values: dict):
+        """Updates the parameter values of the project in the main window model.
 
+        Parameters
+        ----------
+        values : dict
+            A dict with updated parameter values from a RAT run
+        """
         for key, value in values.items():
             for index in range(len(value)):
                 getattr(self.presenter.model.project, key)[index].value = value[index]
-        return values
 
     def undo(self):
-        self.swap_results(self.old_problem, self.old_results, self.old_log)
+        self.update_calculation_outputs(self.old_problem, self.old_results, self.old_log)
 
     def redo(self):
-        self.swap_results(self.problem, self.results, self.log)
+        self.update_calculation_outputs(self.problem, self.results, self.log)
 
-    def swap_results(self, problem, results, log):
-        """Swap problem, result and log in model with given one
+    def update_calculation_outputs(
+        self,
+        problem: RATapi.rat_core.ProblemDefinition,
+        results: Union[RATapi.outputs.Results, RATapi.outputs.BayesResults],
+        log: str,
+    ):
+        """Updates the project, results and log in the main window model
 
         Parameters
         ----------
         problem : RATapi.rat_core.ProblemDefinition
-            The problem definition
+            The updated parameter values from a RAT run
         results : Union[RATapi.outputs.Results, RATapi.outputs.BayesResults]
             The calculation results.
         log : str

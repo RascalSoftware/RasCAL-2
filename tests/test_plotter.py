@@ -4,7 +4,7 @@ import pytest
 import RATapi
 from PyQt6 import QtWidgets
 
-from rascal2.widgets.plotter import PlotWidget
+from rascal2.widgets.plot import PlotWidget
 
 
 class MockWindowView(QtWidgets.QMainWindow):
