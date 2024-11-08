@@ -97,7 +97,7 @@ class MainWindowModel(QtCore.QObject):
         """
         controls_file = Path(load_path, "controls.json")
         try:
-            self.controls = RAT.Controls.model_validate_json(controls_file.read_text())
+            controls = RAT.Controls.model_validate_json(controls_file.read_text())
         except ValueError as err:
             raise ValueError(
                 "The controls.json file for this project is not valid.\n"
@@ -106,12 +106,14 @@ class MainWindowModel(QtCore.QObject):
 
         project_file = Path(load_path, "project.json")
         try:
-            self.project = RAT.utils.convert.project_from_json(project_file.read_text())
+            project = RAT.utils.convert.project_from_json(project_file.read_text())
         except JSONDecodeError as err:
             raise ValueError("The project.json file for this project contains invalid JSON.") from err
         except (KeyError, ValueError) as err:
             raise ValueError("The project.json file for this project is not valid.") from err
 
+        self.controls = controls
+        self.project = project
         self.save_path = load_path
 
     def load_r1_project(self, load_path: str):
