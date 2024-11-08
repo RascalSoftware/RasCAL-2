@@ -222,7 +222,7 @@ def test_domains_tab(setup_project_widget):
     project_widget.edit_project_button.click()
     project_widget.calculation_combobox.setCurrentText(Calculations.Domains)
     assert project_widget.draft_project["calculation"] == Calculations.Domains
-    project_widget.handle_domains_tab()
+    project_widget.handle_tabs()
 
     domains_tab_index = 5
     assert project_widget.project_tab.isTabVisible(domains_tab_index)

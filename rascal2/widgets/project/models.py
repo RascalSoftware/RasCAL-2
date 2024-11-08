@@ -89,7 +89,12 @@ class ClassListModel(QtCore.QAbstractTableModel):
             and role == QtCore.Qt.ItemDataRole.DisplayRole
             and section != 0
         ):
-            return self.headers[section - 1].replace("_", " ").title()
+            header = self.headers[section - 1]
+            if "SLD" in header:
+                header = header.replace("_", " ")
+            else:
+                header = header.replace("_", " ").title()
+            return header
         return None
 
     def append_item(self):

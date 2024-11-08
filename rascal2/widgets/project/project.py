@@ -194,8 +194,9 @@ class ProjectWidget(QtWidgets.QWidget):
             lambda s: self.update_draft_project({"absorption": s == QtCore.Qt.CheckState.Checked})
         )
         self.calculation_combobox.currentTextChanged.connect(lambda s: self.update_draft_project({"calculation": s}))
-        self.calculation_combobox.currentTextChanged.connect(lambda: self.handle_domains_tab())
+        self.calculation_combobox.currentTextChanged.connect(lambda: self.handle_tabs())
         self.model_combobox.currentTextChanged.connect(lambda s: self.update_draft_project({"model": s}))
+        self.model_combobox.currentTextChanged.connect(lambda: self.handle_tabs())
         self.geometry_combobox.currentTextChanged.connect(lambda s: self.update_draft_project({"geometry": s}))
         self.edit_project_tab = QtWidgets.QTabWidget()
 
@@ -233,7 +234,7 @@ class ProjectWidget(QtWidgets.QWidget):
             self.view_tabs[tab].update_model(self.draft_project)
             self.edit_tabs[tab].update_model(self.draft_project)
 
-        self.handle_domains_tab()
+        self.handle_tabs()
         self.handle_controls_update()
 
     def update_draft_project(self, new_values: dict) -> None:
@@ -248,12 +249,19 @@ class ProjectWidget(QtWidgets.QWidget):
         """
         self.draft_project.update(new_values)
 
-    def handle_domains_tab(self) -> None:
-        """Displays or hides the domains tab"""
+    def handle_tabs(self) -> None:
+        """Displays or hides tabs as relevant."""
+        # the domains tab should only be visible if calculating domains
         domain_tab_index = list(self.view_tabs).index("Domains")
         is_domains = self.calculation_combobox.currentText() == Calculations.Domains
         self.project_tab.setTabVisible(domain_tab_index, is_domains)
         self.edit_project_tab.setTabVisible(domain_tab_index, is_domains)
+
+        # the layers tab should only be visible in standard layers
+        layers_tab_index = list(self.view_tabs).index("Layers")
+        is_layers = self.model_combobox.currentText() == LayerModels.StandardLayers
+        self.project_tab.setTabVisible(layers_tab_index, is_layers)
+        self.edit_project_tab.setTabVisible(layers_tab_index, is_layers)
 
     def handle_controls_update(self):
         """Handle updates to Controls that need to be reflected in the project."""
