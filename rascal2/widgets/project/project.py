@@ -279,9 +279,45 @@ class ProjectWidget(QtWidgets.QWidget):
 
     def save_changes(self) -> None:
         """Save changes to the project."""
-        self.parent.presenter.edit_project(self.draft_project)
-        self.update_project_view()
-        self.show_project_view()
+        try:
+            self.validate_draft_project()
+        except ValueError as err:
+            self.parent.terminal_widget.write_error(f"Could not save draft project:\n  {err}")
+        else:
+            self.parent.presenter.edit_project(self.draft_project)
+            self.update_project_view()
+            self.show_project_view()
+
+    def validate_draft_project(self):
+        """Check that the draft project is valid."""
+        errors = []
+        if self.draft_project["model"] == LayerModels.StandardLayers and self.draft_project["layers"]:
+            layer_attrs = list(self.draft_project["layers"][0].model_fields)
+            layer_attrs.remove("name")
+            layer_attrs.remove("hydrate_with")
+            # ensure all layer parameters have been filled in, and all names are layers that exist
+            for i, layer in enumerate(self.draft_project["layers"]):
+                missing_params = [p for p in layer_attrs if getattr(layer, p) == ""]
+                invalid_params = [
+                    (p, v)
+                    for p in layer_attrs
+                    if (v := getattr(layer, p)) not in [p.name for p in self.draft_project["parameters"]]
+                    and p not in missing_params
+                ]
+                if missing_params:
+                    noun = "a parameter" if len(missing_params) == 1 else "parameters"
+                    msg = f"Layer '{layer.name}' (row {i+1}) is missing {noun}: {', '.join(missing_params)}"
+                    errors.append(msg)
+                if invalid_params:
+                    noun = "an invalid value" if len(invalid_params) == 1 else "invalid values"
+                    msg = (
+                        f"Layer '{layer.name}' (row {i+1}) has {noun}: "
+                        f"{', '.join(f'"{v}" for parameter {p}' for p, v in invalid_params)}"
+                    )
+                    errors.append(msg)
+
+        if errors:
+            raise ValueError("\n  ".join(errors))
 
     def cancel_changes(self) -> None:
         """Cancel changes to the project."""
