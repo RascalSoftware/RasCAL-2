@@ -7,7 +7,12 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from RATapi.utils.enums import Calculations, Geometries, LayerModels
 
 from rascal2.config import path_for
-from rascal2.widgets.project.models import DomainContrastWidget, LayerFieldWidget, ParameterFieldWidget, ProjectFieldWidget
+from rascal2.widgets.project.models import (
+    DomainContrastWidget,
+    LayerFieldWidget,
+    ParameterFieldWidget,
+    ProjectFieldWidget,
+)
 
 
 class ProjectWidget(QtWidgets.QWidget):

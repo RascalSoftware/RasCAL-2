@@ -68,6 +68,8 @@ class ClassListModel(QtCore.QAbstractTableModel):
             # pyqt can't automatically coerce enums to strings...
             if isinstance(data, Enum):
                 return str(data)
+            if isinstance(data, list):
+                return ", ".join(data)
             return data
         elif role == QtCore.Qt.ItemDataRole.CheckStateRole and self.index_header(index) == "fit":
             return QtCore.Qt.CheckState.Checked if data else QtCore.Qt.CheckState.Unchecked
@@ -400,6 +402,10 @@ class LayerFieldWidget(ProjectFieldWidget):
 
     classlist_model = LayersModel
 
+    def __init__(self, field, parent):
+        super().__init__(field, parent)
+        self.project_widget = parent.parent
+
     def set_item_delegates(self):
         for i in range(1, self.model.columnCount()):
             if i in [1, self.model.columnCount() - 1]:
@@ -442,7 +448,6 @@ class DomainContrastWidget(ProjectFieldWidget):
     def __init__(self, field, parent):
         super().__init__(field, parent)
         self.project_widget = parent.parent
-
 
     def update_model(self, classlist):
         super().update_model(classlist)

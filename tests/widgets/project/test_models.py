@@ -373,6 +373,7 @@ def test_layer_widget_delegates(init_class):
     for i, header in enumerate(widget.model.headers):
         assert isinstance(widget.table.itemDelegateForColumn(i + 1), expected_delegates[header])
 
+
 @pytest.mark.parametrize("edit_mode", [True, False])
 def test_domains_model_flags(edit_mode, domains_classlist):
     """Test that the DomainsModel flags are set correctly."""
@@ -381,6 +382,7 @@ def test_domains_model_flags(edit_mode, domains_classlist):
     for row in [0, 1, 2]:
         for column in [1, 2]:
             assert bool(model.flags(model.index(row, column)) & QtCore.Qt.ItemFlag.ItemIsEditable) == edit_mode
+
 
 def test_domains_widget_item_delegates(domains_classlist):
     """Test that the domains widget has the expected item delegates."""

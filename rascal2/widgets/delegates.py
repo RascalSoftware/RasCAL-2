@@ -102,6 +102,7 @@ class ParametersDelegate(QtWidgets.QStyledItemDelegate):
         data = editor.currentText()
         model.setData(index, data, QtCore.Qt.ItemDataRole.EditRole)
 
+
 class MultiSelectLayerDelegate(QtWidgets.QStyledItemDelegate):
     """Item delegate for multiselecting layers."""
 
@@ -115,14 +116,15 @@ class MultiSelectLayerDelegate(QtWidgets.QStyledItemDelegate):
         layers = self.project_widget.draft_project["layers"]
         widget.addItems([layer.name for layer in layers])
 
-        current_layers = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
-        widget.select_indices([i for i, layer in enumerate(layers) if layer in current_layers])
-
         return widget
 
     def setEditorData(self, editor: MultiSelectComboBox, index):
-        data = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
-        editor.select_indices([i for i, layer in enumerate(data) if layer in data])
+        # index.data produces the display string rather than the underlying data,
+        # so we split it back into a list here
+        data = index.data(QtCore.Qt.ItemDataRole.DisplayRole).split(", ")
+        layers = self.project_widget.draft_project["layers"]
+
+        editor.select_indices([i for i, layer in enumerate(layers) if layer.name in data])
 
     def setModelData(self, editor, model, index):
         data = editor.selected_items()
