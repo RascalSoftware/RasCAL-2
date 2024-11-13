@@ -462,6 +462,31 @@ class DomainContrastWidget(ProjectFieldWidget):
         )
         self.table.setItemDelegateForColumn(2, delegates.MultiSelectLayerDelegate(self.project_widget, self.table))
 
+
+class CustomFileModel(ClassListModel):
+    """Classlist model for custom files."""
+
+    def __init__(self, classlist: RATapi.ClassList, parent: QtWidgets.QWidget):
+        super().__init__(classlist, parent)
+        self.func_names = {}
+        self.headers.remove("path")
+
+    def columnCount(self, parent=None) -> int:
+        return super().columnCount() + 1
+
+    def headerData(self, section, orientation, role=QtCore.Qt.ItemDataRole.DisplayRole):
+        if section == self.columnCount() - 1:
+            return None
+        return super().headerData(section, orientation, role)
+
+    def flags(self, index):
+        flags = super().flags(index)
+        if index.column() in [0, self.columnCount() - 1]:
+            return QtCore.Qt.ItemFlag.NoItemFlags
+        if self.edit_mode:
+            flags |= QtCore.Qt.ItemFlag.ItemIsEditable
+        return flags
+
     def data(self, index, role=QtCore.Qt.ItemDataRole.DisplayRole):
         data = super().data(index, role)
         if role == QtCore.Qt.ItemDataRole.DisplayRole and self.index_header(index) == "filename" and self.edit_mode:
@@ -499,7 +524,7 @@ class DomainContrastWidget(ProjectFieldWidget):
                     language = None
                     func_names = None
             self.func_names[value] = func_names
-            if func_names is not None:
+            if func_names:
                 self.classlist[row].function_name = func_names[0]
             if language is not None:
                 self.classlist[row].language = language
@@ -518,31 +543,6 @@ class DomainContrastWidget(ProjectFieldWidget):
         if index.column() == self.columnCount() - 1:
             return None
         return super().index_header(index)
-
-
-class CustomFileModel(ClassListModel):
-    """Classlist model for custom files."""
-
-    def __init__(self, classlist: RATapi.ClassList, parent: QtWidgets.QWidget):
-        super().__init__(classlist, parent)
-        self.func_names = {}
-        self.headers.remove("path")
-
-    def columnCount(self, parent=None) -> int:
-        return super().columnCount() + 1
-
-    def headerData(self, section, orientation, role=QtCore.Qt.ItemDataRole.DisplayRole):
-        if section == self.columnCount() - 1:
-            return None
-        return super().headerData(section, orientation, role)
-
-    def flags(self, index):
-        flags = super().flags(index)
-        if index.column() in [0, self.columnCount() - 1]:
-            return QtCore.Qt.ItemFlag.NoItemFlags
-        if self.edit_mode:
-            flags |= QtCore.Qt.ItemFlag.ItemIsEditable
-        return flags
 
 
 class CustomFileWidget(ProjectFieldWidget):
@@ -598,7 +598,7 @@ class CustomFileWidget(ProjectFieldWidget):
                     )
                 )
 
-            editable = (language != Languages.Cpp) and (
+            editable = (language in [Languages.Matlab, Languages.Python]) and (
                 self.model.data(self.model.index(index, self.model.headers.index("filename") + 1)) != "Browse..."
             )
             button.setEnabled(editable)
