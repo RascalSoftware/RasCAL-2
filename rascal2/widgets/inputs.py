@@ -305,7 +305,6 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
 
         self.model().dataChanged.connect(self.update_text)
         self.lineEdit().installEventFilter(self)
-        self.closeOnLineEditClick = False
         self.view().viewport().installEventFilter(self)
 
     def resizeEvent(self, event) -> None:
@@ -336,17 +335,6 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
             True if the event was handled, False otherwise.
 
         """
-        if obj == self.lineEdit() and event.type() == QtCore.QEvent.Type.MouseButtonRelease:
-            if self.closeOnLineEditClick:
-                self.hidePopup()
-                timer = QtCore.QTimer()
-                timer.setSingleShot(True)
-                timer.timeout.connect(lambda: setattr(self, "closeOnLineEditClick", False))
-                timer.start(100)
-            else:
-                self.showPopup()
-                self.closeOnLineEditClick = True
-            return True
         if obj == self.view().viewport() and event.type() == QtCore.QEvent.Type.MouseButtonRelease:
             index = self.view().indexAt(event.position().toPoint())
             item = self.model().itemFromIndex(index)
