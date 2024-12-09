@@ -3,7 +3,7 @@
 import logging
 from pathlib import Path
 
-from PyQt6 import Qsci, QtWidgets
+from PyQt6 import Qsci, QtGui, QtWidgets
 from RATapi.utils.enums import Languages
 from RATapi.wrappers import start_matlab
 
@@ -61,12 +61,21 @@ class CustomFileEditorDialog(QtWidgets.QDialog):
     def __init__(self, file, language, parent):
         super().__init__(parent)
 
-        self.setMinimumWidth(600)
-        self.setMinimumHeight(400)
-
         self.file = file
 
         self.editor = Qsci.QsciScintilla()
+        self.editor.setBraceMatching(Qsci.QsciScintilla.BraceMatch.SloppyBraceMatch)
+        self.editor.setCaretLineVisible(True)
+        self.editor.setCaretLineBackgroundColor(QtGui.QColor("#cccccc"))
+        self.editor.setScrollWidth(1)
+        self.editor.setEolMode(Qsci.QsciScintilla.EolMode.EolUnix)
+        self.editor.setScrollWidthTracking(True)
+        self.editor.setFolding(Qsci.QsciScintilla.FoldStyle.PlainFoldStyle)
+        self.editor.setIndentationsUseTabs(False)
+        self.editor.setIndentationGuides(True)
+        self.editor.setAutoIndent(True)
+        self.editor.setTabWidth(4)
+
         match language:
             case Languages.Python:
                 self.editor.setLexer(Qsci.QsciLexerPython(self.editor))
@@ -75,6 +84,19 @@ class CustomFileEditorDialog(QtWidgets.QDialog):
             case _:
                 self.editor.setLexer(None)
 
+        # Set the default font
+        font = QtGui.QFont("Courier", 10)
+        font.setFixedPitch(True)
+        self.editor.setFont(font)
+
+        # Margin 0 is used for line numbers
+        font_metrics = QtGui.QFontMetrics(font)
+        self.editor.setMarginsFont(font)
+        self.editor.setMarginWidth(0, font_metrics.horizontalAdvance("00000") + 6)
+        self.editor.setMarginLineNumbers(0, True)
+        self.editor.setMarginsBackgroundColor(QtGui.QColor("#cccccc"))
+
+        self.editor.lexer().setFont(font)
         self.editor.setText(self.file.read_text())
 
         save_button = QtWidgets.QPushButton("Save", self)
@@ -83,6 +105,7 @@ class CustomFileEditorDialog(QtWidgets.QDialog):
         cancel_button.clicked.connect(self.reject)
 
         button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addStretch(1)
         button_layout.addWidget(save_button)
         button_layout.addWidget(cancel_button)
 
@@ -91,6 +114,9 @@ class CustomFileEditorDialog(QtWidgets.QDialog):
         layout.addLayout(button_layout)
 
         self.setLayout(layout)
+        self.setMinimumWidth(800)
+        self.setMinimumHeight(600)
+        layout.setContentsMargins(0, 0, 0, 0)
         self.setWindowTitle(f"Edit {str(file)}")
 
     def save_file(self):
