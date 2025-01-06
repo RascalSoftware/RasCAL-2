@@ -96,7 +96,8 @@ class CustomFileEditorDialog(QtWidgets.QDialog):
         self.editor.setMarginLineNumbers(0, True)
         self.editor.setMarginsBackgroundColor(QtGui.QColor("#cccccc"))
 
-        self.editor.lexer().setFont(font)
+        if self.editor.lexer() is not None:
+            self.editor.lexer().setFont(font)
         self.editor.setText(self.file.read_text())
 
         save_button = QtWidgets.QPushButton("Save", self)
