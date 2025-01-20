@@ -4,7 +4,7 @@ from typing import Any, Callable, Generic, TypeVar
 
 import RATapi
 from PyQt6 import QtCore, QtGui, QtWidgets
-from RATapi.utils.enums import BackgroundActions
+from RATapi.utils.enums import BackgroundActions, LayerModels
 
 from rascal2.config import path_for
 from rascal2.widgets.delegates import ProjectFieldDelegate
@@ -95,6 +95,8 @@ class ClassListItemModel(QtCore.QAbstractListModel, Generic[T]):
 class AbstractProjectListWidget(QtWidgets.QWidget):
     """An abstract base widget for editing items kept in a list."""
 
+    item_type = "item"
+
     def __init__(self, field: str, parent):
         super().__init__(parent)
         self.field = field
@@ -158,7 +160,7 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
             # if there are no items, replace the widget with information
             if self.model.rowCount() == 0:
                 self.view_stack = QtWidgets.QLabel(
-                    "No contrasts are currently defined! Edit the project to add a contrast."
+                    f"No {self.item_type}s are currently defined! Edit the project to add a {self.item_type}."
                 )
                 self.view_stack.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
@@ -251,29 +253,31 @@ class LayerStringListModel(QtCore.QStringListModel):
         return QtCore.Qt.DropAction.MoveAction
 
 
-class ContrastModelWidget(QtWidgets.QWidget):
-    """Widget for contrast models."""
+class StandardLayerModelWidget(QtWidgets.QWidget):
+    """Widget for standard layer contrast models."""
 
-    def __init__(self, init_list: list[str] = None, parent=None):
+    def __init__(self, init_list: list[str], parent=None):
         super().__init__(parent)
 
-        self.model = LayerStringListModel(init_list, self)
-        self.list = QtWidgets.QListView(parent)
-        self.list.setModel(self.model)
-        self.list.setItemDelegateForColumn(0, ProjectFieldDelegate(parent.project_widget, "layers", self))
-        self.list.setDragEnabled(True)
-        self.list.setAcceptDrops(True)
-        self.list.setDropIndicatorShown(True)
-        self.list.setDragDropOverwriteMode(False)
+        model = LayerStringListModel(init_list, self)
+        standard_layer_list = QtWidgets.QListView(parent)
+        standard_layer_list.setModel(model)
+        standard_layer_list.setItemDelegateForColumn(0, ProjectFieldDelegate(parent.project_widget, "layers", self))
+        standard_layer_list.setDragEnabled(True)
+        standard_layer_list.setAcceptDrops(True)
+        standard_layer_list.setDropIndicatorShown(True)
+        standard_layer_list.setDragDropOverwriteMode(False)
 
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.list)
+        layout.addWidget(standard_layer_list)
 
         self.setLayout(layout)
 
 
 class ContrastWidget(AbstractProjectListWidget):
     """Widget for viewing and editing Contrasts."""
+
+    item_type = "contrast"
 
     def compose_widget(self, i: int, data_widget: Callable[[str], QtWidgets.QWidget]) -> QtWidgets.QWidget:
         """Create the base grid layouts for the widget.
@@ -282,7 +286,7 @@ class ContrastWidget(AbstractProjectListWidget):
         ----------
         i : int
             The row of the contrasts list to display in this widget.
-        data_widget_creator : Callable[[str], QtWidgets.QWidget]
+        data_widget : Callable[[str], QtWidgets.QWidget]
             A function which takes a field name and returns the data widget for that field.
 
         Returns
@@ -322,7 +326,7 @@ class ContrastWidget(AbstractProjectListWidget):
         model_grid = QtWidgets.QGridLayout()
         model_grid.addWidget(QtWidgets.QLabel("Bulk in:"), 0, 0)
         model_grid.addWidget(data_widget("bulk_in"), 0, 1)
-        model_grid.addWidget(QtWidgets.QLabel("Layers:"), 1, 0)
+        model_grid.addWidget(QtWidgets.QLabel("Model:"), 1, 0)
         model_grid.addWidget(data_widget("model"), 1, 1)
         model_grid.addWidget(QtWidgets.QLabel("Bulk out:"), 2, 0)
         model_grid.addWidget(data_widget("bulk_out"), 2, 1)
@@ -332,7 +336,6 @@ class ContrastWidget(AbstractProjectListWidget):
         layout.addLayout(settings_row)
         layout.addStretch()
         layout.addLayout(model_grid)
-        layout.setContentsMargins(0, 0, 0, 0)
 
         widget = QtWidgets.QWidget(self)
         widget.setLayout(layout)
@@ -344,8 +347,12 @@ class ContrastWidget(AbstractProjectListWidget):
             """Create a read only line edit box for display."""
             current_data = getattr(self.model.get_item(i), field)
             if field == "model":
-                widget = QtWidgets.QListWidget(parent=self)
-                widget.addItems(current_data)
+                if self.project_widget.parent_model.project.model == LayerModels.StandardLayers:
+                    widget = QtWidgets.QListWidget(parent=self)
+                    widget.addItems(current_data)
+                else:
+                    widget = QtWidgets.QLineEdit(current_data[0])
+                    widget.setReadOnly(True)
             else:
                 widget = QtWidgets.QLineEdit(current_data)
                 widget.setReadOnly(True)
@@ -374,8 +381,18 @@ class ContrastWidget(AbstractProjectListWidget):
                     )
                     return widget
                 case "model":
-                    widget = ContrastModelWidget(current_data, self)
-                    return widget
+                    if self.project_widget.draft_project["model"] == LayerModels.StandardLayers:
+                        widget = StandardLayerModelWidget(current_data, self)
+                        widget.dataChanged.connect(lambda: self.model.set_data(i, field, widget.stringList()))
+                        return widget
+                    else:
+                        widget = QtWidgets.QComboBox(self)
+                        widget.addItem("", [])
+                        for file in self.project_widget.draft_project["custom_files"]:
+                            widget.addItem(file.name, [file.name])
+                        widget.setCurrentText(current_data[0])
+                        widget.currentTextChanged.connect(lambda: self.model.set_data(i, field, widget.currentData()))
+                        return widget
                 # all other cases are comboboxes with data from other widget tables
                 case "data" | "bulk_in" | "bulk_out":
                     project_field_name = field
