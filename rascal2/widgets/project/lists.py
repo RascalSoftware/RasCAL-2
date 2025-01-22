@@ -268,11 +268,36 @@ class StandardLayerModelWidget(QtWidgets.QWidget):
         standard_layer_list.setDropIndicatorShown(True)
         standard_layer_list.setDragDropOverwriteMode(False)
 
+        add_button = QtWidgets.QPushButton("+")
+        add_button.pressed.connect(self.append_item)
+        delete_button = QtWidgets.QPushButton(icon=QtGui.QIcon(path_for("delete.png")))
+        delete_button.pressed.connect(self.delete_item)
+
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.addWidget(add_button)
+        buttons.addWidget(delete_button)
+
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(standard_layer_list)
+        layout.addLayout(buttons)
 
         self.setLayout(layout)
 
+    def get_data(self):
+        """Get the data from the model."""
+        return self.model.stringList()
+
+    def append_item(self):
+        """Append an item to the model if the model exists."""
+        if self.model is not None:
+            self.model.insertRows(self.model.rowCount(), 1)
+            self.model.setData(self.model.index(self.model.rowCount() - 1, 0), "Choose Layer...")
+
+    def delete_item(self):
+        """Delete the currently selected item."""
+        if self.model is not None:
+            selection_model = self.list.selectionModel()
+            self.model.removeRows(selection_model.currentIndex().row(), 1)
 
 class ContrastWidget(AbstractProjectListWidget):
     """Widget for viewing and editing Contrasts."""
