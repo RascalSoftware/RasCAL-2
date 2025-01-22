@@ -252,21 +252,19 @@ class LayerStringListModel(QtCore.QStringListModel):
     def supportedDropActions(self):
         return QtCore.Qt.DropAction.MoveAction
 
-
 class StandardLayerModelWidget(QtWidgets.QWidget):
     """Widget for standard layer contrast models."""
 
     def __init__(self, init_list: list[str], parent=None):
         super().__init__(parent)
 
-        model = LayerStringListModel(init_list, self)
-        standard_layer_list = QtWidgets.QListView(parent)
-        standard_layer_list.setModel(model)
-        standard_layer_list.setItemDelegateForColumn(0, ProjectFieldDelegate(parent.project_widget, "layers", self))
-        standard_layer_list.setDragEnabled(True)
-        standard_layer_list.setAcceptDrops(True)
-        standard_layer_list.setDropIndicatorShown(True)
-        standard_layer_list.setDragDropOverwriteMode(False)
+        self.model = LayerStringListModel(init_list, self)
+        self.layer_list = QtWidgets.QListView(parent)
+        self.layer_list.setModel(self.model)
+        self.layer_list.setItemDelegateForColumn(0, ProjectFieldDelegate(parent.project_widget, "layers", self))
+        self.layer_list.setDragEnabled(True)
+        self.layer_list.setAcceptDrops(True)
+        self.layer_list.setDropIndicatorShown(True)
 
         add_button = QtWidgets.QPushButton("+")
         add_button.pressed.connect(self.append_item)
@@ -278,26 +276,26 @@ class StandardLayerModelWidget(QtWidgets.QWidget):
         buttons.addWidget(delete_button)
 
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(standard_layer_list)
+        layout.addWidget(self.layer_list)
         layout.addLayout(buttons)
 
         self.setLayout(layout)
 
-    def get_data(self):
-        """Get the data from the model."""
-        return self.model.stringList()
-
     def append_item(self):
-        """Append an item to the model if the model exists."""
+        """Append an item below the currently selected item."""
         if self.model is not None:
-            self.model.insertRows(self.model.rowCount(), 1)
-            self.model.setData(self.model.index(self.model.rowCount() - 1, 0), "Choose Layer...")
+            selection_model = self.layer_list.selectionModel()
+            self.model.insertRow(selection_model.currentIndex().row() + 1)
+            self.model.setData(self.model.index(selection_model.currentIndex().row() + 1, 0), "Choose Layer...")
 
     def delete_item(self):
         """Delete the currently selected item."""
         if self.model is not None:
-            selection_model = self.list.selectionModel()
-            self.model.removeRows(selection_model.currentIndex().row(), 1)
+            selection_model = self.layer_list.selectionModel()
+            index = selection_model.currentIndex()
+            self.model.removeRow(index.row())
+            self.model.dataChanged.emit(index, index)
+
 
 class ContrastWidget(AbstractProjectListWidget):
     """Widget for viewing and editing Contrasts."""
@@ -408,7 +406,8 @@ class ContrastWidget(AbstractProjectListWidget):
                 case "model":
                     if self.project_widget.draft_project["model"] == LayerModels.StandardLayers:
                         widget = StandardLayerModelWidget(current_data, self)
-                        widget.dataChanged.connect(lambda: self.model.set_data(i, field, widget.stringList()))
+                        widget.model.dataChanged.connect(lambda: self.model.set_data(i, field, widget.model.stringList()))
+                        widget.model.rowsMoved.connect(lambda: self.model.set_data(i, field, widget.model.stringList()))
                         return widget
                     else:
                         widget = QtWidgets.QComboBox(self)
