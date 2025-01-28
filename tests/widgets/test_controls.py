@@ -18,6 +18,7 @@ class MockWindowView(QtWidgets.QMainWindow):
         self.presenter = MagicMock()
         self.presenter.model = MagicMock()
         self.presenter.model.controls = Controls()
+        self.project_widget = MagicMock()
 
 
 view = MockWindowView()

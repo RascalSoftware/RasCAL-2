@@ -16,5 +16,5 @@ for example in examples:
     p, _ = getattr(RAT.examples, example)()
     example_folder = Path(f"./{example}/")
     example_folder.mkdir(parents=True, exist_ok=True)
-    Path(example_folder, "project.json").write_text(RAT.utils.convert.project_to_json(p))
-    Path(example_folder, "controls.json").write_text("{}")
+    p.save(example_folder, "project")
+    RAT.Controls().save(example_folder, "controls") 
