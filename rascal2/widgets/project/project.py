@@ -286,12 +286,14 @@ class ProjectWidget(QtWidgets.QWidget):
     def show_project_view(self) -> None:
         """Show project view"""
         self.setWindowTitle("Project")
+        self.parent.controls_widget.run_button.setEnabled(True)
         self.stacked_widget.setCurrentIndex(0)
 
     def show_edit_view(self) -> None:
         """Show edit view"""
         self.setWindowTitle("Edit Project")
         self.update_project_view()
+        self.parent.controls_widget.run_button.setEnabled(False)
         self.stacked_widget.setCurrentIndex(1)
 
     def save_changes(self) -> None:
@@ -303,6 +305,7 @@ class ProjectWidget(QtWidgets.QWidget):
         else:
             self.parent.presenter.edit_project(self.draft_project)
             self.update_project_view()
+            self.parent.controls_widget.run_button.setEnabled(True)
             self.show_project_view()
 
     def validate_draft_project(self):
