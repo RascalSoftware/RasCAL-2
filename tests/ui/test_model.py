@@ -49,7 +49,7 @@ def test_load_project():
 
     with TemporaryDirectory() as tmpdir:
         Controls(procedure="dream", resampleMinAngle=0.5).save(tmpdir, "controls")
-        project.save(tmpdir, "project") 
+        project.save(tmpdir, "project")
         model.load_project(tmpdir)
 
     assert model.controls == Controls(procedure="dream", resampleMinAngle=0.5)

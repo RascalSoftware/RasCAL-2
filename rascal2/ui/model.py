@@ -75,7 +75,7 @@ class MainWindowModel(QtCore.QObject):
     def save_project(self):
         """Save the project to the save path."""
 
-        self.controls.save(self.save_path, "controls") 
+        self.controls.save(self.save_path, "controls")
         self.project.save(self.save_path, "project")
 
     def load_project(self, load_path: str):

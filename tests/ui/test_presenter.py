@@ -89,7 +89,7 @@ def test_handle_results(mock_problem_def, mock_command, presenter):
     """Test that results are handed to the view correctly."""
     presenter.runner = MagicMock()
     presenter.runner.updated_problem = ProblemDefinition()
-    presenter.runner.results = MagicMock() 
+    presenter.runner.results = MagicMock()
     presenter.runner.results.calculationResults.sumChi = 0.04
     presenter.handle_results()
 
