@@ -346,6 +346,15 @@ class ProjectWidget(QtWidgets.QWidget):
         self.update_project_view()
         self.show_project_view()
 
+    def set_editing_enabled(self, enabled: bool):
+        """Enable or disable project editing, for example during a run."""
+        self.edit_project_button.setEnabled(enabled)
+        for tab_name, tab_items in self.tabs.items():
+            for table in tab_items:
+                if table in RATapi.project.parameter_class_lists:
+                    self.view_tabs[tab_name].tables[table].setEnabled(enabled)
+        
+
 
 class ProjectTabWidget(QtWidgets.QWidget):
     """Widget that combines multiple ProjectFieldWidgets to create a tab of the project window.

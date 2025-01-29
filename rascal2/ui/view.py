@@ -335,6 +335,14 @@ class MainWindowView(QtWidgets.QMainWindow):
         """Reset widgets after a run."""
         self.controls_widget.run_button.setChecked(False)
 
+    def set_editing_enabled(self, enabled: bool):
+        """Disable or enable project editing, for example during a run."""
+        self.controls_widget.fit_settings.setEnabled(enabled)
+        self.controls_widget.procedure_dropdown.setEnabled(enabled)
+        self.undo_action.setEnabled(enabled)
+        self.redo_action.setEnabled(enabled)
+        self.project_widget.set_editing_enabled(enabled)
+
     def get_project_folder(self) -> str:
         """Get a specified folder from the user.
 

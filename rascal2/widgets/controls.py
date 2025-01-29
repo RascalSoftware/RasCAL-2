@@ -157,16 +157,12 @@ class ControlsWidget(QtWidgets.QWidget):
                 self.run_button.setChecked(False)
                 return
             self.validation_label.setText("")
-            self.fit_settings.setEnabled(False)
-            self.procedure_dropdown.setEnabled(False)
-            self.view.project_widget.setEnabled(False)
+            self.view.set_editing_enabled(False)
             self.run_button.setEnabled(False)
             self.stop_button.setEnabled(True)
             self.presenter.run()
         else:
-            self.fit_settings.setEnabled(True)
-            self.procedure_dropdown.setEnabled(True)
-            self.view.project_widget.setEnabled(True)
+            self.view.set_editing_enabled(True)
             self.run_button.setEnabled(True)
             self.stop_button.setEnabled(False)
 
