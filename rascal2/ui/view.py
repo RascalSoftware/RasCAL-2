@@ -268,7 +268,10 @@ class MainWindowView(QtWidgets.QMainWindow):
     def setup_mdi_widgets(self):
         """Performs setup of MDI widgets that relies on the Project existing."""
         self.controls_widget.setup_controls()
-        self.project_widget.update_project_view()
+        self.project_widget.cancel_changes()
+        self.plot_widget.clear()
+        self.terminal_widget.clear()
+        self.terminal_widget.write_startup()
 
     def reset_mdi_layout(self):
         """Reset MDI layout to the default."""
