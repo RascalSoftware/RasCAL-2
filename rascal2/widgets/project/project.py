@@ -353,7 +353,6 @@ class ProjectWidget(QtWidgets.QWidget):
             for table in tab_items:
                 if table in RATapi.project.parameter_class_lists:
                     self.view_tabs[tab_name].tables[table].setEnabled(enabled)
-        
 
 
 class ProjectTabWidget(QtWidgets.QWidget):

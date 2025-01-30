@@ -90,6 +90,8 @@ class ControlsWidget(QtWidgets.QWidget):
 
     def setup_controls(self):
         """Setup the parts of the widget which depend on the Controls object."""
+        # clear any chi-squared from previous controls
+        self.chi_squared.setText("")
 
         # add fit settings for each procedure
         for procedure in Procedures:
