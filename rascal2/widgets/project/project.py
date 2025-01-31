@@ -203,11 +203,15 @@ class ProjectWidget(QtWidgets.QWidget):
         self.edit_absorption_checkbox.checkStateChanged.connect(
             lambda s: self.update_draft_project({"absorption": s == QtCore.Qt.CheckState.Checked})
         )
-        # when calculation type changed, update the draft project and show/hide the domains tab
+        # when calculation type changed, update the draft project, show/hide the domains tab,
+        # and change contrasts to have ratio
         self.calculation_combobox.currentTextChanged.connect(lambda s: self.update_draft_project({"calculation": s}))
         self.calculation_combobox.currentTextChanged.connect(lambda: self.handle_tabs())
+        self.calculation_combobox.currentTextChanged.connect(
+            lambda s: self.edit_tabs["Contrasts"].tables["contrasts"].set_domains(s == Calculations.Domains)
+        )
 
-        # when model type changed, hide/show layers tab and
+        # when model type changed, hide/show layers tab and change model field in contrasts
         self.model_combobox.currentTextChanged.connect(lambda: self.handle_tabs())
         self.model_combobox.currentTextChanged.connect(lambda s: self.handle_model_update(s))
 
@@ -222,7 +226,7 @@ class ProjectWidget(QtWidgets.QWidget):
             lambda s: self.edit_tabs["Layers"].tables["layers"].set_absorption(s == QtCore.Qt.CheckState.Checked)
         )
 
-        for tab in ["Experimental Parameters", "Layers", "Backgrounds"]:
+        for tab in ["Experimental Parameters", "Layers", "Backgrounds", "Domains"]:
             for table in self.edit_tabs[tab].tables.values():
                 table.edited.connect(lambda: self.edit_tabs["Contrasts"].tables["contrasts"].update_item_view())
 
@@ -458,6 +462,9 @@ class ProjectTabWidget(QtWidgets.QWidget):
                 table.edit()
             if "layers" in self.tables:
                 self.tables["layers"].set_absorption(new_model["absorption"])
+            if "contrasts" in self.tables:
+                self.tables["contrasts"].set_domains(new_model["calculation"] == Calculations.Domains)
+
 
     def handle_controls_update(self, controls):
         """Reflect changes to the Controls object."""
