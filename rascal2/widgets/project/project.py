@@ -7,6 +7,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from RATapi.utils.enums import Calculations, Geometries, LayerModels
 
 from rascal2.config import path_for
+from rascal2.widgets.project.lists import ContrastWidget
 from rascal2.widgets.project.models import (
     CustomFileWidget,
     DomainContrastWidget,
@@ -45,12 +46,14 @@ class ProjectWidget(QtWidgets.QWidget):
             "Backgrounds": [],
             "Domains": ["domain_ratios", "domain_contrasts"],
             "Custom Files": ["custom_files"],
-            "Contrasts": [],
+            "Contrasts": ["contrasts"],
         }
 
         self.view_tabs = {}
         self.edit_tabs = {}
         self.draft_project = None
+        # for making model type changes non-destructive
+        self.old_contrast_models = {}
 
         project_view = self.create_project_view()
         project_edit = self.create_edit_view()
@@ -200,10 +203,18 @@ class ProjectWidget(QtWidgets.QWidget):
         self.edit_absorption_checkbox.checkStateChanged.connect(
             lambda s: self.update_draft_project({"absorption": s == QtCore.Qt.CheckState.Checked})
         )
+        # when calculation type changed, update the draft project, show/hide the domains tab,
+        # and change contrasts to have ratio
         self.calculation_combobox.currentTextChanged.connect(lambda s: self.update_draft_project({"calculation": s}))
         self.calculation_combobox.currentTextChanged.connect(lambda: self.handle_tabs())
-        self.model_combobox.currentTextChanged.connect(lambda s: self.update_draft_project({"model": s}))
+        self.calculation_combobox.currentTextChanged.connect(
+            lambda s: self.edit_tabs["Contrasts"].tables["contrasts"].set_domains(s == Calculations.Domains)
+        )
+
+        # when model type changed, hide/show layers tab and change model field in contrasts
         self.model_combobox.currentTextChanged.connect(lambda: self.handle_tabs())
+        self.model_combobox.currentTextChanged.connect(lambda s: self.handle_model_update(s))
+
         self.geometry_combobox.currentTextChanged.connect(lambda s: self.update_draft_project({"geometry": s}))
         self.edit_project_tab = QtWidgets.QTabWidget()
 
@@ -214,6 +225,10 @@ class ProjectWidget(QtWidgets.QWidget):
         self.edit_absorption_checkbox.checkStateChanged.connect(
             lambda s: self.edit_tabs["Layers"].tables["layers"].set_absorption(s == QtCore.Qt.CheckState.Checked)
         )
+
+        for tab in ["Experimental Parameters", "Layers", "Backgrounds", "Domains"]:
+            for table in self.edit_tabs[tab].tables.values():
+                table.edited.connect(lambda: self.edit_tabs["Contrasts"].tables["contrasts"].update_item_view())
 
         main_layout.addWidget(self.edit_project_tab)
 
@@ -282,6 +297,32 @@ class ProjectWidget(QtWidgets.QWidget):
         for tab in self.tabs:
             self.view_tabs[tab].handle_controls_update(controls)
             self.edit_tabs[tab].handle_controls_update(controls)
+
+    def handle_model_update(self, new_type):
+        """Handle updates to the model type.
+
+        Parameters
+        ----------
+        new_type : LayerModels
+            The new layer model.
+
+        """
+        if self.draft_project is None:
+            return
+
+        old_type = self.draft_project["model"]
+        self.update_draft_project({"model": new_type})
+
+        # we use 'xor' (^) as "if the old type was standard layers and the new type isn't, or vice versa"
+        if (old_type == LayerModels.StandardLayers) ^ (new_type == LayerModels.StandardLayers):
+            old_contrast_models = {}
+            # clear contrasts as what the 'model' means has changed!
+            for contrast in self.draft_project["contrasts"]:
+                old_contrast_models[contrast.name] = contrast.model
+                contrast.model = self.old_contrast_models.get(contrast.name, [])
+
+            self.old_contrast_models = old_contrast_models
+            self.edit_tabs["Contrasts"].tables["contrasts"].update_item_view()
 
     def show_project_view(self) -> None:
         """Show project view"""
@@ -386,6 +427,8 @@ class ProjectTabWidget(QtWidgets.QWidget):
                 self.tables[field] = DomainContrastWidget(field, self)
             elif field == "custom_files":
                 self.tables[field] = CustomFileWidget(field, self)
+            elif field == "contrasts":
+                self.tables[field] = ContrastWidget(field, self)
             else:
                 self.tables[field] = ProjectFieldWidget(field, self)
             layout.addWidget(self.tables[field])
@@ -419,6 +462,9 @@ class ProjectTabWidget(QtWidgets.QWidget):
                 table.edit()
             if "layers" in self.tables:
                 self.tables["layers"].set_absorption(new_model["absorption"])
+            if "contrasts" in self.tables:
+                self.tables["contrasts"].set_domains(new_model["calculation"] == Calculations.Domains)
+
 
     def handle_controls_update(self, controls):
         """Reflect changes to the Controls object."""
