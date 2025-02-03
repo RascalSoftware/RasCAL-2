@@ -3,6 +3,7 @@
 from copy import deepcopy
 
 import RATapi
+from pydantic import ValidationError
 from PyQt6 import QtCore, QtGui, QtWidgets
 from RATapi.utils.enums import Calculations, Geometries, LayerModels
 
@@ -344,40 +345,21 @@ class ProjectWidget(QtWidgets.QWidget):
         except ValueError as err:
             self.parent.terminal_widget.write_error(f"Could not save draft project:\n  {err}")
         else:
-            self.parent.presenter.edit_project(self.draft_project)
-            self.update_project_view()
-            self.parent.controls_widget.run_button.setEnabled(True)
-            self.show_project_view()
+            # catch errors from Pydantic as fallback rather than crashing
+            try:
+                self.parent.presenter.edit_project(self.draft_project)
+            except ValidationError as err:
+                self.parent.terminal_widget.write_error(f"Could not save draft project:\n  {err}")
+            else:
+                self.update_project_view()
+                self.parent.controls_widget.run_button.setEnabled(True)
+                self.show_project_view()
 
     def validate_draft_project(self):
         """Check that the draft project is valid."""
         errors = []
-        if self.draft_project["model"] == LayerModels.StandardLayers and self.draft_project["layers"]:
-            layer_attrs = list(self.draft_project["layers"][0].model_fields)
-            layer_attrs.remove("name")
-            layer_attrs.remove("hydrate_with")
-            # ensure all layer parameters have been filled in, and all names are layers that exist
-            valid_params = [p.name for p in self.draft_project["parameters"]]
-            for i, layer in enumerate(self.draft_project["layers"]):
-                missing_params = []
-                invalid_params = []
-                for attr in layer_attrs:
-                    param = getattr(layer, attr)
-                    if param == "":
-                        missing_params.append(attr)
-                    elif param not in valid_params:
-                        invalid_params.append((attr, param))
-
-                if missing_params:
-                    noun = "a parameter" if len(missing_params) == 1 else "parameters"
-                    msg = f"Layer '{layer.name}' (row {i + 1}) is missing {noun}: {', '.join(missing_params)}"
-                    errors.append(msg)
-                if invalid_params:
-                    noun = "an invalid value" if len(invalid_params) == 1 else "invalid values"
-                    msg = f"Layer '{layer.name}' (row {i + 1}) has {noun}: {{0}}".format(
-                        ",\n  ".join(f'"{v}" for parameter {p}' for p, v in invalid_params)
-                    )
-                    errors.append(msg)
+        errors.extend(self.edit_tabs["Layers"].tables["layers"].validate())
+        errors.extend(self.edit_tabs["Contrasts"].tables["contrasts"].validate())
 
         if errors:
             raise ValueError("\n  ".join(errors))

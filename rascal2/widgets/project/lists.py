@@ -4,7 +4,7 @@ from typing import Any, Callable, Generic, TypeVar
 
 import RATapi
 from PyQt6 import QtCore, QtGui, QtWidgets
-from RATapi.utils.enums import BackgroundActions, LayerModels
+from RATapi.utils.enums import BackgroundActions, Calculations, LayerModels
 
 from rascal2.config import path_for
 from rascal2.widgets.delegates import ProjectFieldDelegate
@@ -514,7 +514,7 @@ class ContrastWidget(AbstractProjectListWidget):
             match field:
                 case "name":
                     widget = QtWidgets.QLineEdit(current_data)
-                    widget.textChanged.connect(lambda text: self.model.set_data(i, "name", text))
+                    widget.textChanged.connect(lambda text: self.set_name_data(i, text))
                     return widget
                 case "background_action":
                     widget = QtWidgets.QComboBox()
@@ -564,6 +564,22 @@ class ContrastWidget(AbstractProjectListWidget):
 
         return self.compose_widget(i, data_combobox)
 
+    def set_name_data(self, index: int, name: str):
+        """Set name data, ensuring name isn't empty.
+
+        Parameters
+        ----------
+        index : int
+            The index of the contrast.
+        name : str
+            The desired name for the contrast.
+
+        """
+        if name != "":
+            self.model.set_data(index, "name", name)
+        else:
+            self.model.set_data(index, "name", "Unnamed Contrast")
+
     def set_domains(self, domains: bool):
         """Set whether the model uses ContrastWithRatio.
 
@@ -575,3 +591,63 @@ class ContrastWidget(AbstractProjectListWidget):
         """
         self.model.set_domains(domains)
         self.update_model(self.model.classlist)
+
+    def validate(self):
+        """Ensure that all values in the widget are valid, and return a list of errors if not.
+
+        Returns
+        -------
+        list[str]
+            A list of error messages.
+
+        """
+        errors = []
+        project = self.project_widget.draft_project
+        if project["contrasts"]:
+            contrast_attrs = list(project["contrasts"][0].model_fields)
+            contrast_attrs.remove("name")
+            contrast_attrs.remove("background_action")
+            contrast_attrs.remove("model")
+            contrast_attrs.remove("resample")
+            for i, contrast in enumerate(project["contrasts"]):
+                missing_params = []
+                invalid_params = []
+                for attr in contrast_attrs:
+                    project_field_name = attr if attr in ["data", "bulk_in", "bulk_out"] else attr + "s"
+                    valid_params = [p.name for p in project[project_field_name]]
+                    param = getattr(contrast, attr)
+                    if param == "":
+                        missing_params.append(attr)
+                    elif param not in valid_params:
+                        invalid_params.append((attr, param))
+
+                if missing_params:
+                    msg = f"Contrast '{contrast.name}' (row {i + 1}) is missing: {', '.join(missing_params)}"
+                    errors.append(msg)
+                if invalid_params:
+                    noun = "an invalid value" if len(invalid_params) == 1 else "invalid values"
+                    msg = f"Contrast '{contrast.name}' (row {i + 1}) has {noun}: {{0}}".format(
+                        ",\n  ".join(f'"{v}" for field {p}' for p, v in invalid_params)
+                    )
+                    errors.append(msg)
+
+                model = contrast.model
+                if project["model"] == LayerModels.StandardLayers:
+                    if project["calculation"] == Calculations.Domains:
+                        model_field_name = "domain_contrasts"
+                    else:
+                        model_field_name = "layers"
+                    valid_params = [p.name for p in project[model_field_name]]
+                    invalid_model_vals = set(item for item in model if item not in valid_params)
+                    if invalid_model_vals:
+                        noun = "an invalid model value" if len(invalid_model_vals) == 1 else "invalid model values"
+                        msg = f"Contrast '{contrast.name}' (row {i + 1}) has {noun}: {{0}}'".format(
+                            ", ".join(invalid_model_vals)
+                        )
+                        errors.append(msg)
+                else:
+                    if model not in [f.name for f in project["custom_files"]]:
+                        msg = f"Contrast '{contrast.name}' (row {i + 1}) has invalid model: {model[0]}"
+                        errors.append(msg)
+
+            return errors

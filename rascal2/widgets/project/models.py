@@ -8,7 +8,7 @@ from pathlib import Path
 import pydantic
 import RATapi
 from PyQt6 import QtCore, QtGui, QtWidgets
-from RATapi.utils.enums import Languages, Procedures
+from RATapi.utils.enums import Languages, LayerModels, Procedures
 
 import rascal2.widgets.delegates as delegates
 from rascal2.config import path_for
@@ -427,6 +427,46 @@ class LayerFieldWidget(ProjectFieldWidget):
         self.model.set_absorption(absorption)
         if self.model.edit_mode:
             self.edit()
+
+    def validate(self) -> list[str]:
+        """Ensure that all values in the widget are valid, and return a list of errors if not.
+
+        Returns
+        -------
+        list[str]
+            A list of error messages.
+
+        """
+        errors = []
+        project = self.project_widget.draft_project
+        if project["model"] == LayerModels.StandardLayers and project["layers"]:
+            layer_attrs = list(project["layers"][0].model_fields)
+            layer_attrs.remove("name")
+            layer_attrs.remove("hydrate_with")
+            # ensure all layer parameters have been filled in, and all names are layers that exist
+            valid_params = [p.name for p in project["parameters"]]
+            for i, layer in enumerate(project["layers"]):
+                missing_params = []
+                invalid_params = []
+                for attr in layer_attrs:
+                    param = getattr(layer, attr)
+                    if param == "":
+                        missing_params.append(attr)
+                    elif param not in valid_params:
+                        invalid_params.append((attr, param))
+
+                if missing_params:
+                    noun = "a parameter" if len(missing_params) == 1 else "parameters"
+                    msg = f"Layer '{layer.name}' (row {i + 1}) is missing {noun}: {', '.join(missing_params)}"
+                    errors.append(msg)
+                if invalid_params:
+                    noun = "an invalid value" if len(invalid_params) == 1 else "invalid values"
+                    msg = f"Layer '{layer.name}' (row {i + 1}) has {noun}: {{0}}".format(
+                        ",\n  ".join(f'"{v}" for parameter {p}' for p, v in invalid_params)
+                    )
+                    errors.append(msg)
+
+        return errors
 
 
 class DomainsModel(ClassListTableModel):
