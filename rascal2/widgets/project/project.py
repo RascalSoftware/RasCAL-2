@@ -242,6 +242,10 @@ class ProjectWidget(QtWidgets.QWidget):
         # because we don't want validation errors going off while editing the model is in-progress
         self.draft_project: dict = create_draft_project(self.parent_model.project)
 
+        for tab in self.tabs:
+            self.view_tabs[tab].update_model(self.draft_project)
+            self.edit_tabs[tab].update_model(self.draft_project)
+
         self.absorption_checkbox.setChecked(self.parent_model.project.absorption)
         self.calculation_type.setText(self.parent_model.project.calculation)
         self.model_type.setText(self.parent_model.project.model)
@@ -251,10 +255,6 @@ class ProjectWidget(QtWidgets.QWidget):
         self.calculation_combobox.setCurrentText(self.parent_model.project.calculation)
         self.model_combobox.setCurrentText(self.parent_model.project.model)
         self.geometry_combobox.setCurrentText(self.parent_model.project.geometry)
-
-        for tab in self.tabs:
-            self.view_tabs[tab].update_model(self.draft_project)
-            self.edit_tabs[tab].update_model(self.draft_project)
 
         self.handle_tabs()
         self.handle_controls_update()
@@ -460,11 +460,6 @@ class ProjectTabWidget(QtWidgets.QWidget):
             table.update_model(classlist)
             if self.edit_mode:
                 table.edit()
-            if "layers" in self.tables:
-                self.tables["layers"].set_absorption(new_model["absorption"])
-            if "contrasts" in self.tables:
-                self.tables["contrasts"].set_domains(new_model["calculation"] == Calculations.Domains)
-
 
     def handle_controls_update(self, controls):
         """Reflect changes to the Controls object."""

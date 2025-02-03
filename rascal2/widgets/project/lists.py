@@ -261,7 +261,9 @@ class StandardLayerModelWidget(QtWidgets.QWidget):
         self.layer_list = QtWidgets.QListView(parent)
         self.layer_list.setModel(self.model)
         if parent.model.domains:
-            self.layer_list.setItemDelegateForColumn(0, ProjectFieldDelegate(parent.project_widget, "domain_contrasts", self))
+            self.layer_list.setItemDelegateForColumn(
+                0, ProjectFieldDelegate(parent.project_widget, "domain_contrasts", self)
+            )
         else:
             self.layer_list.setItemDelegateForColumn(0, ProjectFieldDelegate(parent.project_widget, "layers", self))
         self.layer_list.setDragEnabled(True)
