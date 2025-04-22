@@ -51,6 +51,8 @@ class ProjectWidget(QtWidgets.QWidget):
             "Custom Files": ["custom_files"],
             "Contrasts": ["contrasts"],
         }
+        # track which tabs are lists (for syncing)
+        self.list_tabs = ["Contrasts"]
 
         self.view_tabs = {}
         self.edit_tabs = {}
@@ -336,12 +338,34 @@ class ProjectWidget(QtWidgets.QWidget):
     def show_edit_view(self) -> None:
         """Show edit view"""
         self.setWindowTitle("Edit Project")
+
+        # sync selected items for list tabs
+        view_indices = {
+            tab: self.view_tabs[tab].tables[tab.lower()].list.selectionModel().currentIndex().row()
+            for tab in self.list_tabs
+        }
+
         self.update_project_view()
         self.parent.controls_widget.run_button.setEnabled(False)
+
+        for tab in self.list_tabs:
+            edit_widget = self.edit_tabs[tab].tables[tab.lower()]
+            idx = view_indices[tab]
+            edit_widget.list.selectionModel().setCurrentIndex(
+                edit_widget.model.index(idx, 0), QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect
+            )
+
         self.stacked_widget.setCurrentIndex(1)
 
     def save_changes(self) -> None:
         """Save changes to the project."""
+        # sync list items (wrap around update_project_view() which sets them to zero by default)
+        # the list can lose focus when a contrast is edited... default to first item if this happens
+        edit_indices = {
+            tab: max(self.edit_tabs[tab].tables[tab.lower()].list.selectionModel().currentIndex().row(), 0)
+            for tab in self.list_tabs
+        }
+
         errors = "\n  ".join(self.validate_draft_project())
         if errors:
             self.parent.terminal_widget.write_error(f"Could not save draft project:\n  {errors}")
@@ -356,6 +380,14 @@ class ProjectWidget(QtWidgets.QWidget):
             else:
                 self.update_project_view()
                 self.parent.controls_widget.run_button.setEnabled(True)
+
+                for tab in self.list_tabs:
+                    view_widget = self.view_tabs[tab].tables[tab.lower()]
+                    idx = edit_indices[tab]
+                    view_widget.list.selectionModel().setCurrentIndex(
+                        view_widget.model.index(idx, 0), QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect
+                    )
+
                 self.show_project_view()
 
     def validate_draft_project(self) -> Generator[str, None, None]:

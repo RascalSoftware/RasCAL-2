@@ -150,6 +150,9 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
         # this signal changes the current contrast shown in the editor to be the currently highlighted list item
         self.list.selectionModel().currentChanged.connect(lambda index, _: self.view_stack.setCurrentIndex(index.row()))
         self.update_item_view()
+        self.list.selectionModel().setCurrentIndex(
+            self.model.index(0, 0), self.list.selectionModel().SelectionFlag.ClearAndSelect
+        )
 
     def update_item_view(self):
         """Update the item views to correspond with the list model."""
@@ -197,13 +200,22 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
         else:
             self.view_stack.addWidget(self.create_view(new_widget_index))
 
+        self.list.selectionModel().setCurrentIndex(
+            self.model.index(new_widget_index, 0), self.list.selectionModel().SelectionFlag.ClearAndSelect
+        )
+
     def delete_item(self):
         """Delete the currently selected item."""
         if self.model is not None:
             selection_model = self.list.selectionModel()
-            self.model.delete_item(selection_model.currentIndex().row())
+            deleted_index = selection_model.currentIndex().row()
+            self.model.delete_item(deleted_index)
 
-        self.update_item_view()
+            self.update_item_view()
+
+            self.list.selectionModel().setCurrentIndex(
+                self.model.index(deleted_index - 1, 0), self.list.selectionModel().SelectionFlag.ClearAndSelect
+            )
 
     def create_view(self, i: int) -> QtWidgets.QWidget:
         """Create the view widget for a specific item.
