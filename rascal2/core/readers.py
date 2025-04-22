@@ -77,7 +77,7 @@ class NexusDataReader(AbstractDataReader):
                 q_values = (q_values[:, :-1] + q_values[:, 1:]) / 2
                 signal = data_group.nxsignal.nxdata
                 errors = data_group.nxerrors.nxdata
-                
+
                 data = np.vstack([q_values, signal, errors])
                 data = data.transpose()
 

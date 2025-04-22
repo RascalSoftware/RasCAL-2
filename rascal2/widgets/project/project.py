@@ -55,7 +55,7 @@ class ProjectWidget(QtWidgets.QWidget):
             "Contrasts": ["contrasts"],
         }
         # track which tabs are lists (for syncing)
-        self.list_tabs = ["Contrasts"]
+        self.list_tabs = ["Contrasts", "Data"]
 
         self.view_tabs = {}
         self.edit_tabs = {}

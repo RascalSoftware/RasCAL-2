@@ -726,7 +726,7 @@ class DataWidget(AbstractProjectListWidget):
                     model = ArrayTableModel(current_data)
                     widget = QtWidgets.QTableView()
                     widget.setModel(model)
-                    return widget 
+                    return widget
                 case _:
                     min_box = QtWidgets.QLineEdit(str(current_data[0]))
                     max_box = QtWidgets.QLineEdit(str(current_data[1]))
@@ -758,7 +758,7 @@ class DataWidget(AbstractProjectListWidget):
                     model = ArrayTableModel(current_data)
                     widget = QtWidgets.QTableView()
                     widget.setModel(model)
-                    return widget 
+                    return widget
                 case _:
                     widget = RangeWidget()
                     widget.set_data(current_data)
