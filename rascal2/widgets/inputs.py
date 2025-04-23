@@ -221,7 +221,7 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
             return "inf"
         if value == -float("inf"):
             return "-inf"
-        return f"{round(value, 12):.4g}"
+        return f"{round(value, 12):.12g}"
 
     def valueFromText(self, text: str) -> float:
         """Set the underlying value of the spinbox from the text input."""
@@ -297,8 +297,11 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
                 return (QtGui.QValidator.State.Acceptable, input_text, pos)
             except ValueError:
                 return (QtGui.QValidator.State.Intermediate, input_text, pos)
-        elif "." in input_text and len(input_text.split(".")[-1]) != self.decimals():
-            self.setDecimals(len(input_text.split(".")[-1]))
+        elif "." in input_text:
+            # don't accept multiple decimal points
+            if len(parts := input_text.split(".")) > 2:
+                return (QtGui.QValidator.State.Intermediate, input_text, pos)
+            self.setDecimals(sum(map(len, parts)))
             return (QtGui.QValidator.State.Acceptable, input_text, pos)
         else:
             try:
@@ -311,10 +314,15 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
 class RangeWidget(QtWidgets.QWidget):
     """A widget to choose a minimum and maximum float, e.g. for a range."""
 
+    data_changed = QtCore.pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.min_box = AdaptiveDoubleSpinBox()
         self.max_box = AdaptiveDoubleSpinBox()
+
+        self.min_box.valueChanged.connect(lambda: self.data_changed.emit())
+        self.max_box.valueChanged.connect(lambda: self.data_changed.emit())
 
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.min_box)

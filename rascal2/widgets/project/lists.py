@@ -1,5 +1,6 @@
 """Tab model/views which are based on a list at the side of the widget."""
 
+from itertools import count
 from pathlib import Path
 from typing import Any, Callable, Generic, TypeVar
 
@@ -661,13 +662,18 @@ class DataWidget(AbstractProjectListWidget):
     def append_item(self):
         file_paths = self.file_dialog.getOpenFileNames(self, "Select data files to open")[0]
         for path in file_paths:
+            data = readers[Path(path).suffix]().read(path)
             try:
-                data = readers[Path(path).suffix]().read(path)
-            except ValueError as err:
-                self.parent.parent.parent.terminal_widget.write_error(f"Failed to load {path}: {err}")
-            else:
                 for dataset in data:
+                    # handle repeated dataset names by appending a copy number to ensure uniqueness
+                    if dataset.name in (existing_names := [d.name for d in self.model.classlist]):
+                        copy_count = count(1)
+                        while (copy_name := dataset.name + f"-{next(copy_count)}") in existing_names:
+                            pass
+                        dataset.name = copy_name
                     super().append_item(dataset)
+            except Exception as err:
+                self.parent.parent.parent.terminal_widget.write_error(f"Failed to load dataset {path}: {err}")
 
     def update_model(self, classlist):
         super().update_model(classlist)
@@ -716,7 +722,8 @@ class DataWidget(AbstractProjectListWidget):
 
     def create_view(self, i):
         def data_viewer(field):
-            current_data = getattr(self.model.get_item(i), field)
+            item = self.model.get_item(i)
+            current_data = getattr(item, field)
             match field:
                 case "name":
                     widget = QtWidgets.QLineEdit(current_data)
@@ -728,23 +735,33 @@ class DataWidget(AbstractProjectListWidget):
                     widget.setModel(model)
                     return widget
                 case _:
-                    min_box = QtWidgets.QLineEdit(str(current_data[0]))
-                    max_box = QtWidgets.QLineEdit(str(current_data[1]))
-                    min_box.setReadOnly(True)
-                    max_box.setReadOnly(True)
-                    layout = QtWidgets.QHBoxLayout()
-                    layout.addWidget(min_box)
-                    layout.addWidget(max_box)
+                    widget = RangeWidget()
+                    widget.set_data(current_data)
+                    data_array = item.data
+                    if data_array.size > 0:
+                        q_data = data_array[:, 0]
+                        q_range = (float(q_data.min()), float(q_data.max()))
+                        if field == "simulation_range":
+                            widget.set_inner_limit(q_range)
+                        else:
+                            widget.min_box.setMinimum(float(q_data.min()))
+                            widget.max_box.setMaximum(float(q_data.max()))
+                            widget.min_box.valueChanged.connect(lambda v: widget.max_box.setMinimum(v))
+                            widget.max_box.valueChanged.connect(lambda v: widget.min_box.setMaximum(v))
+                            widget.set_outer_limit(q_range)
 
-                    widget = QtWidgets.QWidget()
-                    widget.setLayout(layout)
-
+                    widget.data_changed.connect(
+                        lambda: setattr(item, field, [widget.min_box.value(), widget.max_box.value()])
+                    )
+                    # currently causes a crash...
+                    # widget.data_changed.connect(lambda: self.update_project_data())
                     return widget
 
         return self.compose_widget(i, data_viewer)
 
     def create_editor(self, i):
         def data_editor(field):
+            item = self.model.get_item(i)
             current_data = getattr(self.model.get_item(i), field)
             match field:
                 case "name":
@@ -762,7 +779,7 @@ class DataWidget(AbstractProjectListWidget):
                 case _:
                     widget = RangeWidget()
                     widget.set_data(current_data)
-                    data_array = self.model.get_item(i).data
+                    data_array = item.data
                     if data_array.size > 0:
                         q_data = data_array[:, 0]
                         q_range = (float(q_data.min()), float(q_data.max()))
@@ -774,9 +791,21 @@ class DataWidget(AbstractProjectListWidget):
                             widget.min_box.valueChanged.connect(lambda v: widget.max_box.setMinimum(v))
                             widget.max_box.valueChanged.connect(lambda v: widget.min_box.setMaximum(v))
                             widget.set_outer_limit(q_range)
+
+                    widget.data_changed.connect(
+                        lambda: setattr(item, field, [widget.min_box.value(), widget.max_box.value()])
+                    )
                     return widget
 
         return self.compose_widget(i, data_editor)
+
+    def update_project_data(self):
+        """Update parent project data and recalculate plots."""
+
+        presenter = self.parent.parent.parent.presenter
+        presenter.edit_project({"data": self.model.classlist})
+        if presenter.view.settings.live_recalculate:
+            presenter.run("calculate")
 
     def set_name_data(self, index: int, name: str):
         """Set name data, ensuring name isn't empty.
