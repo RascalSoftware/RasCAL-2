@@ -48,13 +48,13 @@ def test_plot_widget_update_plots(plot_widget):
     """Test that the plots are updated correctly when update_plots is called."""
     plot_widget.update_plots(MagicMock(), MagicMock(spec=RATapi.outputs.Results))
 
-    assert not plot_widget.bayes_plots_button.isEnabled()
+    assert not plot_widget.bayes_plots_button.isVisibleTo(plot_widget)
     plot_widget.reflectivity_plot.plot.assert_called_once()
     plot_widget.reflectivity_plot.reset_mock()
 
     plot_widget.update_plots(MagicMock(), MagicMock(spec=RATapi.outputs.BayesResults))
 
-    assert plot_widget.bayes_plots_button.isEnabled()
+    assert plot_widget.bayes_plots_button.isVisibleTo(plot_widget)
     plot_widget.reflectivity_plot.plot.assert_called_once()
 
 
