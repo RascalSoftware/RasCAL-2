@@ -81,7 +81,8 @@ class ClassListTableModel(QtCore.QAbstractTableModel):
                 value = QtCore.Qt.CheckState(value) == QtCore.Qt.CheckState.Checked
             if param is not None:
                 try:
-                    setattr(self.classlist[row], param, value)
+                    with contextlib.suppress(UserWarning):
+                        setattr(self.classlist[row], param, value)
                 except pydantic.ValidationError:
                     return False
                 if not self.edit_mode:
@@ -722,6 +723,9 @@ class ResolutionsFieldWidget(AbstractSignalFieldWidget):
             type_index,
             delegates.ValidatedInputDelegate(self.model.item_type.model_fields["type"], self.table, remove_items=[2]),
         )
+        # hide unused value_2 through value_5
+        for column in range(4, 9):
+            self.table.setColumnHidden(column, True)
 
     @property
     def parameter_field(self) -> str:
