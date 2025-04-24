@@ -25,11 +25,12 @@ class PlotWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QVBoxLayout()
 
-        self.bayes_plots_dialog = BayesPlotsDialog(self)
+        self.bayes_plots_dialog = BayesPlotsDialog(parent)
+        self.bayes_plots_dialog.setWindowTitle("Bayes Results")
 
         button_layout = QtWidgets.QHBoxLayout()
-        self.bayes_plots_button = QtWidgets.QPushButton("View Bayes plots...")
-        self.bayes_plots_button.setDisabled(True)
+        self.bayes_plots_button = QtWidgets.QPushButton("View Bayes plots")
+        self.bayes_plots_button.setVisible(False)
         self.bayes_plots_button.pressed.connect(self.bayes_plots_dialog.exec)
 
         button_layout.addWidget(self.bayes_plots_button)
@@ -44,7 +45,7 @@ class PlotWidget(QtWidgets.QWidget):
         """Update the plot widget to match the parent model."""
         self.reflectivity_plot.plot(project, results)
         self.bayes_plots_dialog.results_outdated = True
-        self.bayes_plots_button.setDisabled(not isinstance(results, RATapi.outputs.BayesResults))
+        self.bayes_plots_button.setVisible(isinstance(results, RATapi.outputs.BayesResults))
 
     def plot_event(self, event):
         """Handle plot event data."""
@@ -60,7 +61,7 @@ class BayesPlotsDialog(QtWidgets.QDialog):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.parent_model = parent.parent_model
+        self.parent_model = parent.presenter.model
 
         layout = QtWidgets.QVBoxLayout()
 
