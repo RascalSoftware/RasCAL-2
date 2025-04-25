@@ -1,5 +1,7 @@
 """Tests for the RATRunner class."""
 
+import contextlib
+import os
 from queue import Queue  # we need a non-multiprocessing queue because mocks cannot be serialised
 from unittest.mock import MagicMock, patch
 
@@ -150,7 +152,10 @@ def test_run_examples(example):
     if example == "convert_rascal":
         return
 
-    project, _ = getattr(RAT.examples, example)()
+    # suppress RAT printing
+    with open(os.devnull, "w", encoding="utf-8") as stdout, contextlib.redirect_stdout(stdout):
+        project, _ = getattr(RAT.examples, example)()
+
     rat_inputs = RAT.inputs.make_input(project, RAT.Controls())
 
     queue = Queue()
