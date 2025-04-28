@@ -346,10 +346,10 @@ class CornerPlotWidget(AbstractPlotWidget):
 
     def plot(self, _, results):
         self.clear()
-        if isinstance(results, RATapi.outputs.BayesResults):
-            fig = RATapi.plotting.plot_corner(results, return_fig=True)
-            self.canvas.figure = fig
-            self.canvas.draw()
+
+        fig = RATapi.plotting.plot_corner(results, return_fig=True)
+        self.canvas.figure = fig
+        self.canvas.draw()
 
 
 class HistPlotWidget(AbstractPlotWidget):
@@ -363,10 +363,9 @@ class HistPlotWidget(AbstractPlotWidget):
 
     def plot(self, _, results):
         self.clear()
-        if isinstance(results, RATapi.outputs.BayesResults):
-            fig = RATapi.plotting.plot_hists(results, return_fig=True)
-            self.canvas.figure = fig
-            self.canvas.draw()
+        fig = RATapi.plotting.plot_hists(results, return_fig=True)
+        self.canvas.figure = fig
+        self.canvas.draw()
 
 
 class ContourPlotWidget(AbstractPlotWidget):
@@ -377,11 +376,9 @@ class ContourPlotWidget(AbstractPlotWidget):
 
         self.x_param_box = QtWidgets.QComboBox(self)
         self.x_param_box.currentTextChanged.connect(lambda: self.draw_plot())
-        self.x_param_box.setDisabled(True)
 
         self.y_param_box = QtWidgets.QComboBox(self)
         self.y_param_box.currentTextChanged.connect(lambda: self.draw_plot())
-        self.y_param_box.setDisabled(True)
 
         self.smooth_checkbox = QtWidgets.QCheckBox(self)
         self.smooth_checkbox.setChecked(True)
@@ -405,23 +402,10 @@ class ContourPlotWidget(AbstractPlotWidget):
 
         return control_layout
 
-    def plot(self, _, results: Union[RATapi.outputs.Results, RATapi.outputs.BayesResults]):
+    def plot(self, _, results: RATapi.outputs.BayesResults):
         """Plot the contour for two parameters."""
         fit_params = results.fitNames
-
-        if not isinstance(results, RATapi.outputs.BayesResults):
-            self.current_plot_data = None
-        else:
-            self.current_plot_data = results
-
-        if self.current_plot_data is None:
-            self.clear()
-            self.x_param_box.setDisabled(True)
-            self.y_param_box.setDisabled(True)
-            return
-
-        self.x_param_box.setDisabled(False)
-        self.y_param_box.setDisabled(False)
+        self.results = results
 
         # reset fit parameter options
         old_x_param = self.x_param_box.currentText()
@@ -453,15 +437,13 @@ class ContourPlotWidget(AbstractPlotWidget):
 
     def draw_plot(self):
         self.clear()
-        if self.current_plot_data is None:
-            return
 
         x_param = self.x_param_box.currentText()
         y_param = self.y_param_box.currentText()
         smooth = self.smooth_checkbox.checkState() == QtCore.Qt.CheckState.Checked
 
         if x_param != "" and y_param != "":
-            RATapi.plotting.plot_contour(self.current_plot_data, x_param, y_param, smooth, axes=self.figure.axes[0])
+            RATapi.plotting.plot_contour(self.results, x_param, y_param, smooth, axes=self.figure.axes[0])
             self.canvas.draw()
 
 
@@ -476,7 +458,6 @@ class ChainPlotWidget(AbstractPlotWidget):
 
     def plot(self, _, results):
         self.clear()
-        if isinstance(results, RATapi.outputs.BayesResults):
-            fig = RATapi.plotting.plot_chain(results, return_fig=True)
-            self.canvas.figure = fig
-            self.canvas.draw()
+        fig = RATapi.plotting.plot_chain(results, return_fig=True)
+        self.canvas.figure = fig
+        self.canvas.draw()
