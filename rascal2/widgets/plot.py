@@ -10,6 +10,7 @@ from matplotlib.figure import Figure
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from rascal2.config import path_for
+from rascal2.widgets.inputs import MultiSelectComboBox
 
 
 class PlotWidget(QtWidgets.QWidget):
@@ -335,39 +336,6 @@ class RefSLDWidget(AbstractPlotWidget):
         self.canvas.draw()
 
 
-class CornerPlotWidget(AbstractPlotWidget):
-    """Widget for plotting corner plots."""
-
-    def make_control_layout(self):
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(QtWidgets.QLabel("Not yet implemented!"))
-
-        return layout
-
-    def plot(self, _, results):
-        self.clear()
-
-        fig = RATapi.plotting.plot_corner(results, return_fig=True)
-        self.canvas.figure = fig
-        self.canvas.draw()
-
-
-class HistPlotWidget(AbstractPlotWidget):
-    """Widget for plotting Bayesian posterior panels."""
-
-    def make_control_layout(self):
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(QtWidgets.QLabel("Not yet implemented!"))
-
-        return layout
-
-    def plot(self, _, results):
-        self.clear()
-        fig = RATapi.plotting.plot_hists(results, return_fig=True)
-        self.canvas.figure = fig
-        self.canvas.draw()
-
-
 class ContourPlotWidget(AbstractPlotWidget):
     """Widget for plotting a contour plot of two parameters."""
 
@@ -447,17 +415,170 @@ class ContourPlotWidget(AbstractPlotWidget):
             self.canvas.draw()
 
 
-class ChainPlotWidget(AbstractPlotWidget):
-    """Widget for plotting a Bayesian chain panel."""
+class AbstractPanelPlotWidget(AbstractPlotWidget):
+    """Abstract base widget for plotting panels of parameters (corner plot, histograms, chains)
+
+    These widgets all share a parameter multi-select box, so it is defined here.
+
+    """
 
     def make_control_layout(self):
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(QtWidgets.QLabel("Not yet implemented!"))
+        param_select_row = QtWidgets.QHBoxLayout()
+        param_select_row.addWidget(QtWidgets.QLabel("Parameters:"))
+
+        self.param_combobox = MultiSelectComboBox()
+        param_select_row.addWidget(self.param_combobox)
+
+        select_deselect_row = QtWidgets.QHBoxLayout()
+        select_button = QtWidgets.QPushButton("Select all")
+        select_button.pressed.connect(
+            lambda: self.param_combobox.select_indices([i for i in range(self.param_combobox.model().rowCount())])
+        )
+        deselect_button = QtWidgets.QPushButton("Deselect all")
+        deselect_button.pressed.connect(lambda: self.param_combobox.select_indices([]))
+        select_deselect_row.addWidget(select_button)
+        select_deselect_row.addWidget(deselect_button)
+
+        layout.addLayout(param_select_row)
+        layout.addLayout(select_deselect_row)
 
         return layout
 
     def plot(self, _, results):
+        self.results = results
+
         self.clear()
-        fig = RATapi.plotting.plot_chain(results, return_fig=True)
-        self.canvas.figure = fig
-        self.canvas.draw()
+
+        # reset selected parameter data
+        # note that items in old_params which are not in fitParams
+        # will be ignored by select_items
+        old_params = self.param_combobox.selected_items()
+        self.param_combobox.clear()
+        self.param_combobox.addItems(results.fitNames)
+        self.param_combobox.select_items(old_params)
+
+        self.draw_plot()
+
+    def draw_plot(self):
+        raise NotImplementedError
+
+
+class CornerPlotWidget(AbstractPanelPlotWidget):
+    """Widget for plotting corner plots."""
+
+    def make_control_layout(self):
+        layout = super().make_control_layout()
+
+        smooth_row = QtWidgets.QHBoxLayout()
+        smooth_row.addWidget(QtWidgets.QLabel("Apply smoothing:"))
+        self.smooth_checkbox = QtWidgets.QCheckBox()
+        self.smooth_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
+        smooth_row.addWidget(self.smooth_checkbox)
+
+        replot_button = QtWidgets.QPushButton("Redraw Plot")
+        replot_button.pressed.connect(self.draw_plot)
+        # label to inform user that plot is running
+        self.plot_running_label = QtWidgets.QLabel("Plotting...")
+        self.plot_running_label.setVisible(False)
+
+        layout.addLayout(smooth_row)
+        layout.addWidget(replot_button)
+        layout.addWidget(self.plot_running_label)
+
+        return layout
+
+    def draw_plot(self):
+        plot_params = self.param_combobox.selected_items()
+        smooth = self.smooth_checkbox.checkState() == QtCore.Qt.CheckState.Checked
+
+        if plot_params:
+            self.plot_running_label.setVisible(True)
+
+            fig = RATapi.plotting.plot_corner(self.results, params=plot_params, smooth=smooth, return_fig=True)
+            self.canvas.figure = fig
+            self.canvas.draw()
+
+            self.plot_running_label.setVisible(False)
+
+
+class HistPlotWidget(AbstractPanelPlotWidget):
+    """Widget for plotting Bayesian posterior panels."""
+
+    def make_control_layout(self):
+        layout = super().make_control_layout()
+        self.param_combobox.selection_changed.connect(self.draw_plot)
+
+        smooth_row = QtWidgets.QHBoxLayout()
+        smooth_row.addWidget(QtWidgets.QLabel("Apply smoothing:"))
+        self.smooth_checkbox = QtWidgets.QCheckBox()
+        self.smooth_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
+        self.smooth_checkbox.toggled.connect(self.draw_plot)
+        smooth_row.addWidget(self.smooth_checkbox)
+
+        est_density_row = QtWidgets.QHBoxLayout()
+        est_density_row.addWidget(QtWidgets.QLabel("Estimated density:"))
+
+        self.est_density_combobox = QtWidgets.QComboBox()
+
+        # loop over items and data as `addItems` doesn't support item data
+        for item, data in [("None", None), ("normal", "normal"), ("log-normal", "lognor"), ("KDE", "kernel")]:
+            self.est_density_combobox.addItem(item, data)
+
+        self.est_density_combobox.currentTextChanged.connect(self.draw_plot)
+
+        est_density_row.addWidget(self.est_density_combobox)
+
+        layout.addLayout(smooth_row)
+        layout.addLayout(est_density_row)
+
+        return layout
+
+    def draw_plot(self):
+        plot_params = self.param_combobox.selected_items()
+        smooth = self.smooth_checkbox.checkState() == QtCore.Qt.CheckState.Checked
+        est_dens = self.est_density_combobox.currentData()
+
+        if plot_params:
+            fig = RATapi.plotting.plot_hists(
+                self.results,
+                params=plot_params,
+                smooth=smooth,
+                estimated_density={"default": est_dens},
+                return_fig=True,
+            )
+            self.canvas.figure = fig
+            self.canvas.draw()
+
+
+class ChainPlotWidget(AbstractPanelPlotWidget):
+    """Widget for plotting a Bayesian chain panel."""
+
+    def make_control_layout(self):
+        layout = super().make_control_layout()
+        self.param_combobox.selection_changed.connect(self.draw_plot)
+
+        maxpoints_row = QtWidgets.QHBoxLayout()
+
+        maxpoints_row.addWidget(QtWidgets.QLabel("Maximum points:"))
+
+        self.maxpoints_box = QtWidgets.QSpinBox()
+        self.maxpoints_box.setMaximum(100000)
+        self.maxpoints_box.setMinimum(1)
+        self.maxpoints_box.setValue(15000)
+        self.maxpoints_box.valueChanged.connect(self.draw_plot)
+
+        maxpoints_row.addWidget(self.maxpoints_box)
+
+        layout.addLayout(maxpoints_row)
+
+        return layout
+
+    def draw_plot(self):
+        plot_params = self.param_combobox.selected_items()
+        maxpoints = self.maxpoints_box.value()
+
+        if plot_params:
+            fig = RATapi.plotting.plot_chain(self.results, params=plot_params, maxpoints=maxpoints, return_fig=True)
+            self.canvas.figure = fig
+            self.canvas.draw()
