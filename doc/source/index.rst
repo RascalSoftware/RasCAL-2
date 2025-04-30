@@ -9,4 +9,4 @@ project is structured.
    :caption: Contents:
 
    project
-
+   plot
