@@ -560,7 +560,11 @@ class ChainPlotWidget(AbstractPanelPlotWidget):
 
         maxpoints_row = QtWidgets.QHBoxLayout()
 
-        maxpoints_row.addWidget(QtWidgets.QLabel("Maximum points:"))
+        maxpoints_label = QtWidgets.QLabel("Maximum points:")
+        maxpoints_label.setToolTip(
+            "The number of points to display in each chain, evenly distributed along the chain. Capped at 100000."
+        )
+        maxpoints_row.addWidget(maxpoints_label)
 
         self.maxpoints_box = QtWidgets.QSpinBox()
         self.maxpoints_box.setMaximum(100000)
