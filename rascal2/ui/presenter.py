@@ -143,8 +143,6 @@ class MainWindowPresenter:
             reply = self.view.show_unsaved_dialog(message)
             if reply == UnsavedReply.Save:
                 self.save_project()
-            elif reply == UnsavedReply.Discard:
-                pass
             elif reply == UnsavedReply.Cancel:
                 proceed = False
 

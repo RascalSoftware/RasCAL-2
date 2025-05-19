@@ -405,7 +405,7 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         Returns
         -------
-         : rascal2.core.enums.UnsavedReply
+        rascal2.core.enums.UnsavedReply
             The user's response to the warning.
         """
         buttons = (
