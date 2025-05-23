@@ -149,6 +149,15 @@ class MainWindowPresenter:
 
         return proceed
 
+    def export_results(self):
+        """Export the results object."""
+        if self.model.results:
+            save_file = self.view.get_save_file("Export Results", "", "*.json")
+            if not save_file:
+                return
+
+            self.model.results.save(save_file)
+
     def interrupt_terminal(self):
         """Sends an interrupt signal to the RAT runner."""
         self.runner.interrupt()
