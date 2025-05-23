@@ -55,6 +55,7 @@ class MainWindowPresenter:
             self.view.logging.error(f"Failed to load project at path {load_path}:\n {err}")
             raise err  # so that it can be captured by the widget
         self.initialise_ui(self.model.project.name, load_path)
+        self.model.update_results(self.model.results)
 
     def load_r1_project(self, load_path: str):
         """Load a RAT project from a RasCAL-1 project file.
@@ -147,6 +148,15 @@ class MainWindowPresenter:
                 proceed = False
 
         return proceed
+
+    def export_results(self):
+        """Export the results object."""
+        if self.model.results:
+            save_file = self.view.get_save_file("Export Results", "", "*.json")
+            if not save_file:
+                return
+
+            self.model.results.save(save_file)
 
     def interrupt_terminal(self):
         """Sends an interrupt signal to the RAT runner."""

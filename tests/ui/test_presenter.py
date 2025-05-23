@@ -207,3 +207,27 @@ def test_ask_to_save_project(presenter, reply, undo_clean_state, expected):
 
     presenter.view.undo_stack.clean = undo_clean_state
     assert presenter.ask_to_save_project() is expected
+
+
+def test_export_results(presenter):
+    """Test that results can be exported."""
+    test_json_file = "test.json"
+    presenter.model.results.save = MagicMock()
+    presenter.view.get_save_file = MagicMock(return_value=test_json_file)
+
+    presenter.export_results()
+    presenter.model.results.save.assert_called_once_with(test_json_file)
+
+    # If we do not return a save file, don't export the results
+    presenter.model.results.save.reset_mock()
+    presenter.view.get_save_file = MagicMock(return_value=None)
+
+    presenter.export_results()
+    presenter.model.results.save.assert_not_called()
+
+    # If we do not have any results, don't ask for a file
+    presenter.view.get_save_file.reset_mock()
+    presenter.model.results = None
+
+    presenter.export_results()
+    presenter.view.get_save_file.assert_not_called()
