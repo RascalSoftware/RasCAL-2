@@ -225,6 +225,15 @@ def test_export_results(presenter):
     presenter.export_results()
     presenter.model.results.save.assert_not_called()
 
+    # If there is an OSError, log the error
+    presenter.model.results.save = MagicMock(side_effect=OSError("Test Error"))
+    presenter.view.get_save_file = MagicMock(return_value=test_json_file)
+    presenter.view.logging.error = MagicMock()
+
+    presenter.export_results()
+    presenter.model.results.save.assert_called_once_with(test_json_file)
+    presenter.view.logging.error.assert_called_once_with("Failed to save project at path test.json:\n Test Error")
+
     # If we do not have any results, don't ask for a file
     presenter.view.get_save_file.reset_mock()
     presenter.model.results = None

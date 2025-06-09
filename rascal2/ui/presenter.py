@@ -152,11 +152,15 @@ class MainWindowPresenter:
     def export_results(self):
         """Export the results object."""
         if self.model.results:
-            save_file = self.view.get_save_file("Export Results", "", "*.json")
+            filename = self.model.project.name.replace(" ", "_")
+            save_file = self.view.get_save_file("Export Results", filename, "*.json")
             if not save_file:
                 return
 
-            self.model.results.save(save_file)
+            try:
+                self.model.results.save(save_file)
+            except OSError as err:
+                self.view.logging.error(f"Failed to save project at path {save_file}:\n {err}")
 
     def interrupt_terminal(self):
         """Sends an interrupt signal to the RAT runner."""
