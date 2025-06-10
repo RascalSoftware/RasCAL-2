@@ -33,11 +33,11 @@ class ValidatedInputDelegate(QtWidgets.QStyledItemDelegate):
         # this uses the editor widget while holding a reference to BaseInputWidget.
         return widget.editor
 
-    def setEditorData(self, editor: QtWidgets.QWidget, index):
+    def setEditorData(self, _editor: QtWidgets.QWidget, index):
         data = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
         self.widget.set_data(data)
 
-    def setModelData(self, editor, model, index):
+    def setModelData(self, _editor, model, index):
         data = self.widget.get_data()
         model.setData(index, data, QtCore.Qt.ItemDataRole.EditRole)
 

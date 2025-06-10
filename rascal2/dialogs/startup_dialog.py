@@ -46,7 +46,6 @@ class StartupDialog(QtWidgets.QDialog):
         button_layout = QtWidgets.QHBoxLayout()
         button_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         buttons = self.create_buttons()
-        # buttons[-1].setDefa
         for button in buttons:
             button_layout.addWidget(button)
         main_layout.addStretch(1)

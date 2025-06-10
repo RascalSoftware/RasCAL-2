@@ -46,7 +46,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.create_toolbar()
         self.create_status_bar()
 
-        self.setMinimumSize(1600, 900)
+        self.setMinimumSize(1024, 800)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
 
         self.settings = Settings()
