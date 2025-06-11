@@ -97,7 +97,7 @@ def build_exe():
     shutil.rmtree(work_path)
 
     # Copy resources into installer directory
-    resources = ["static/images"]
+    resources = ["static/images", "static/style.css"]
     shutil.copy(PROJECT_PATH / "LICENSE", dist_path / "LICENSE")
     for resource in resources:
         if IS_MAC:
