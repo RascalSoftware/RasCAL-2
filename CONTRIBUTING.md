@@ -55,7 +55,7 @@ Style guidelines
 
 How to build the executable
 ---------------------------
- This script will create the executable for the software in the **packaging/bundle** folder.
+This script will create the executable for the software in the **packaging/bundle** folder.
 
     cd packaging
     python build_exe.py
