@@ -129,6 +129,18 @@ def log_uncaught_exceptions(exc_type, exc_value, exc_traceback):
 
 
 def run_matlab(ready_event, close_event, engine_output):
+    """Start a new matlab engine instance and waits until closed
+
+    Parameters
+    ----------
+    ready_event : multiprocessing.Event
+        An event to inform listeners that MATLAB is ready.
+    close_event : multiprocessing.Event
+        An event to inform this function that MATLAB should be closed.
+    engine_output : multiprocessing.Manager.list
+        A list to output the name of MATLAB engine instance or an exception.
+
+    """
     try:
         import matlab.engine
 
@@ -146,14 +158,30 @@ def run_matlab(ready_event, close_event, engine_output):
     eng.quit()
 
 
-def get_matlab_engine(engine_ready, engine_output, flag=False):
+def get_matlab_engine(engine_ready, engine_output, is_local=False):
+    """Get a MATLAB engine from the MatlabHelper or exception if no engine is available
+
+    Parameters
+    ----------
+    engine_ready : multiprocessing.Event
+        An event to inform listeners that MATLAB is ready.
+    engine_output :  multiprocessing.Manager.list
+        A list with the name of MATLAB engine instance or an exception from the MatlabHelper.
+    is_local : bool, default False
+        Indicates a local engine should be created other connect ratapi.
+
+    Returns
+    -------
+    output : Union[matlab.engine.futureresult.FutureResult, Exception]
+        MATLAB engine future or Exception from MatlabHelper
+    """
     if not engine_output:
         engine_ready.wait(timeout=60)
 
     if engine_output:
         if isinstance(engine_output[0], bytes):
             engine_name = engine_output[0].decode("utf-8")
-            if flag:
+            if is_local:
                 import matlab.engine
 
                 engine_future = matlab.engine.connect_matlab(engine_name, background=True)
@@ -173,6 +201,8 @@ def get_matlab_engine(engine_ready, engine_output, flag=False):
 
 
 class MatlabHelper:
+    """Helper to start MATLAB on another process"""
+
     def __init__(self):
         self.error = ""
         self.ready_event = Event()
@@ -182,6 +212,7 @@ class MatlabHelper:
         self.__engine = None
 
     def async_start(self):
+        """Start MATLAB on a new process"""
         if not self.get_matlab_path():
             return
         self.manager = Manager()
@@ -198,10 +229,18 @@ class MatlabHelper:
         self.process.start()
 
     def shutdown(self):
+        """Set close event to the MATLAB run function"""
         self.ready_event.wait(timeout=60)
         self.close_event.set()
 
     def get_local_engine(self):
+        """Get an instance of MATLAB engine for use on the main process.
+
+        Returns
+        -------
+        matlab.engine.MatlabEngine
+            MATLAB engine instance
+        """
         if self.__engine is not None:
             return self.__engine
 
@@ -213,6 +252,13 @@ class MatlabHelper:
         return self.__engine
 
     def get_matlab_path(self):
+        """Get MATLAB install directory
+
+        Returns
+        -------
+        str
+            Return MATLAB install directory.
+        """
         install_dir = ""
         self.error = ""
         try:

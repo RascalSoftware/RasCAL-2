@@ -61,22 +61,21 @@ class MatlabSetupDialog(QtWidgets.QDialog):
         self.changed = False
 
     def open_folder_selector(self) -> None:
-        """
-        Open folder selector.
-        """
+        """Open folder selector."""
         folder_name = QtWidgets.QFileDialog.getExistingDirectory(self, "Select MATLAB Directory", ".")
         if folder_name:
             self.matlab_path.setText(folder_name)
             self.changed = True
 
     def set_matlab_paths(self):
+        """Update MATLAB paths in arch file"""
         should_init = False
         with open(MATLAB_ARCH_FILE, "r+") as path_file:
             install_dir = pathlib.Path(self.matlab_path.text())
             if not getattr(sys, "frozen", False):
                 return
 
-            if len(path_file.readlines()) != 4:
+            if len(path_file.readlines()) == 0:
                 should_init = True
 
             path_file.truncate(0)

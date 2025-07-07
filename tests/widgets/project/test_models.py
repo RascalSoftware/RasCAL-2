@@ -412,7 +412,7 @@ def test_file_model_filename_data():
     """Tests the display data for the CustomFileModel `filename` field is as expected."""
     init_list = ratapi.ClassList(
         [
-            ratapi.models.CustomFile(filename="myfile.m", path="/home/user/"),
+            ratapi.models.CustomFile(filename="myfile.m", path=Path(".").resolve()),
             ratapi.models.CustomFile(filename="", path="/"),
         ]
     )
@@ -426,7 +426,7 @@ def test_file_model_filename_data():
 
     model.edit_mode = True
 
-    # assert Path(model.data(model.index(0, filename_col))) == Path("/home/user/myfile.m")
+    assert Path(model.data(model.index(0, filename_col))) == (Path(".") / "myfile.m").resolve()
     assert model.data(model.index(1, filename_col)) == "Browse..."
 
 
@@ -442,20 +442,17 @@ def test_file_model_filename_data():
 )
 def test_file_model_set_filename(filename, expected_lang, expected_filenames):
     """Test the custom file row autocompletes when a filename is set."""
-    init_list = ratapi.ClassList([ratapi.models.CustomFile(filename="", path="/")])
-
+    init_list = ratapi.ClassList([ratapi.models.CustomFile(filename="", path=".")])
     python_file = "def func1(): pass \ndef func2(): pass \ndef func3(): pass"
 
     model = CustomFileModel(init_list, parent)
 
     filename_col = model.headers.index("filename") + 1
-
     with tempfile.TemporaryDirectory() as tmp:
         Path(tmp, "myfile.py").write_text(python_file)
         filepath = Path(tmp, filename)
         model.setData(model.index(0, filename_col), filepath)
-
-        assert model.classlist[0].path == Path(tmp)
+        assert model.classlist[0].path == Path(tmp).resolve()
         assert model.classlist[0].filename == filename
         assert model.classlist[0].language == expected_lang
 
