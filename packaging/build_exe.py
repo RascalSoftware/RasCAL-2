@@ -123,11 +123,17 @@ def build_exe():
             ver_file.write(f'!define VERSION "{RASCAL2_VERSION}"')
 
     arch_path = dist_path / "bin" / "_internal" / "matlab" / "engine" / "_arch.txt"
+    warnings.warn(
+        f"MATLAB engine arch file ({arch_path}) was not found. Ignore this if you don't plan to use MATLAB",
+        stacklevel=2,
+    )
     if arch_path.exists():
         open(dist_path / "bin" / "_internal" / "matlab" / "engine" / "_arch.txt", "w").close()
     else:
-        warnings.warn(f"MATLAB engine arch file ({arch_path}) was not found. "
-                      "Ignore this if you don't plan to use MATLAB")
+        warnings.warn(
+            f"MATLAB engine arch file ({arch_path}) was not found. Ignore if you don't plan to use MATLAB",
+            stacklevel=1,
+        )
 
     print("RasCAL-2 built with no errors!\n")
 
