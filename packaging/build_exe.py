@@ -2,6 +2,7 @@ import os
 import pathlib
 import shutil
 import sys
+import warnings
 
 import PyInstaller.__main__ as pyi
 
@@ -121,7 +122,13 @@ def build_exe():
 
             ver_file.write(f'!define VERSION "{RASCAL2_VERSION}"')
 
-    open(dist_path / "bin" / "_internal" / "matlab" / "engine" / "_arch.txt", "w").close()
+    arch_path = dist_path / "bin" / "_internal" / "matlab" / "engine" / "_arch.txt"
+    if arch_path.exists():
+        open(dist_path / "bin" / "_internal" / "matlab" / "engine" / "_arch.txt", "w").close()
+    else:
+        warnings.warn(f"MATLAB engine arch file ({arch_path}) was not found. "
+                      "Ignore this if you don't plan to use MATLAB")
+
     print("RasCAL-2 built with no errors!\n")
 
 
