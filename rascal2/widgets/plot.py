@@ -265,7 +265,7 @@ class BlittingSupport:
 
     def __init__(
         self,
-        data: RATapi.events.PlotEventData,
+        data: ratapi.events.PlotEventData,
         fig=None,
         linear_x: bool = False,
         q4: bool = False,
@@ -289,7 +289,7 @@ class BlittingSupport:
         """Ensure the background is updated after a resize event."""
         self.__background_changed = True
 
-    def update(self, data: RATapi.events.PlotEventData):
+    def update(self, data: ratapi.events.PlotEventData):
         """Update the foreground, if background has not changed otherwise it updates full plot.
 
         Parameters
@@ -349,7 +349,7 @@ class BlittingSupport:
         new_segments_y = [np.array([[x, yt], [x, yb]]) for x, yt, yb in zip(x_base, y_error_top, y_error_bottom)]
         bars_y.set_segments(new_segments_y)
 
-    def update_plot(self, data: RATapi.events.PlotEventData):
+    def update_plot(self, data: ratapi.events.PlotEventData):
         """Update the full plot.
 
         Parameters
@@ -360,7 +360,7 @@ class BlittingSupport:
         """
         if self.figure is not None:
             self.figure.clf()
-        self.figure = RATapi.plotting.plot_ref_sld_helper(
+        self.figure = ratapi.plotting.plot_ref_sld_helper(
             data,
             self.figure,
             linear_x=self.linear_x,
@@ -383,7 +383,7 @@ class BlittingSupport:
         self.set_animated(False)
         self.__background_changed = False
 
-    def update_foreground(self, data: RATapi.events.PlotEventData):
+    def update_foreground(self, data: ratapi.events.PlotEventData):
         """Update the plot foreground only.
 
         Parameters
@@ -394,7 +394,7 @@ class BlittingSupport:
         """
         self.set_animated(True)
         self.figure.canvas.restore_region(self.bg)
-        plot_data = RATapi.plotting._extract_plot_data(data, self.q4, self.show_error_bar)
+        plot_data = ratapi.plotting._extract_plot_data(data, self.q4, self.show_error_bar)
 
         offset = 2 if self.show_error_bar else 1
         for i in range(
@@ -530,12 +530,12 @@ class RefSLDWidget(AbstractPlotWidget):
         self.figure.tight_layout(pad=1)
         self.canvas.draw()
 
-    def plot_with_blit(self, data: RATapi.events.PlotEventData):
+    def plot_with_blit(self, data: ratapi.events.PlotEventData):
         """Updates the ref and SLD plots with blitting
 
         Parameters
         ----------
-        data : RATapi.events.PlotEventData
+        data : ratapi.events.PlotEventData
             plot event data
         """
         self.current_plot_data = data
