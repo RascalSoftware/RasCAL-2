@@ -23,7 +23,7 @@ InstallDir "$PROGRAMFILES64\${PRODUCT}"
 ;Get installation folder from registry if available
 InstallDirRegKey HKCU "Software\${PRODUCT}" ""
 
-;Request application privileges for Windows Vista
+;Request application privileges for Windows
 RequestExecutionLevel admin
   
 ;--------------------------------

@@ -186,9 +186,9 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.clear_terminal_action.setStatusTip("Clear text in the terminal")
         self.clear_terminal_action.triggered.connect(self.terminal_widget.clear)
 
-        self.setup_matalb_action = QtGui.QAction("Setup MATLAB", self)
-        self.setup_matalb_action.setStatusTip("Set the path of the MATLAB executable")
-        self.setup_matalb_action.triggered.connect(self.open_matlab_setup)
+        self.setup_matlab_action = QtGui.QAction("Setup MATLAB", self)
+        self.setup_matlab_action.setStatusTip("Set the path of the MATLAB executable")
+        self.setup_matlab_action.triggered.connect(self.open_matlab_setup)
 
     def create_menus(self):
         """Creates the main menu and sub menus"""
@@ -227,7 +227,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         tools_menu = self.main_menu.addMenu("&Tools")
         tools_menu.addAction(self.clear_terminal_action)
         tools_menu.addSeparator()
-        tools_menu.addAction(self.setup_matalb_action)
+        tools_menu.addAction(self.setup_matlab_action)
 
         help_menu = self.main_menu.addMenu("&Help")
         help_menu.addAction(self.open_help_action)

@@ -70,7 +70,7 @@ plugins
     
 2. After installing NSIS, build the executable then run the build script **packaging/windows/build_installer.nsi**.
 
-        cd packaging/windows/
-        python build_exe.py 
-        makensis build_installer.nsi
+        cd packaging/
+        python build_exe.py
+        makensis windows/build_installer.nsi
       
