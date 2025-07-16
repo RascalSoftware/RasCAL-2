@@ -304,6 +304,10 @@ class BlittingSupport:
             self.update_foreground(data)
 
     def __setattr__(self, name, value):
+        old_value = getattr(self, name, None)
+        if value == old_value:
+            return
+
         super().__setattr__(name, value)
         if name in ["figure", "linear_x", "q4", "show_error_bar", "show_grid", "show_legend"]:
             self.__background_changed = True
@@ -555,20 +559,11 @@ class RefSLDWidget(AbstractPlotWidget):
                 show_legend=show_legend,
             )
         else:
-            if linear_x != self.blit_plot.linear_x:
-                self.blit_plot.linear_x = linear_x
-
-            if q4 != self.blit_plot.q4:
-                self.blit_plot.q4 = q4
-
-            if show_error_bar != self.blit_plot.show_error_bar:
-                self.blit_plot.show_error_bar = show_error_bar
-
-            if show_grid != self.blit_plot.show_grid:
-                self.blit_plot.show_grid = show_grid
-
-            if show_legend != self.blit_plot.show_legend:
-                self.blit_plot.show_legend = show_legend
+            self.blit_plot.linear_x = linear_x
+            self.blit_plot.q4 = q4
+            self.blit_plot.show_error_bar = show_error_bar
+            self.blit_plot.show_grid = show_grid
+            self.blit_plot.show_legend = show_legend
 
             self.blit_plot.update(data)
 
