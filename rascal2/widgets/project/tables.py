@@ -170,9 +170,7 @@ class ProjectFieldWidget(QtWidgets.QWidget):
         self.parent = parent
         self.project_widget = parent.parent
         self.table = QtWidgets.QTableView(parent)
-        self.table.setSizePolicy(
-            QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.MinimumExpanding
-        )
+        self.table.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.MinimumExpanding)
         self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
 
         layout = QtWidgets.QVBoxLayout()
@@ -190,6 +188,32 @@ class ProjectFieldWidget(QtWidgets.QWidget):
         layout.addWidget(self.table)
         self.setLayout(layout)
 
+    def resizeEvent(self, event):
+        self.resize_columns()
+        super().resizeEvent(event)
+
+    def resize_columns(self):
+        """Resize the columns of the tableview to avoid truncating content"""
+        header = self.table.horizontalHeader()
+        index = self.model.headers.index("name") + 1
+        self.table.setColumnWidth(index, 100)
+        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
+
+        for i in range(self.model.columnCount()):
+            if i != index:
+                header.setSectionResizeMode(i, QtWidgets.QHeaderView.ResizeMode.Interactive)
+                self.table.resizeColumnToContents(i)
+
+        width = self.table.columnWidth(index)
+        header.setSectionResizeMode(index, QtWidgets.QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.Fixed)
+        if self.model.headers[0] == "fit":
+            header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Fixed)
+        self.table.resizeColumnToContents(index)
+        content_width = self.table.columnWidth(index)
+        width = width if width > content_width else content_width
+        self.table.setColumnWidth(index, width)
+
     def update_model(self, classlist):
         """Update the table model to synchronise with the project field."""
         self.model = self.classlist_model(classlist, self)
@@ -199,10 +223,8 @@ class ProjectFieldWidget(QtWidgets.QWidget):
         self.model.modelReset.connect(lambda: self.edited.emit())
         self.table.hideColumn(0)
         self.set_item_delegates()
-        header = self.table.horizontalHeader()
 
-        header.setSectionResizeMode(self.model.headers.index("name") + 1, QtWidgets.QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self.resize_columns()
 
     def set_item_delegates(self):
         """Set item delegates and open persistent editors for the table."""
