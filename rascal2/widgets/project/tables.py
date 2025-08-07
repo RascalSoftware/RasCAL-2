@@ -159,7 +159,6 @@ class ProjectFieldWidget(QtWidgets.QWidget):
     """
 
     classlist_model = ClassListTableModel
-    data_offset = 1
 
     # the model can change and disconnect, so we re-connect it
     # to a signal here on each change
@@ -579,7 +578,6 @@ class CustomFileModel(ClassListTableModel):
 
 class CustomFileWidget(ProjectFieldWidget):
     classlist_model = CustomFileModel
-    data_offset = 2
 
     def edit(self):
         super().edit()
@@ -612,7 +610,9 @@ class CustomFileWidget(ProjectFieldWidget):
 
         def setup_button():
             """Check whether the button should be editable and set it up for the right language."""
-            language = self.model.data(self.model.index(index, self.model.headers.index("language") + 2))
+            language = self.model.data(
+                self.model.index(index, self.model.headers.index("language") + self.model.col_offset)
+            )
             with contextlib.suppress(TypeError):
                 button.pressed.disconnect()
             if language == Languages.Matlab:
@@ -629,7 +629,8 @@ class CustomFileWidget(ProjectFieldWidget):
                 )
 
             editable = (language in [Languages.Matlab, Languages.Python]) and (
-                self.model.data(self.model.index(index, self.model.headers.index("filename") + 2)) != "Browse..."
+                self.model.data(self.model.index(index, self.model.headers.index("filename") + self.model.col_offset))
+                != "Browse..."
             )
             button.setEnabled(editable)
 
@@ -643,12 +644,12 @@ class CustomFileWidget(ProjectFieldWidget):
         """Set item delegates and open persistent editors for the table."""
         for i, header in enumerate(self.model.headers):
             self.table.setItemDelegateForColumn(
-                i + self.data_offset,
+                i + self.model.col_offset,
                 delegates.ValidatedInputDelegate(self.model.item_type.model_fields[header], self.table),
             )
 
-        filename_index = self.model.headers.index("filename") + self.data_offset
-        function_index = self.model.headers.index("function_name") + self.data_offset
+        filename_index = self.model.headers.index("filename") + self.model.col_offset
+        function_index = self.model.headers.index("function_name") + self.model.col_offset
         self.table.setItemDelegateForColumn(
             filename_index,
             delegates.ValidatedInputDelegate(self.model.item_type.model_fields["path"], self.table, open_on_show=True),
