@@ -156,7 +156,7 @@ class ProjectWidget(QtWidgets.QWidget):
 
         self.cancel_button = QtWidgets.QPushButton("Cancel", self, objectName="redbutton")
         self.cancel_button.setIcon(QtGui.QIcon(path_for("cancel-dark.png")))
-        self.cancel_button.clicked.connect(self.cancel_changes)
+        self.cancel_button.clicked.connect(self.show_project_view)
 
         buttons_layout = QtWidgets.QHBoxLayout()
         buttons_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
@@ -333,6 +333,18 @@ class ProjectWidget(QtWidgets.QWidget):
 
     def show_project_view(self) -> None:
         """Show project view"""
+        edit_indices = {
+            tab: max(self.edit_tabs[tab].tables[tab.lower()].list.selectionModel().currentIndex().row(), 0)
+            for tab in self.list_tabs
+        }
+        self.update_project_view()
+        for tab in self.list_tabs:
+            view_widget = self.view_tabs[tab].tables[tab.lower()]
+            idx = edit_indices[tab]
+            view_widget.list.selectionModel().setCurrentIndex(
+                view_widget.model.index(idx, 0), QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect
+            )
+
         self.setWindowTitle("Project")
         self.parent.controls_widget.run_button.setEnabled(True)
         self.stacked_widget.setCurrentIndex(0)
@@ -363,11 +375,6 @@ class ProjectWidget(QtWidgets.QWidget):
         """Save changes to the project."""
         # sync list items (wrap around update_project_view() which sets them to zero by default)
         # the list can lose focus when a contrast is edited... default to first item if this happens
-        edit_indices = {
-            tab: max(self.edit_tabs[tab].tables[tab.lower()].list.selectionModel().currentIndex().row(), 0)
-            for tab in self.list_tabs
-        }
-
         errors = "\n  ".join(self.validate_draft_project())
         if errors:
             self.parent.terminal_widget.write_error(f"Could not save draft project:\n  {errors}")
@@ -380,16 +387,6 @@ class ProjectWidget(QtWidgets.QWidget):
                 custom_errors = ValidationError.from_exception_data(err.title, custom_error_list, hide_input=True)
                 self.parent.terminal_widget.write_error(f"Could not save draft project:\n  {custom_errors}")
             else:
-                self.update_project_view()
-                self.parent.controls_widget.run_button.setEnabled(True)
-
-                for tab in self.list_tabs:
-                    view_widget = self.view_tabs[tab].tables[tab.lower()]
-                    idx = edit_indices[tab]
-                    view_widget.list.selectionModel().setCurrentIndex(
-                        view_widget.model.index(idx, 0), QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect
-                    )
-
                 self.show_project_view()
 
     def validate_draft_project(self) -> Generator[str, None, None]:
@@ -497,11 +494,6 @@ class ProjectWidget(QtWidgets.QWidget):
                     elif model[0] not in [f.name for f in project["custom_files"]]:
                         msg = f"Contrast '{contrast.name}' (row {i + 1}) has invalid model: {model[0]}"
                         yield msg
-
-    def cancel_changes(self) -> None:
-        """Cancel changes to the project."""
-        self.update_project_view()
-        self.show_project_view()
 
     def set_editing_enabled(self, enabled: bool):
         """Enable or disable project editing, for example during a run."""
