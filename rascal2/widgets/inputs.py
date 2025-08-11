@@ -339,6 +339,7 @@ class RangeWidget(QtWidgets.QWidget):
         self.max_box.valueChanged.connect(lambda: self.data_changed.emit())
 
         layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.min_box)
         layout.addWidget(self.max_box)
 

@@ -711,19 +711,34 @@ class DataWidget(AbstractProjectListWidget):
         simulation = self.model.get_item(i).name == "Simulation"
 
         layout = QtWidgets.QGridLayout()
-        layout.addWidget(QtWidgets.QLabel("Dataset Name:"), 0, 0)
-        layout.addWidget(data_widget("name"), 0, 1, 1, -1)
+        layout.setSpacing(20)
+        sub_layout = QtWidgets.QHBoxLayout()
+        sub_layout.setSpacing(5)
+        sub_layout.addWidget(QtWidgets.QLabel("Dataset Name:"))
+        sub_layout.addWidget(data_widget("name"))
+        layout.addLayout(sub_layout, 0, 0, 1, -1)
 
-        layout.addWidget(QtWidgets.QLabel("Simulation range:"), 1, 0)
-        layout.addWidget(data_widget("simulation_range"), 2, 0, 1, 2)
+        sub_layout = QtWidgets.QVBoxLayout()
+        sub_layout.setSpacing(5)
+        sub_layout.addWidget(QtWidgets.QLabel("Simulation range:"))
+        sub_layout.addWidget(data_widget("simulation_range"))
+        layout.addLayout(sub_layout, 1, 0, 1, 2)
         if simulation:
             layout.addWidget(QtWidgets.QWidget(), 1, 2, 2, 2)
             layout.addWidget(QtWidgets.QWidget(), 3, 0, 2, -1)
+            layout.setRowStretch(layout.rowCount(), 1)
         else:
-            layout.addWidget(QtWidgets.QLabel("Data range:"), 1, 2)
-            layout.addWidget(data_widget("data_range"), 2, 2, 1, 2)
-            layout.addWidget(QtWidgets.QLabel("Preview Data"), 3, 0, 1, -1, QtCore.Qt.AlignmentFlag.AlignHCenter)
-            layout.addWidget(data_widget("data"), 4, 0, 1, -1, QtCore.Qt.AlignmentFlag.AlignHCenter)
+            sub_layout = QtWidgets.QVBoxLayout()
+            sub_layout.setSpacing(5)
+            sub_layout.addWidget(QtWidgets.QLabel("Data range:"))
+            sub_layout.addWidget(data_widget("data_range"))
+            layout.addLayout(sub_layout, 1, 2, 1, 2)
+
+            sub_layout = QtWidgets.QVBoxLayout()
+            sub_layout.setSpacing(5)
+            sub_layout.addWidget(QtWidgets.QLabel("Preview Data"), 0, QtCore.Qt.AlignmentFlag.AlignHCenter)
+            sub_layout.addWidget(data_widget("data"), 0, QtCore.Qt.AlignmentFlag.AlignHCenter)
+            layout.addLayout(sub_layout, 2, 0, 1, -1)
 
         widget = QtWidgets.QWidget(self)
         widget.setLayout(layout)
@@ -756,6 +771,7 @@ class DataWidget(AbstractProjectListWidget):
                 case _:
                     widget = RangeWidget()
                     widget.set_data(current_data)
+                    widget.set_inner_limit(current_data[::-1])
                     data_array = item.data
                     if data_array.size > 0:
                         q_data = data_array[:, 0]
@@ -770,8 +786,7 @@ class DataWidget(AbstractProjectListWidget):
                     widget.data_changed.connect(
                         lambda: setattr(item, field, [widget.min_box.value(), widget.max_box.value()])
                     )
-                    # currently causes a crash...
-                    # widget.data_changed.connect(lambda: self.update_project_data())
+                    widget.data_changed.connect(lambda: self.update_project_data())
                     return widget
 
         return self.compose_widget(i, data_viewer)
@@ -813,9 +828,10 @@ class DataWidget(AbstractProjectListWidget):
 
     def update_project_data(self):
         """Update parent project data and recalculate plots."""
-
         presenter = self.parent.parent.parent.presenter
+        presenter.model.blockSignals(True)
         presenter.edit_project({"data": self.model.classlist})
+        presenter.model.blockSignals(False)
         if presenter.view.settings.live_recalculate:
             presenter.run("calculate")
 
