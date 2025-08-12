@@ -333,10 +333,11 @@ class ProjectWidget(QtWidgets.QWidget):
 
     def show_project_view(self) -> None:
         """Show project view"""
-        edit_indices = {
-            tab: max(self.edit_tabs[tab].tables[tab.lower()].list.selectionModel().currentIndex().row(), 0)
-            for tab in self.list_tabs
-        }
+        edit_indices = {}
+        for tab in self.list_tabs:
+            model = self.edit_tabs[tab].tables[tab.lower()].list.selectionModel()
+            edit_indices[tab] = 0 if model is None else max(model.currentIndex().row(), 0)
+
         self.update_project_view()
         for tab in self.list_tabs:
             view_widget = self.view_tabs[tab].tables[tab.lower()]
