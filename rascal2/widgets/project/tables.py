@@ -230,7 +230,6 @@ class ProjectFieldWidget(QtWidgets.QWidget):
             self.table.hideColumn(1)
 
         self.set_item_delegates()
-
         self.resize_columns()
 
     def set_item_delegates(self):
@@ -291,7 +290,9 @@ class ProjectFieldWidget(QtWidgets.QWidget):
             Whether to recalculate the plots when the project updates.
         """
         presenter = self.parent.parent.parent.presenter
+        presenter.model.blockSignals(True)
         presenter.edit_project({self.field: self.model.classlist})
+        presenter.model.blockSignals(False)
         if recalculate and presenter.view.settings.live_recalculate:
             presenter.run("calculate")
 

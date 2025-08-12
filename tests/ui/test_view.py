@@ -32,7 +32,7 @@ def test_view():
         ((1, 2, 196, 24, True), (3, 78, 196, 24, True), (1, 2, 204, 66, False), (12, 342, 196, 24, True)),
     ],
 )
-@patch("rascal2.ui.view.ProjectWidget.update_project_view")
+@patch("rascal2.ui.view.ProjectWidget.show_project_view")
 @patch("rascal2.ui.view.MainWindowPresenter")
 @patch("rascal2.ui.view.ControlsWidget.setup_controls")
 class TestMDISettings:
