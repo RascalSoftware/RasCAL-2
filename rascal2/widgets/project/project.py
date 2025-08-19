@@ -243,8 +243,17 @@ class ProjectWidget(QtWidgets.QWidget):
 
         return edit_project_widget
 
-    def update_project_view(self) -> None:
+    def update_project_view(self, update_tab_index=None) -> None:
         """Updates the project view."""
+
+        if update_tab_index is None:
+            update_tab_index = self.stacked_widget.currentIndex()
+        tab_to_update = self.view_tabs if update_tab_index == 0 else self.edit_tabs
+        tab_indices = {}
+        for tab in self.list_tabs:
+            model = tab_to_update[tab].tables[tab.lower()].list.selectionModel()
+            tab_indices[tab] = 0 if model is None else max(model.currentIndex().row(), 0)
+
         # draft project is a dict containing all the attributes of the parent model,
         # because we don't want validation errors going off while editing the model is in-progress
         self.draft_project: dict = create_draft_project(self.parent_model.project)
@@ -265,6 +274,13 @@ class ProjectWidget(QtWidgets.QWidget):
 
         self.handle_tabs()
         self.handle_controls_update()
+
+        for tab in self.list_tabs:
+            tab_widget = self.view_tabs[tab].tables[tab.lower()]
+            idx = tab_indices[tab]
+            tab_widget.list.selectionModel().setCurrentIndex(
+                tab_widget.model.index(idx, 0), QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect
+            )
 
     def update_draft_project(self, new_values: dict) -> None:
         """
@@ -333,43 +349,16 @@ class ProjectWidget(QtWidgets.QWidget):
 
     def show_project_view(self) -> None:
         """Show project view"""
-        edit_indices = {}
-        for tab in self.list_tabs:
-            model = self.edit_tabs[tab].tables[tab.lower()].list.selectionModel()
-            edit_indices[tab] = 0 if model is None else max(model.currentIndex().row(), 0)
-
-        self.update_project_view()
-        for tab in self.list_tabs:
-            view_widget = self.view_tabs[tab].tables[tab.lower()]
-            idx = edit_indices[tab]
-            view_widget.list.selectionModel().setCurrentIndex(
-                view_widget.model.index(idx, 0), QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect
-            )
-
+        self.update_project_view(1)
         self.setWindowTitle("Project")
         self.parent.controls_widget.run_button.setEnabled(True)
         self.stacked_widget.setCurrentIndex(0)
 
     def show_edit_view(self) -> None:
         """Show edit view"""
+        self.update_project_view(0)
         self.setWindowTitle("Edit Project")
-
-        # sync selected items for list tabs
-        view_indices = {
-            tab: self.view_tabs[tab].tables[tab.lower()].list.selectionModel().currentIndex().row()
-            for tab in self.list_tabs
-        }
-
-        self.update_project_view()
         self.parent.controls_widget.run_button.setEnabled(False)
-
-        for tab in self.list_tabs:
-            edit_widget = self.edit_tabs[tab].tables[tab.lower()]
-            idx = view_indices[tab]
-            edit_widget.list.selectionModel().setCurrentIndex(
-                edit_widget.model.index(idx, 0), QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect
-            )
-
         self.stacked_widget.setCurrentIndex(1)
 
     def save_changes(self) -> None:
