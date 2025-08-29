@@ -146,10 +146,12 @@ def run_matlab(ready_event, close_event, engine_output):
 
         eng = matlab.engine.start_matlab()
         eng.matlab.engine.shareEngine(nargout=0)
-        engine_output.append(eng.matlab.engine.engineName(nargout=1).encode("utf-8"))
+        if not close_event.is_set():
+            engine_output.append(eng.matlab.engine.engineName(nargout=1).encode("utf-8"))
     except Exception as ex:
         engine_output.append(ex)
         raise ex
+
     ready_event.set()
     close_event.wait()
 
@@ -176,7 +178,7 @@ def get_matlab_engine(engine_ready, engine_output, is_local=False):
         MATLAB engine future or Exception from MatlabHelper
     """
     if not engine_output:
-        engine_ready.wait(timeout=60)
+        engine_ready.wait(timeout=40)
 
     if engine_output:
         if isinstance(engine_output[0], bytes):
@@ -228,12 +230,6 @@ class MatlabHelper:
         self.process.daemon = False
         self.process.start()
 
-    def shutdown(self):
-        """Set close event to the MATLAB run function"""
-        if not self.engine_output:
-            self.ready_event.wait(timeout=60)
-        self.close_event.set()
-
     def get_local_engine(self):
         """Get an instance of MATLAB engine for use on the main process.
 
@@ -277,5 +273,4 @@ class MatlabHelper:
         return str(install_dir)
 
 
-mp.set_start_method("spawn", force=True)
 MATLAB_HELPER = MatlabHelper()

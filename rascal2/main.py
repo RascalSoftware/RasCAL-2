@@ -44,7 +44,7 @@ def main():
     sys.excepthook = log_uncaught_exceptions
     MATLAB_HELPER.async_start()
     exit_code = ui_execute()
-    MATLAB_HELPER.shutdown()
+    MATLAB_HELPER.close_event.set()
     sys.exit(exit_code)
 
 

@@ -90,6 +90,9 @@ def run(queue, rat_inputs: tuple, procedure: str, display: bool, engine_ready, e
 
     engine_future = None
     if any([file["language"] == "matlab" for file in problem_definition.customFiles.files]):
+        if not engine_output:
+            queue.put(LogData(INFO, "Attempting to start Matlab..."))
+
         result = get_matlab_engine(engine_ready, engine_output)
         if isinstance(result, Exception):
             queue.put(result)
