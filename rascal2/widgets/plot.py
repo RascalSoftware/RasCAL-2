@@ -4,7 +4,6 @@ from abc import abstractmethod
 from inspect import isclass
 from typing import Optional, Union
 
-import numpy as np
 import ratapi
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -40,17 +39,32 @@ class PlotWidget(QtWidgets.QWidget):
         self.reflectivity_plot = RefSLDWidget(self)
         layout.addLayout(button_layout)
         layout.addWidget(self.reflectivity_plot)
-
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 5, 0, 30)
         self.setLayout(layout)
 
     def update_plots(self, project: ratapi.Project, results: ratapi.outputs.Results | ratapi.outputs.BayesResults):
-        """Update the plot widget to match the parent model."""
+        """Update the plot widget to match the parent model.
+
+        Parameters
+        ----------
+        project : ratapi.Project
+            The project
+        results : Union[ratapi.outputs.Results, ratapi.outputs.BayesResults]
+            The calculation results.
+        """
         self.reflectivity_plot.plot(project, results)
         self.bayes_plots_dialog.results_outdated = True
         self.bayes_plots_button.setVisible(isinstance(results, ratapi.outputs.BayesResults))
 
-    def plot_with_blit(self, event):
-        """Handle plot event data."""
+    def plot_with_blit(self, event: ratapi.events.PlotEventData):
+        """Handle plot event data.
+
+        Parameters
+        ----------
+        event : ratapi.events.PlotEventData
+            plot event data
+        """
         self.reflectivity_plot.plot_with_blit(event)
 
     def clear(self):
@@ -238,201 +252,6 @@ class AbstractPlotWidget(QtWidgets.QWidget):
             self.figure.savefig(filepath[0])
 
 
-class BlittingSupport:
-    """Create a SLD plot that uses blitting to get faster draws.
-
-    The blit plot stores the background from an
-    initial draw then updates the foreground (lines and error bars) if the background is not changed.
-
-    Parameters
-    ----------
-    data : PlotEventData
-        The plot event data that contains all the information
-        to generate the ref and sld plots
-    fig : matplotlib.pyplot.figure, optional
-        The figure class that has two subplots
-    linear_x : bool, default: False
-        Controls whether the x-axis on reflectivity plot uses the linear scale
-    q4 : bool, default: False
-        Controls whether Q^4 is plotted on the reflectivity plot
-    show_error_bar : bool, default: True
-        Controls whether the error bars are shown
-    show_grid : bool, default: False
-        Controls whether the grid is shown
-    show_legend : bool, default: True
-        Controls whether the legend is shown
-    """
-
-    def __init__(
-        self,
-        data: ratapi.events.PlotEventData,
-        fig=None,
-        linear_x: bool = False,
-        q4: bool = False,
-        show_error_bar: bool = True,
-        show_grid: bool = False,
-        show_legend: bool = True,
-    ):
-        self.figure = fig
-        self.linear_x = linear_x
-        self.q4 = q4
-        self.show_error_bar = show_error_bar
-        self.show_grid = show_grid
-        self.show_legend = show_legend
-        self.update_plot(data)
-        self.event_id = self.figure.canvas.mpl_connect("resize_event", self.resizeEvent)
-
-    def __del__(self):
-        self.figure.canvas.mpl_disconnect(self.event_id)
-
-    def resizeEvent(self, _event):
-        """Ensure the background is updated after a resize event."""
-        self.__background_changed = True
-
-    def update(self, data: ratapi.events.PlotEventData):
-        """Update the foreground, if background has not changed otherwise it updates full plot.
-
-        Parameters
-        ----------
-        data : PlotEventData
-            The plot event data that contains all the information
-            to generate the ref and sld plots
-        """
-        if self.__background_changed:
-            self.update_plot(data)
-        else:
-            self.update_foreground(data)
-
-    def __setattr__(self, name, value):
-        old_value = getattr(self, name, None)
-        if value == old_value:
-            return
-
-        super().__setattr__(name, value)
-        if name in ["figure", "linear_x", "q4", "show_error_bar", "show_grid", "show_legend"]:
-            self.__background_changed = True
-
-    def set_animated(self, is_animated: bool):
-        """Set the animated property of foreground plot elements.
-
-        Parameters
-        ----------
-        is_animated : bool
-            Indicates if the animated property should be set.
-        """
-        for line in self.figure.axes[0].lines:
-            line.set_animated(is_animated)
-        for line in self.figure.axes[1].lines:
-            line.set_animated(is_animated)
-        for container in self.figure.axes[0].containers:
-            container[2][0].set_animated(is_animated)
-
-    def adjust_error_bar(self, error_bar_container, x, y, y_error):
-        """Adjust the error bar data.
-
-        Parameters
-        ----------
-        error_bar_container : Tuple
-            Tuple containing the artist of the errorbar i.e. (data line, cap lines, bar lines)
-        x : np.ndarray
-            The shifted data x axis data
-        y : np.ndarray
-            The shifted data y axis data
-        y_error : np.ndarray
-            The shifted data y axis error data
-        """
-        line, _, (bars_y,) = error_bar_container
-
-        line.set_data(x, y)
-        x_base = x
-        y_base = y
-
-        y_error_top = y_base + y_error
-        y_error_bottom = y_base - y_error
-
-        new_segments_y = [np.array([[x, yt], [x, yb]]) for x, yt, yb in zip(x_base, y_error_top, y_error_bottom)]
-        bars_y.set_segments(new_segments_y)
-
-    def update_plot(self, data: ratapi.events.PlotEventData):
-        """Update the full plot.
-
-        Parameters
-        ----------
-        data : PlotEventData
-            The plot event data that contains all the information
-            to generate the ref and sld plots
-        """
-        if self.figure is not None:
-            self.figure.clf()
-        self.figure = ratapi.plotting.plot_ref_sld_helper(
-            data,
-            self.figure,
-            linear_x=self.linear_x,
-            q4=self.q4,
-            show_error_bar=self.show_error_bar,
-            show_grid=self.show_grid,
-            show_legend=self.show_legend,
-            animated=True,
-        )
-        self.figure.tight_layout(pad=1)
-        self.figure.canvas.draw()
-        self.bg = self.figure.canvas.copy_from_bbox(self.figure.bbox)
-        for line in self.figure.axes[0].lines:
-            self.figure.axes[0].draw_artist(line)
-        for line in self.figure.axes[1].lines:
-            self.figure.axes[1].draw_artist(line)
-        for container in self.figure.axes[0].containers:
-            self.figure.axes[0].draw_artist(container[2][0])
-        self.figure.canvas.blit(self.figure.bbox)
-        self.set_animated(False)
-        self.__background_changed = False
-
-    def update_foreground(self, data: ratapi.events.PlotEventData):
-        """Update the plot foreground only.
-
-        Parameters
-        ----------
-        data : PlotEventData
-            The plot event data that contains all the information
-            to generate the ref and sld plots
-        """
-        self.set_animated(True)
-        self.figure.canvas.restore_region(self.bg)
-        plot_data = ratapi.plotting._extract_plot_data(data, self.q4, self.show_error_bar)
-
-        offset = 2 if self.show_error_bar else 1
-        for i in range(
-            0,
-            len(self.figure.axes[0].lines),
-        ):
-            self.figure.axes[0].lines[i].set_data(plot_data["ref"][i // offset][0], plot_data["ref"][i // offset][1])
-            self.figure.axes[0].draw_artist(self.figure.axes[0].lines[i])
-
-        i = 0
-        for j in range(len(plot_data["sld"])):
-            for sld in plot_data["sld"][j]:
-                self.figure.axes[1].lines[i].set_data(sld[0], sld[1])
-                self.figure.axes[1].draw_artist(self.figure.axes[1].lines[i])
-                i += 1
-
-            if plot_data["sld_resample"]:
-                for resampled in plot_data["sld_resample"][j]:
-                    self.figure.axes[1].lines[i].set_data(resampled[0], resampled[1])
-                    self.figure.axes[1].draw_artist(self.figure.axes[1].lines[i])
-                    i += 1
-
-        for i, container in enumerate(self.figure.axes[0].containers):
-            self.adjust_error_bar(
-                container, plot_data["error"][i][0], plot_data["error"][i][1], plot_data["error"][i][2]
-            )
-            self.figure.axes[0].draw_artist(container[2][0])
-            self.figure.axes[0].draw_artist(container[0])
-
-        self.figure.canvas.blit(self.figure.bbox)
-        self.figure.canvas.flush_events()
-        self.set_animated(False)
-
-
 class RefSLDWidget(AbstractPlotWidget):
     """Creates a UI for displaying the path lengths from the simulation result"""
 
@@ -440,18 +259,18 @@ class RefSLDWidget(AbstractPlotWidget):
         self.plot_controls = QtWidgets.QWidget()
         self.x_axis = QtWidgets.QComboBox()
         self.x_axis.addItems(["Log", "Linear"])
-        self.x_axis.currentTextChanged.connect(lambda: self.plot_event())
+        self.x_axis.currentTextChanged.connect(self.handle_control_changed)
         self.y_axis = QtWidgets.QComboBox()
         self.y_axis.addItems(["Ref", "Q^4"])
-        self.y_axis.currentTextChanged.connect(lambda: self.plot_event())
+        self.y_axis.currentTextChanged.connect(self.handle_control_changed)
         self.show_error_bar = QtWidgets.QCheckBox("Show Error Bars")
         self.show_error_bar.setChecked(True)
-        self.show_error_bar.checkStateChanged.connect(lambda: self.plot_event())
+        self.show_error_bar.checkStateChanged.connect(self.handle_control_changed)
         self.show_grid = QtWidgets.QCheckBox("Show Grid")
-        self.show_grid.checkStateChanged.connect(lambda: self.plot_event())
+        self.show_grid.checkStateChanged.connect(self.handle_control_changed)
         self.show_legend = QtWidgets.QCheckBox("Show Legend")
         self.show_legend.setChecked(True)
-        self.show_legend.checkStateChanged.connect(lambda: self.plot_event())
+        self.show_legend.checkStateChanged.connect(self.handle_control_changed)
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(QtWidgets.QLabel("X-Axis"))
@@ -466,6 +285,11 @@ class RefSLDWidget(AbstractPlotWidget):
 
     def make_toolbar_widget(self):
         self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Vertical)
+        self.slider.setTracking(False)
+        self.slider.setMinimum(1)
+        self.slider.setMaximum(100)
+        self.slider.setValue(100)
+        self.slider.valueChanged.connect(self.handle_control_changed)
 
         return self.slider
 
@@ -474,6 +298,12 @@ class RefSLDWidget(AbstractPlotWidget):
         figure.subplots(1, 2)
 
         return figure
+
+    def handle_control_changed(self):
+        if self.blit_plot is None:
+            self.plot_event()
+        else:
+            self.plot_with_blit()
 
     def plot(self, project: ratapi.Project, results: Union[ratapi.outputs.Results, ratapi.outputs.BayesResults]):
         """Plots the reflectivity and SLD profiles.
@@ -485,9 +315,6 @@ class RefSLDWidget(AbstractPlotWidget):
         results : Union[ratapi.outputs.Results, ratapi.outputs.BayesResults]
             The calculation results.
         """
-        if self.blit_plot is not None:
-            del self.blit_plot
-            self.blit_plot = None
         if project is None or results is None:
             self.clear()
             return
@@ -513,6 +340,9 @@ class RefSLDWidget(AbstractPlotWidget):
         data : Optional[ratapi.events.PlotEventData]
             plot event data, cached data is used if none is provided
         """
+        if self.blit_plot is not None:
+            del self.blit_plot
+            self.blit_plot = None
 
         if data is not None:
             self.current_plot_data = data
@@ -530,11 +360,12 @@ class RefSLDWidget(AbstractPlotWidget):
             show_error_bar=self.show_error_bar.isChecked(),
             show_grid=self.show_grid.isChecked(),
             show_legend=show_legend,
+            shift_value=self.slider.value(),
         )
         self.figure.tight_layout(pad=1)
         self.canvas.draw()
 
-    def plot_with_blit(self, data: ratapi.events.PlotEventData):
+    def plot_with_blit(self, data: Optional[ratapi.events.PlotEventData] = None):
         """Updates the ref and SLD plots with blitting
 
         Parameters
@@ -542,21 +373,28 @@ class RefSLDWidget(AbstractPlotWidget):
         data : ratapi.events.PlotEventData
             plot event data
         """
-        self.current_plot_data = data
+        if data is not None:
+            self.current_plot_data = data
+
+        if self.current_plot_data is None:
+            return
+
         linear_x = self.x_axis.currentText() == "Linear"
         q4 = self.y_axis.currentText() == "Q^4"
         show_error_bar = self.show_error_bar.isChecked()
         show_grid = self.show_grid.isChecked()
-        show_legend = self.show_legend.isChecked() if data.contrastNames else False
+        show_legend = self.show_legend.isChecked() if self.current_plot_data.contrastNames else False
+        shift_value = self.slider.value()
         if self.blit_plot is None:
-            self.blit_plot = BlittingSupport(
-                data,
+            self.blit_plot = ratapi.plotting.BlittingSupport(
+                self.current_plot_data,
                 self.figure,
                 linear_x=linear_x,
                 q4=q4,
                 show_error_bar=show_error_bar,
                 show_grid=show_grid,
                 show_legend=show_legend,
+                shift_value=shift_value,
             )
         else:
             self.blit_plot.linear_x = linear_x
@@ -564,8 +402,9 @@ class RefSLDWidget(AbstractPlotWidget):
             self.blit_plot.show_error_bar = show_error_bar
             self.blit_plot.show_grid = show_grid
             self.blit_plot.show_legend = show_legend
+            self.blit_plot.shift_value = shift_value
 
-            self.blit_plot.update(data)
+            self.blit_plot.update(self.current_plot_data)
 
 
 class ContourPlotWidget(AbstractPlotWidget):
