@@ -59,16 +59,14 @@ def presenter():
     return pr
 
 
-@pytest.mark.parametrize(["param", "value"], [("nSamples", 50), ("calcSldDuringFit", True), ("parallel", "contrasts")])
+@pytest.mark.parametrize(["param", "value"], [("nSamples", 50), ("parallel", "contrasts")])
 def test_set_controls_data(presenter, param, value):
     """Check that setting values are correctly propagated to the Controls object."""
     presenter.edit_controls(param, value)
     assert getattr(presenter.model.controls, param) == value
 
 
-@pytest.mark.parametrize(
-    ["param", "value"], [("nSamples", "???"), ("calcSldDuringFit", "something"), ("parallel", "bad parallel setting")]
-)
+@pytest.mark.parametrize(["param", "value"], [("nSamples", "???"), ("parallel", "bad parallel setting")])
 def test_controls_validation_error(presenter, param, value):
     """Test that data is not changed if invalid data is passed to set."""
     try:

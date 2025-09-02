@@ -114,6 +114,7 @@ def test_ref_sld_plot_event(mock_plot_sld, sld_widget):
         show_error_bar=True,
         show_grid=False,
         show_legend=True,
+        shift_value=100,
     )
     sld_widget.canvas.draw.assert_called_once()
     data.contrastNames = []
@@ -127,6 +128,7 @@ def test_ref_sld_plot_event(mock_plot_sld, sld_widget):
         show_error_bar=True,
         show_grid=False,
         show_legend=False,
+        shift_value=100,
     )
     data.contrastNames = ["Hello"]
     sld_widget.x_axis.setCurrentText("Linear")
@@ -143,6 +145,7 @@ def test_ref_sld_plot_event(mock_plot_sld, sld_widget):
         show_error_bar=False,
         show_grid=True,
         show_legend=False,
+        shift_value=100,
     )
 
 

@@ -437,6 +437,7 @@ class ProjectWidget(QtWidgets.QWidget):
             contrast_attrs.remove("background_action")
             contrast_attrs.remove("model")
             contrast_attrs.remove("resample")
+            contrast_attrs.remove("repeat_layers")
             for i, contrast in enumerate(project["contrasts"]):
                 missing_params = []
                 invalid_params = []
