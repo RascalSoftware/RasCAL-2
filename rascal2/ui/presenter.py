@@ -52,7 +52,7 @@ class MainWindowPresenter:
         try:
             self.model.load_project(load_path)
         except ValueError as err:
-            self.view.logging.error(f"Failed to load project at path {load_path}:\n {err}")
+            self.view.logging.error(f"Failed to load project at path {load_path}.\n", exc_info=err)
             raise err  # so that it can be captured by the widget
         self.initialise_ui(self.model.project.name, load_path)
         self.model.update_results(self.model.results)
@@ -160,7 +160,7 @@ class MainWindowPresenter:
             try:
                 self.model.results.save(save_file)
             except OSError as err:
-                self.view.logging.error(f"Failed to save project at path {save_file}:\n {err}")
+                self.view.logging.error(f"Failed to save project at path {save_file}.\n", exc_info=err)
 
     def interrupt_terminal(self):
         """Sends an interrupt signal to the RAT runner."""
@@ -218,7 +218,7 @@ class MainWindowPresenter:
         if self.runner.error is None:
             self.view.logging.info("RAT run interrupted!")
         else:
-            self.view.logging.error(f"RAT run failed with exception:\n{self.runner.error}")
+            self.view.logging.error("RAT run failed with exception.\n", exc_info=self.runner.error)
         self.view.reset_widgets()
 
     def handle_event(self):

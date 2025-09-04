@@ -73,7 +73,7 @@ def setup_settings(project_path: str | os.PathLike) -> Settings:
     return Settings()
 
 
-def setup_logging(log_path: str | os.PathLike, terminal, level: int = logging.INFO) -> logging.Logger:
+def setup_logging(log_path: str | os.PathLike, terminal=None, level: int = logging.INFO) -> logging.Logger:
     """Set up logging for the project.
 
     The default logging path and level are defined in the settings.
@@ -82,7 +82,7 @@ def setup_logging(log_path: str | os.PathLike, terminal, level: int = logging.IN
     ----------
     log_path : str | PathLike
         The path to where the log file will be written.
-    terminal : TerminalWidget
+    terminal : Optional[TerminalWidget]
         The TerminalWidget instance which acts as an IO stream.
     level : int, default logging.INFO
         The debug level for the logger.
@@ -98,11 +98,12 @@ def setup_logging(log_path: str | os.PathLike, terminal, level: int = logging.IN
     log_filehandler.setFormatter(file_formatting)
     logger.addHandler(log_filehandler)
 
-    # handler that logs to terminal widget
-    log_termhandler = logging.StreamHandler(stream=terminal)
-    term_formatting = logging.Formatter("%(levelname)s - %(message)s")
-    log_termhandler.setFormatter(term_formatting)
-    logger.addHandler(log_termhandler)
+    if terminal is not None:
+        # handler that logs to terminal widget
+        log_termhandler = logging.StreamHandler(stream=terminal)
+        term_formatting = logging.Formatter("%(levelname)s - %(message)s")
+        log_termhandler.setFormatter(term_formatting)
+        logger.addHandler(log_termhandler)
 
     return logger
 
@@ -114,7 +115,7 @@ def get_logger():
         # Backup in case the crash happens before the local logger setup
         path = pathlib.Path(get_global_settings().fileName()).parent
         path.mkdir(parents=True, exist_ok=True)
-        logger.addHandler(logging.FileHandler(path / "rascal.log"))
+        setup_logging(path / "rascal.log")
 
     return logger
 

@@ -118,7 +118,9 @@ def test_run_error(presenter):
     presenter.runner = MagicMock()
     presenter.runner.error = ValueError("Test error!")
     presenter.handle_interrupt()
-    presenter.view.logging.error.assert_called_once_with("RAT run failed with exception:\nTest error!")
+    presenter.view.logging.error.assert_called_once_with(
+        "RAT run failed with exception.\n", exc_info=presenter.runner.error
+    )
 
 
 @pytest.mark.parametrize(
@@ -224,13 +226,14 @@ def test_export_results(presenter):
     presenter.model.results.save.assert_not_called()
 
     # If there is an OSError, log the error
-    presenter.model.results.save = MagicMock(side_effect=OSError("Test Error"))
+    error = OSError("Test Error")
+    presenter.model.results.save = MagicMock(side_effect=error)
     presenter.view.get_save_file = MagicMock(return_value=test_json_file)
     presenter.view.logging.error = MagicMock()
 
     presenter.export_results()
     presenter.model.results.save.assert_called_once_with(test_json_file)
-    presenter.view.logging.error.assert_called_once_with("Failed to save project at path test.json:\n Test Error")
+    presenter.view.logging.error.assert_called_once_with("Failed to save project at path test.json.\n", exc_info=error)
 
     # If we do not have any results, don't ask for a file
     presenter.view.get_save_file.reset_mock()

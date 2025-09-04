@@ -88,18 +88,6 @@ def run(queue, rat_inputs: tuple, procedure: str, display: bool, engine_ready, e
     """
     problem_definition, cpp_controls = rat_inputs
 
-    engine_future = None
-    if any([file["language"] == "matlab" for file in problem_definition.customFiles.files]):
-        if not engine_output:
-            queue.put(LogData(INFO, "Attempting to start Matlab..."))
-
-        result = get_matlab_engine(engine_ready, engine_output)
-        if isinstance(result, Exception):
-            queue.put(result)
-            return
-        else:
-            engine_future = result
-
     if display:
         rat.events.register(rat.events.EventTypes.Message, queue.put)
         rat.events.register(rat.events.EventTypes.Progress, queue.put)
@@ -107,6 +95,17 @@ def run(queue, rat_inputs: tuple, procedure: str, display: bool, engine_ready, e
         queue.put(LogData(INFO, "Starting RAT"))
 
     try:
+        engine_future = None
+        if any([file["language"] == "matlab" for file in problem_definition.customFiles.files]):
+            if not engine_output:
+                queue.put(LogData(INFO, "Attempting to start Matlab..."))
+
+            result = get_matlab_engine(engine_ready, engine_output)
+            if isinstance(result, Exception):
+                raise result
+            else:
+                engine_future = result
+
         problem_definition, output_results, bayes_results = rat.rat_core.RATMain(problem_definition, cpp_controls)
         results = rat.outputs.make_results(procedure, output_results, bayes_results)
         if engine_future is not None:
