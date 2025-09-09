@@ -116,9 +116,6 @@ class Settings(BaseModel, validate_assignment=True, arbitrary_types_allowed=True
         default=True, title=SettingsGroups.General, description="Auto-run simulation when parameter values change."
     )
 
-    log_path: str = Field(default="logs/rascal.log", title=SettingsGroups.Logging, description="Path to Log File")
-    log_level: LogLevels = Field(default=LogLevels.Info, title=SettingsGroups.Logging, description="Minimum Log Level")
-
     clear_terminal: bool = Field(
         default=True, title=SettingsGroups.Terminal, description="Clear Terminal when Run Starts"
     )

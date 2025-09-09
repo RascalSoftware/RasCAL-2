@@ -13,16 +13,16 @@ from rascal2.settings import Settings, get_global_settings
 if getattr(sys, "frozen", False):
     # we are running in a bundle
     SOURCE_PATH = pathlib.Path(sys.executable).parent.parent
+    SITE_PATH = SOURCE_PATH / "bin/_internal"
+    EXAMPLES_PATH = SOURCE_PATH / "examples"
 else:
     SOURCE_PATH = pathlib.Path(__file__).parent
+    SITE_PATH = site.getsitepackages()[-1]
+    EXAMPLES_PATH = SOURCE_PATH.parent / "examples"
+
 STATIC_PATH = SOURCE_PATH / "static"
 IMAGES_PATH = STATIC_PATH / "images"
-
-if not getattr(sys, "frozen", False):
-    site_path = site.getsitepackages()[-1]
-else:
-    site_path = SOURCE_PATH / "bin/_internal"
-MATLAB_ARCH_FILE = pathlib.Path(site_path) / "matlab/engine/_arch.txt"
+MATLAB_ARCH_FILE = pathlib.Path(SITE_PATH) / "matlab/engine/_arch.txt"
 
 
 def handle_scaling():

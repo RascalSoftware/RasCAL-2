@@ -2,12 +2,12 @@ from pathlib import Path
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 
-from rascal2.config import get_logger, path_for, setup_logging, setup_settings
+from rascal2.config import EXAMPLES_PATH, get_logger, path_for, setup_logging, setup_settings
 from rascal2.core.enums import UnsavedReply
 from rascal2.dialogs.matlab_setup_dialog import MatlabSetupDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog
 from rascal2.dialogs.startup_dialog import PROJECT_FILES, LoadDialog, LoadR1Dialog, NewProjectDialog, StartupDialog
-from rascal2.settings import MDIGeometries, Settings
+from rascal2.settings import MDIGeometries, Settings, get_global_settings
 from rascal2.widgets import ControlsWidget, PlotWidget, TerminalWidget
 from rascal2.widgets.project import ProjectWidget
 from rascal2.widgets.startup import StartUpWidget
@@ -336,12 +336,14 @@ class MainWindowView(QtWidgets.QMainWindow):
         """
         proj_path = Path(save_path)
         self.settings = setup_settings(proj_path)
-        log_path = Path(self.settings.log_path)
-        if not log_path.is_absolute():
-            log_path = proj_path / log_path
 
-        log_path.parents[0].mkdir(parents=True, exist_ok=True)
-        self.logging = setup_logging(log_path, self.terminal_widget, level=self.settings.log_level)
+        if proj_path.is_relative_to(EXAMPLES_PATH):
+            log_path = Path(get_global_settings().fileName()).parent
+        else:
+            log_path = proj_path / "logs"
+
+        log_path.mkdir(parents=True, exist_ok=True)
+        self.logging = setup_logging(log_path / "rascal.log", self.terminal_widget)
 
     def enable_elements(self):
         """Enable the elements that are disabled on startup."""
@@ -376,6 +378,17 @@ class MainWindowView(QtWidgets.QMainWindow):
         """
         project_folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder")
         if project_folder:
+            if Path(project_folder).is_relative_to(EXAMPLES_PATH):
+                message = "Files cannot be saved in the examples directory. Please select another directory to save in."
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    "Select Folder",
+                    message,
+                    QtWidgets.QMessageBox.StandardButton.Ok,
+                    QtWidgets.QMessageBox.StandardButton.Ok,
+                )
+                return ""
+
             if any(Path(project_folder, file).exists() for file in PROJECT_FILES):
                 overwrite = self.show_confirm_dialog(
                     "Confirm Overwrite", "A project already exists in this folder, do you want to replace it?"
@@ -407,6 +420,13 @@ class MainWindowView(QtWidgets.QMainWindow):
             The chosen file.
         """
         save_file, _ = QtWidgets.QFileDialog.getSaveFileName(self, caption, directory, QtCore.QObject.tr(file_filter))
+
+        if Path(save_file).is_relative_to(EXAMPLES_PATH):
+            message = "Files cannot be saved in the examples directory. Please select another directory to save in."
+            QtWidgets.QMessageBox.warning(
+                self, caption, message, QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Ok
+            )
+            return ""
 
         return save_file
 
