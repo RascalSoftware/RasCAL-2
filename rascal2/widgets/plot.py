@@ -10,7 +10,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from rascal2.config import path_for
-from rascal2.widgets.inputs import MultiSelectComboBox
+from rascal2.widgets.inputs import MultiSelectComboBox, ProgressButton
 
 
 class PlotWidget(QtWidgets.QWidget):
@@ -465,6 +465,9 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
         param_layout = QtWidgets.QVBoxLayout()
         param_layout.setSpacing(2)
 
+        self.desc_label = QtWidgets.QLabel("<h3>Select parameters to update plot or "
+                                           "click the 'Select all' button to plot all parameters.</h3>")
+        self.desc_label.setWordWrap(True)
         self.param_combobox = MultiSelectComboBox()
 
         select_deselect_row = QtWidgets.QHBoxLayout()
@@ -480,6 +483,8 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
         param_layout.addWidget(QtWidgets.QLabel("Parameters"))
         param_layout.addWidget(self.param_combobox)
         param_layout.addLayout(select_deselect_row)
+        layout.addWidget(self.desc_label)
+        layout.addSpacing(20)
         layout.addLayout(param_layout)
 
         return layout
@@ -521,17 +526,23 @@ class CornerPlotWidget(AbstractPanelPlotWidget):
         self.smooth_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
         smooth_row.addWidget(self.smooth_checkbox)
 
-        replot_button = QtWidgets.QPushButton("Draw Corner Plot")
-        replot_button.pressed.connect(self.draw_plot)
+        self.plot_button = ProgressButton("Update Plot", progress_text="Creating plot")
+        self.plot_button.pressed.connect(self.draw_plot)
         # label to inform user that plot is running
-        self.plot_running_label = QtWidgets.QLabel("Plotting...")
-        self.plot_running_label.setVisible(False)
+        # self.plot_running_label = QtWidgets.QLabel("Plotting...")
+        # self.plot_running_label.setVisible(False)
 
         layout.addLayout(smooth_row)
-        layout.addWidget(replot_button)
-        layout.addWidget(self.plot_running_label)
+        layout.addWidget(self.plot_button)
+        # layout.addWidget(self.plot_running_label)
+
+        self.desc_label.setText("<h3>Select parameters or click the 'Select all' button, "
+                                "then click the 'Update Plot' button.</h3>")
 
         return layout
+
+    def update_ui(self, _i, _n):
+        QtWidgets.QApplication.instance().processEvents()
 
     def draw_plot(self):
         plot_params = self.param_combobox.selected_items()
@@ -539,12 +550,12 @@ class CornerPlotWidget(AbstractPanelPlotWidget):
 
         if plot_params:
             self.resize_canvas(True)
-            self.plot_running_label.setVisible(True)
+            self.plot_button.showProgress()
 
-            ratapi.plotting.plot_corner(self.results, params=plot_params, smooth=smooth, fig=self.figure)
+            ratapi.plotting.plot_corner(self.results, params=plot_params, smooth=smooth, fig=self.figure, progress_callback=self.update_ui)
             self.canvas.draw()
 
-            self.plot_running_label.setVisible(False)
+            self.plot_button.hideProgress()
 
 
 class HistPlotWidget(AbstractPanelPlotWidget):

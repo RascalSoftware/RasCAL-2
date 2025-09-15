@@ -9,6 +9,8 @@ from typing import Callable
 from pydantic.fields import FieldInfo
 from PyQt6 import QtCore, QtGui, QtWidgets
 
+from rascal2.config import path_for
+
 
 def get_validated_input(field_info: FieldInfo, parent=None) -> QtWidgets.QWidget:
     """Get a validated input widget from Pydantic field info.
@@ -581,3 +583,45 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
         """
         super().showEvent(event)
         self.update_text()
+
+
+class ProgressButton(QtWidgets.QPushButton):
+    """Creates a custom button that displays a busy indicator
+
+     :param default_text: button text
+     :type default_text: str
+     """
+    def __init__(self, default_text, progress_text=""):
+        super().__init__(default_text)
+        self._default_text = default_text
+        self.progress_text = progress_text
+        self.loader = QtGui.QMovie()
+        self.loader.setFileName(path_for('loader.gif'))
+        self.loader.frameChanged.connect(lambda: self.setIcon(QtGui.QIcon(self.loader.currentPixmap())))
+        self.clicked.connect(self.showProgress)
+
+    @property
+    def default_text(self):
+        return self._default_text
+
+    @default_text.setter
+    def default_text(self, text):
+        """Setter for button text"""
+        self._default_text = text
+        self.setText(text)
+
+    def showProgress(self):
+        """Shows busy indicator"""
+        if not self.progress_text:
+            return
+
+        self.setEnabled(False)
+        self.setText(f'  {self.progress_text}...')
+        self.loader.start()
+
+    def hideProgress(self):
+        """Hides busy indicator"""
+        self.setEnabled(True)
+        self.setText(self.default_text)
+        self.loader.stop()
+        self.setIcon(QtGui.QIcon())
