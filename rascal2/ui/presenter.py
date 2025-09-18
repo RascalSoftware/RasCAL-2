@@ -40,7 +40,7 @@ class MainWindowPresenter:
 
         """
         self.model.create_project(name, save_path)
-        self.initialise_ui(name, save_path)
+        self.initialise_ui()
 
     def load_project(self, load_path: str):
         """Load an existing RAT project then initialise UI.
@@ -56,8 +56,21 @@ class MainWindowPresenter:
         except ValueError as err:
             self.view.logging.error(f"Failed to load project at path {load_path}.\n", exc_info=err)
             raise err  # so that it can be captured by the widget
-        self.initialise_ui(self.model.project.name, load_path)
-        self.model.update_results(self.model.results)
+        self.initialise_ui()
+
+    def load_project_and_run(self, load_path: str):
+        """Load an existing RAT project then initialise UI.
+
+        Parameters
+        ----------
+        load_path : str
+            The path from which to load the project.
+
+        """
+        self.model.load_project(load_path)
+        if self.model.results is None:
+            self.model.results = rat.run(self.model.project, rat.Controls(display="off"))[1]
+
 
     def load_r1_project(self, load_path: str):
         """Load a RAT project from a RasCAL-1 project file.
@@ -69,22 +82,14 @@ class MainWindowPresenter:
 
         """
         self.model.load_r1_project(load_path)
-        self.initialise_ui(self.model.project.name, self.model.save_path)
+        self.initialise_ui()
 
-    def initialise_ui(self, name: str, save_path: str):
-        """Initialise UI for a project.
-
-        Parameters
-        ----------
-        name : str
-            The name of the project.
-        save_path : str
-            The save path of the project.
-
-        """
-        self.view.setWindowTitle(self.title + " - " + name)
-        self.view.init_settings_and_log(save_path)
+    def initialise_ui(self):
+        """Initialise UI for a project."""
+        self.view.setWindowTitle(self.title + " - " + self.model.project.name, )
+        self.view.init_settings_and_log(self.model.save_path)
         self.view.setup_mdi()
+        self.view.plot_widget.update_plots(self.model.project, self.model.results)
         self.view.undo_stack.clear()
         self.view.enable_elements()
 

@@ -46,7 +46,17 @@ class MainWindowModel(QtCore.QObject):
             The save path of the project.
         """
         self.project = rat.Project(name=name)
+        self.project.contrasts.append(
+            name="Default Contrast",
+            background="Background 1",
+            resolution="Resolution 1",
+            scalefactor="Scalefactor 1",
+            bulk_out="SLD D2O",
+            bulk_in="SLD Air",
+            data="Simulation",
+        )
         self.controls = rat.Controls()
+        self.results = rat.run(self.project, rat.Controls(display="off"))[1]
         self.save_path = save_path
 
     def update_results(self, results: Union[ratapi.outputs.Results, ratapi.outputs.BayesResults]):
