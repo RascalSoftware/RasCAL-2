@@ -82,7 +82,7 @@ def test_load_project(empty_results):
 
     with TemporaryDirectory() as tmpdir:
         empty_results.save(Path(tmpdir, "results"))
-        Controls(procedure="dream", resampleMinAngle=0.5).save(tmpdir, "controls")
+        Controls(procedure="dream", resampleMinAngle=0.5).save(Path(tmpdir, "controls"))
         project.save(Path(tmpdir, "project"))
         model.load_project(tmpdir)
 

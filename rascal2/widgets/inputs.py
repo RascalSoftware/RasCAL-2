@@ -581,3 +581,40 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
         """
         super().showEvent(event)
         self.update_text()
+
+
+class ProgressButton(QtWidgets.QPushButton):
+    """Creates a custom button that displays a busy indicator
+
+    :param default_text: button text
+    :type default_text: str
+    """
+
+    def __init__(self, default_text, progress_text):
+        super().__init__(default_text)
+        self._default_text = default_text
+        self.progress_text = progress_text
+        self.clicked.connect(self.show_progress)
+
+    @property
+    def default_text(self):
+        return self._default_text
+
+    @default_text.setter
+    def default_text(self, text):
+        """Setter for button text"""
+        self._default_text = text
+        self.setText(text)
+
+    def show_progress(self):
+        """Shows busy indicator"""
+        self.setEnabled(False)
+        self.setText(f"{self.progress_text} ...")
+
+    def update_progress(self, current, total):
+        self.setText(f"{self.progress_text} - {current} of {total}")
+
+    def hide_progress(self):
+        """Hides busy indicator"""
+        self.setEnabled(True)
+        self.setText(self.default_text)
