@@ -74,8 +74,10 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         if self.presenter.ask_to_save_project():
             project_dlg = dialog(self)
-            if project_dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted and self.centralWidget() is self.startup_dlg:
-                self.startup_dlg.show()
+            project_dlg.show()
+        #     if project_dlg.exec() != QtWidgets.QDialog.DialogCode.Accepted :#and self.centralWidget() is self.startup_dlg:
+        #         pass
+        # #         self.startup_dlg.show()
 
     def show_settings_dialog(self):
         """Shows the settings dialog to adjust program settings"""

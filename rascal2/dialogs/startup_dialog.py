@@ -4,63 +4,10 @@ from pathlib import Path
 from PyQt6 import QtCore, QtWidgets
 
 from rascal2.settings import update_recent_projects
+from rascal2.core.worker import Worker
 
 # global variable for required project files
 PROJECT_FILES = ["controls.json", "project.json"]
-
-
-class Worker(QtCore.QThread):
-    """Creates worker thread object
-
-    :param _exec: function to run on ``QThread``
-    :type _exec: Callable[..., Any]
-    :param args: arguments of function ``_exec``
-    :type args: Tuple[Any, ...]
-    """
-    job_succeeded = QtCore.pyqtSignal('PyQt_PyObject')
-    job_failed = QtCore.pyqtSignal(Exception, 'PyQt_PyObject')
-
-    def __init__(self, _exec, args):
-        super().__init__()
-        self._exec = _exec
-        self._args = args
-
-    def run(self):
-        """This function is executed on worker thread when the ``QThread.start``
-        method is called."""
-        try:
-            result = self._exec(*self._args)
-            self.job_succeeded.emit(result)
-        except Exception as e:
-            self.job_failed.emit(e, self._args)
-
-    @classmethod
-    def callFromWorker(cls, func, args, on_success=None, on_failure=None, on_complete=None):
-        """Calls the given function from a new worker thread object
-
-        :param func: function to run on ``QThread``
-        :type func: Callable[..., Any]
-        :param args: arguments of function ``func``
-        :type args: Tuple[Any, ...]
-        :param on_success: function to call if success
-        :type on_success: Union[Callable[..., None], None]
-        :param on_failure: function to call if failed
-        :type on_failure: Union[Callable[..., None], None]
-        :param on_complete: function to call when complete
-        :type on_complete: Union[Callable[..., None], None]
-        :return: worker thread running ``func``
-        :rtype: Worker
-        """
-        worker = cls(func, args)
-        if on_success is not None:
-            worker.job_succeeded.connect(on_success)
-        if on_failure is not None:
-            worker.job_failed.connect(on_failure)
-        if on_complete is not None:
-            worker.finished.connect(on_complete)
-        worker.start()
-
-        return worker
 
 
 class StartupDialog(QtWidgets.QDialog):
@@ -204,6 +151,21 @@ class StartupDialog(QtWidgets.QDialog):
         super().showEvent(event)
         self.cancel_button.setFocus()
 
+    def reject(self):
+        super().reject()
+        if self.parent().centralWidget() is self.parent().startup_dlg:
+           self.parent().startup_dlg.setVisible(True)
+
+    def project_start_success(self):
+        self.parent().presenter.initialise_ui()
+        if not self.parent().toolbar.isEnabled():
+            self.parent().toolbar.setEnabled(True)
+        self.accept()
+
+    def project_start_failed(self, exception, _args):
+        self.set_folder_error(str(exception))
+
+
 
 class NewProjectDialog(StartupDialog):
     """The dialog to create a new project."""
@@ -286,6 +248,11 @@ class LoadDialog(StartupDialog):
             form_layout.addWidget(recent_projects_title, num_rows, 0, 1, 1, QtCore.Qt.AlignmentFlag.AlignTop)
             form_layout.addLayout(recent_projects_layout, num_rows, 1, 1, -1)
 
+        self.loading_bar = QtWidgets.QProgressBar()
+        self.loading_bar.setMinimum(0)
+        self.loading_bar.setMaximum(0)
+        form_layout.addWidget(self.loading_bar, form_layout.rowCount(), 0, 1, -1, QtCore.Qt.AlignmentFlag.AlignTop)
+
     def load_recent_project(self, path: str):
         # use internal function so we can use it as a parameter-free slot
         def _load():
@@ -313,17 +280,12 @@ class LoadDialog(StartupDialog):
         if self.project_folder.text() == "":
             self.set_folder_error("Please specify a project folder.")
         if self.project_folder_error.isHidden():
-            self.worker = Worker.callFromWorker(self.parent().presenter.load_project_and_run,
-                                                [self.project_folder.text()],
-                                                self.parent().presenter.initialise_ui,
-                                                self.load_project_failed,
-                                                )
-        else:
-            if not self.parent().toolbar.isEnabled():
-                self.parent().toolbar.setEnabled(True)
-            self.accept()
-    def load_project_failed(self, exception, _args):
-        self.set_folder_error(str(exception))
+            self.worker = Worker.call(self.parent().presenter.load_project_and_run,
+                                      [self.project_folder.text()],
+                                      self.project_start_success,
+                                      self.project_start_failed,
+                                      )
+
 
 class LoadR1Dialog(StartupDialog):
     """Dialog to load a RasCAL-1 project."""
@@ -360,6 +322,11 @@ class LoadR1Dialog(StartupDialog):
         if self.project_folder.text() == "":
             self.set_folder_error("Please specify a project file.")
         if self.project_folder_error.isHidden():
+            self.worker = Worker.call(self.parent().presenter.load_r1_project_and_run,
+                                      [self.project_folder.text()],
+                                      self.project_start_success,
+                                      self.project_start_failed,
+                                      )
             self.parent().presenter.load_r1_project(self.project_folder.text())
             if not self.parent().toolbar.isEnabled():
                 self.parent().toolbar.setEnabled(True)

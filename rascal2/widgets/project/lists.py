@@ -830,10 +830,9 @@ class DataWidget(AbstractProjectListWidget):
         """Update parent project data and recalculate plots."""
         presenter = self.parent.parent.parent.presenter
         presenter.model.blockSignals(True)
-        presenter.edit_project({"data": self.model.classlist})
+        presenter.edit_project({"data": self.model.classlist},
+                               preview=presenter.view.settings.live_recalculate)
         presenter.model.blockSignals(False)
-        if presenter.view.settings.live_recalculate:
-            presenter.run("calculate")
 
     def set_name_data(self, index: int, name: str):
         """Set name data, ensuring name isn't empty.

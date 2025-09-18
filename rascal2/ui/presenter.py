@@ -4,8 +4,9 @@ from pathlib import Path
 from typing import Any
 
 import ratapi as rat
+import ratapi.wrappers
 
-from rascal2.config import EXAMPLES_PATH
+from rascal2.config import EXAMPLES_PATH, MATLAB_HELPER, get_matlab_engine
 from rascal2.core import commands
 from rascal2.core.enums import UnsavedReply
 from rascal2.core.runner import LogData, RATRunner
@@ -27,6 +28,17 @@ class MainWindowPresenter:
         self.view = view
         self.model = MainWindowModel()
         self.title = self.view.windowTitle()
+        self.worker = None
+
+    def use_worker(self):
+        if self.worker is not None:
+            self.worker.terminate()
+            self.worker.wait()
+        self.worker = Worker.call(self.presenter.quick_run,
+                                  [self.presenter.model.project],
+                                  self.quick_run_success,
+                                  self.quick_run_failed,
+                                  )
 
     def create_project(self, name: str, save_path: str):
         """Creates a new RAT project and controls object then initialise UI.
@@ -69,10 +81,9 @@ class MainWindowPresenter:
         """
         self.model.load_project(load_path)
         if self.model.results is None:
-            self.model.results = rat.run(self.model.project, rat.Controls(display="off"))[1]
+            self.model.results = self.quick_run(self.model.project)
 
-
-    def load_r1_project(self, load_path: str):
+    def load_r1_project_and_run(self, load_path: str):
         """Load a RAT project from a RasCAL-1 project file.
 
         Parameters
@@ -82,7 +93,8 @@ class MainWindowPresenter:
 
         """
         self.model.load_r1_project(load_path)
-        self.initialise_ui()
+        self.model.results = self.quick_run(self.model.project)
+
 
     def initialise_ui(self):
         """Initialise UI for a project."""
@@ -178,6 +190,15 @@ class MainWindowPresenter:
         """Sends an interrupt signal to the RAT runner."""
         self.runner.interrupt()
 
+    def quick_run(self, project):
+        print("Quick run started")
+        if (ratapi.wrappers.MatlabWrapper.loader is None and
+                any([file.language == "matlab" for file in project.custom_files])):
+            result = get_matlab_engine(MATLAB_HELPER.ready_event, MATLAB_HELPER.engine_output)
+            if isinstance(result, Exception):
+                raise result
+        return rat.run(project, rat.Controls(display="off"))[1]
+
     def run(self, procedure: rat.utils.enums.Procedures = None):
         """Run rat.
 
@@ -249,7 +270,7 @@ class MainWindowPresenter:
             case LogData():
                 self.view.logging.log(event.level, event.msg)
 
-    def edit_project(self, updated_project: dict) -> None:
+    def edit_project(self, updated_project: dict, preview=False) -> None:
         """Edit the Project with a dictionary of attributes.
 
         Parameters
@@ -266,7 +287,7 @@ class MainWindowPresenter:
         project_dict = self.model.project.model_dump()
         project_dict.update(updated_project)
         self.model.project.model_validate(project_dict)
-        self.view.undo_stack.push(commands.EditProject(updated_project, self))
+        self.view.undo_stack.push(commands.EditProject(updated_project, self, preview=preview))
 
 
 # '\d+\.\d+' is the regex for

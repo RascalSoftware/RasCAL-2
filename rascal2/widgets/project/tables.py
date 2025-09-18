@@ -82,6 +82,10 @@ class ClassListTableModel(QtCore.QAbstractTableModel):
             if self.index_header(index) == "fit":
                 value = QtCore.Qt.CheckState(value) == QtCore.Qt.CheckState.Checked
             if param is not None:
+                current_value = getattr(self.classlist[index.row()], param)
+                if current_value == value:
+                    # No change
+                    return False
                 try:
                     with contextlib.suppress(UserWarning):
                         setattr(self.classlist[row], param, value)
@@ -291,10 +295,9 @@ class ProjectFieldWidget(QtWidgets.QWidget):
         """
         presenter = self.parent.parent.parent.presenter
         presenter.model.blockSignals(True)
-        presenter.edit_project({self.field: self.model.classlist})
+        presenter.edit_project({self.field: self.model.classlist},
+                               preview=recalculate and presenter.view.settings.live_recalculate)
         presenter.model.blockSignals(False)
-        if recalculate and presenter.view.settings.live_recalculate:
-            presenter.run("calculate")
 
 
 class ParametersModel(ClassListTableModel):

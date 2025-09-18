@@ -8,6 +8,8 @@ import ratapi
 from PyQt6 import QtGui
 from ratapi import ClassList
 
+from .worker import Worker
+
 
 @unique
 class CommandID(IntEnum):
@@ -22,8 +24,9 @@ class AbstractModelEdit(QtGui.QUndoCommand):
 
     attribute = None
 
-    def __init__(self, new_values: dict, presenter):
+    def __init__(self, new_values: dict, presenter, preview=False):
         super().__init__()
+        self.preview = preview
         self.presenter = presenter
         self.new_values = new_values
         if self.attribute is None:
@@ -31,6 +34,8 @@ class AbstractModelEdit(QtGui.QUndoCommand):
         else:
             self.model_class = getattr(self.presenter.model, self.attribute)
         self.old_values = {attr: getattr(self.model_class, attr) for attr in self.new_values}
+        self.new_result = None
+        self.old_result = copy.deepcopy(self.presenter.model.results)
         self.update_text()
 
     def update_text(self):
@@ -53,13 +58,42 @@ class AbstractModelEdit(QtGui.QUndoCommand):
 
     def undo(self):
         self.update_attribute(self.old_values)
+        if self.preview:
+            self.presenter.model.results(self.old_result)
 
     def redo(self):
         self.update_attribute(self.new_values)
+        if self.preview and self.new_result is None:
+            print(1)
+            self.get_preview()
+        elif self.preview and self.new_result is not None:
+            self.presenter.model.update_results(self.new_result)
+        else:
+            self.new_result = self.old_result
+
+    def get_preview(self):
+        print(2)
+        self.worker = Worker.call(self.presenter.quick_run,
+                                  [self.presenter.model.project],
+                                  self.quick_run_success,
+                                  self.quick_run_failed,
+                                  )
+
+    def quick_run_success(self, result):
+        self.new_result = result
+        self.presenter.model.update_results(self.new_result)
+
+    def quick_run_failed(self, exception, _args):
+        print(exception)
+        #TODO Logging
 
     def mergeWith(self, command):
         """Merges consecutive Edit controls commands if the attributes are the
         same."""
+        print(3)
+        worker = getattr(command, 'worker', None)
+        if worker is not None:
+            worker.stop()
 
         # We should think about if merging all Edit controls irrespective of
         # attribute is the way to go for UX
@@ -69,8 +103,12 @@ class AbstractModelEdit(QtGui.QUndoCommand):
         if list(self.old_values.values()) == list(command.new_values.values()):
             self.setObsolete(True)
 
+        self.preview = command.preview
+        self.new_result = command.new_result
         self.new_values = command.new_values
         self.update_text()
+        if self.preview:
+            self.get_preview()
         return True
 
     def id(self):

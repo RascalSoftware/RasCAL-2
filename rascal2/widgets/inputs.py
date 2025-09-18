@@ -335,8 +335,8 @@ class RangeWidget(QtWidgets.QWidget):
         self.min_box = AdaptiveDoubleSpinBox()
         self.max_box = AdaptiveDoubleSpinBox()
 
-        self.min_box.valueChanged.connect(lambda: self.data_changed.emit())
-        self.max_box.valueChanged.connect(lambda: self.data_changed.emit())
+        self.min_box.editingFinished.connect(lambda: self.data_changed.emit())
+        self.max_box.editingFinished.connect(lambda: self.data_changed.emit())
 
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
