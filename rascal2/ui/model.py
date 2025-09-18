@@ -75,7 +75,7 @@ class MainWindowModel(QtCore.QObject):
     def save_project(self):
         """Save the project to the save path."""
 
-        self.controls.save(self.save_path, "controls.json")
+        self.controls.save(Path(self.save_path, "controls.json"))
         self.project.save(Path(self.save_path, "project.json"))
         if self.results:
             self.results.save(Path(self.save_path, "results.json"))

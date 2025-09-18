@@ -4,8 +4,8 @@ from abc import abstractmethod
 from inspect import isclass
 from typing import Optional, Union
 
-import ratapi
 import matplotlib
+import ratapi
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt6 import QtCore, QtGui, QtWidgets
 
@@ -117,12 +117,14 @@ class BayesPlotsDialog(QtWidgets.QDialog):
         # rather than an instance
         if isclass(plot_widget):
             plot_widget = plot_widget(self)
-            plot_widget.toggle_settings(True)
+            plot_widget.toggle_button.setChecked(True)
 
         self.plot_tabs.addTab(plot_widget, plot_type)
 
         if self.parent_model.results is not None:
             plot_widget.plot(self.parent_model.project, self.parent_model.results)
+            if isinstance(plot_widget, CornerPlotWidget):
+                plot_widget.param_combobox.select_items(self.parent_model.results.fitNames)
 
 
 class AbstractPlotWidget(QtWidgets.QWidget):
@@ -173,7 +175,9 @@ class AbstractPlotWidget(QtWidgets.QWidget):
 
         self.blit_plot = None
         self.figure = self.make_figure()
-        self.canvas = FigureCanvas(self.figure, )
+        self.canvas = FigureCanvas(
+            self.figure,
+        )
         self.figure.set_facecolor("none")
         self.canvas.setStyleSheet("background-color: transparent;")
 
@@ -244,9 +248,9 @@ class AbstractPlotWidget(QtWidgets.QWidget):
 
     def export(self):
         """Save the figure to a file."""
-        filepath = QtWidgets.QFileDialog.getSaveFileName(self, "Export Plot")
-        if filepath:
-            self.figure.savefig(filepath[0])
+        filepath, accepted = QtWidgets.QFileDialog.getSaveFileName(self, "Export Plot", filter="Image File (*.png)")
+        if accepted:
+            self.figure.savefig(filepath)
 
 
 class RefSLDWidget(AbstractPlotWidget):
@@ -465,8 +469,9 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
         param_layout = QtWidgets.QVBoxLayout()
         param_layout.setSpacing(2)
 
-        self.desc_label = QtWidgets.QLabel("<h3>Select parameters to update plot or "
-                                           "click the 'Select all' button to plot all parameters.</h3>")
+        self.desc_label = QtWidgets.QLabel(
+            "<h3>Select parameters to update plot or click the 'Select all' button to plot all parameters.</h3>"
+        )
         self.desc_label.setWordWrap(True)
         self.param_combobox = MultiSelectComboBox()
 
@@ -491,27 +496,15 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
 
     def plot(self, _, results):
         self.results = results
-
-        self.clear()
-
-        # reset selected parameter data
-        # note that items in old_params which are not in fitParams
-        # will be ignored by select_items
-        old_params = self.param_combobox.selected_items()
         self.param_combobox.clear()
         self.param_combobox.addItems(results.fitNames)
-        self.param_combobox.select_items(old_params)
-
         self.draw_plot()
-
-    def resize_canvas(self, expand=True):
-        if expand:
-            self.canvas.setMinimumSize(900, 600)
-        else:
-            self.canvas.setMinimumSize(0, 0)
 
     def draw_plot(self):
         raise NotImplementedError
+
+    def resize_canvas(self):
+        self.canvas.setMinimumSize(900, 600)
 
 
 class CornerPlotWidget(AbstractPanelPlotWidget):
@@ -526,22 +519,25 @@ class CornerPlotWidget(AbstractPanelPlotWidget):
         self.smooth_checkbox.setCheckState(QtCore.Qt.CheckState.Checked)
         smooth_row.addWidget(self.smooth_checkbox)
 
-        self.plot_button = ProgressButton("Update Plot", progress_text="Creating plot")
+        self.plot_button = ProgressButton("Update Plot", "Creating plots")
         self.plot_button.pressed.connect(self.draw_plot)
-        # label to inform user that plot is running
-        # self.plot_running_label = QtWidgets.QLabel("Plotting...")
-        # self.plot_running_label.setVisible(False)
 
         layout.addLayout(smooth_row)
         layout.addWidget(self.plot_button)
-        # layout.addWidget(self.plot_running_label)
 
-        self.desc_label.setText("<h3>Select parameters or click the 'Select all' button, "
-                                "then click the 'Update Plot' button.</h3>")
+        self.desc_label.setText(
+            "<h3>Select parameters or click the 'Select all' button, then click the 'Update Plot' button.</h3>"
+        )
+
+        self.param_combobox.selection_changed.connect(self.toggle_plot_button)
 
         return layout
 
-    def update_ui(self, _i, _n):
+    def toggle_plot_button(self):
+        self.plot_button.setEnabled(len(self.param_combobox.selected_items()) != 0)
+
+    def update_ui(self, current, total):
+        self.plot_button.update_progress(current, total)
         QtWidgets.QApplication.instance().processEvents()
 
     def draw_plot(self):
@@ -549,13 +545,16 @@ class CornerPlotWidget(AbstractPanelPlotWidget):
         smooth = self.smooth_checkbox.checkState() == QtCore.Qt.CheckState.Checked
 
         if plot_params:
-            self.resize_canvas(True)
-            self.plot_button.showProgress()
+            self.plot_button.show_progress()
+            QtWidgets.QApplication.instance().processEvents()
 
-            ratapi.plotting.plot_corner(self.results, params=plot_params, smooth=smooth, fig=self.figure, progress_callback=self.update_ui)
+            ratapi.plotting.plot_corner(
+                self.results, params=plot_params, smooth=smooth, fig=self.figure, progress_callback=self.update_ui
+            )
+            self.resize_canvas()
             self.canvas.draw()
 
-            self.plot_button.hideProgress()
+            self.plot_button.hide_progress()
 
 
 class HistPlotWidget(AbstractPanelPlotWidget):
@@ -596,7 +595,6 @@ class HistPlotWidget(AbstractPanelPlotWidget):
         est_dens = self.est_density_combobox.currentData()
 
         if plot_params:
-            self.resize_canvas(True)
             ratapi.plotting.plot_hists(
                 self.results,
                 params=plot_params,
@@ -604,6 +602,7 @@ class HistPlotWidget(AbstractPanelPlotWidget):
                 estimated_density={"default": est_dens},
                 fig=self.figure,
             )
+
             self.canvas.draw()
 
 
@@ -639,6 +638,6 @@ class ChainPlotWidget(AbstractPanelPlotWidget):
         maxpoints = self.maxpoints_box.value()
 
         if plot_params:
-            self.resize_canvas(True)
             ratapi.plotting.plot_chain(self.results, params=plot_params, maxpoints=maxpoints, fig=self.figure)
+            self.resize_canvas()
             self.canvas.draw()
