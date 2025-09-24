@@ -152,8 +152,6 @@ StartUpWidget QToolButton#ImportR1Button{
 /*****************************
     StartUpDialog Styles
 *****************************/
-
-
 StartupDialog #CancelButton {
     icon: url(@Path/cancel-dark.png);
 }
@@ -170,7 +168,7 @@ StartupDialog #LoadButton {
     icon: url(@Path/load-dark.png);
 }
 
-StartupDialog QLabel {
+StartupDialog > QLabel {
     font-weight: bold;
 }
 
@@ -178,27 +176,40 @@ StartupDialog QLineEdit[error="true"] {
     border: 1px solid #E34234;
 }
 
-StartupDialog #PreviousProjectButton {
-    text-align: left;
-    border-left: transparent;
-    border-right: transparent;
-    border-top: transparent;
+StartupDialog QListWidget::item:hover {
+    background-color: @Accent;
+}
+
+StartupDialog QListWidget::item:selected {
+    background: transparent;
+}
+
+StartupDialog QListWidget{
+    margin: 0px;
+    padding: 0px;
+    background: transparent;
+    border: 1px transparent;
+}
+
+StartupDialog QProgressBar {
+    border: 1px solid grey;
+    max-height: 5px;
     border-radius: 0px;
-    padding-left: 20px;
-    margin-left: 0px;
-    background-color: @Window;
 }
 
-StartupDialog #PreviousProjectButton:hover {
+QProgressBar::chunk {
+    background-color: @Accent;
+    width: 1px
+}
+
+DisplayWidget #title{
     font-weight: 600;
-    background-color: #e0eef9;
-    border-bottom: 1px solid #828282;
+    font-size: 16px;
 }
 
-StartupDialog #PreviousProjectButton:pressed {
-    background-color: #3874f2;
+DisplayWidget #desc{
+    color: #555
 }
-
 
 /*****************************
      PlotWidget Styles

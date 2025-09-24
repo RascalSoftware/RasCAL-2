@@ -95,7 +95,6 @@ class MainWindowPresenter:
         self.model.load_r1_project(load_path)
         self.model.results = self.quick_run(self.model.project)
 
-
     def initialise_ui(self):
         """Initialise UI for a project."""
         self.view.setWindowTitle(self.title + " - " + self.model.project.name, )

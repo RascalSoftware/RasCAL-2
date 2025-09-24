@@ -128,10 +128,6 @@ class MainWindowModel(QtCore.QObject):
         project_file = Path(load_path, "project.json")
         try:
             project = rat.Project.load(project_file)
-            # TODO remove this when RascalSoftware/python-RAT/#126 is fixed
-            # https://github.com/RascalSoftware/python-RAT/issues/126
-            for file in project.custom_files:
-                file.path = Path(file.path)
         except JSONDecodeError as err:
             raise ValueError("The project.json file for this project contains invalid JSON.") from err
         except (KeyError, ValueError) as err:
@@ -152,6 +148,10 @@ class MainWindowModel(QtCore.QObject):
 
         """
         self.project = rat.utils.convert.r1_to_project(load_path)
+
+        # TODO remove this when it is fixed in ratapi
+        for file in self.project.custom_files:
+            file.path = Path(load_path).parent
         self.controls = rat.Controls()
         self.save_path = str(Path(load_path).parent)
 

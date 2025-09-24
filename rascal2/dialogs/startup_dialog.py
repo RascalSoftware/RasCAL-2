@@ -1,13 +1,23 @@
+import logging
 import os
 from pathlib import Path
 
 from PyQt6 import QtCore, QtWidgets
 
+from rascal2.config import EXAMPLES_PATH
 from rascal2.settings import update_recent_projects
 from rascal2.core.worker import Worker
 
 # global variable for required project files
 PROJECT_FILES = ["controls.json", "project.json"]
+EXAMPLES = {"absorption": "Shows absorption (imaginary SLD) effect of usually seen below the critical edge",
+            "domains_custom_layers": "Incoherent summing ('domains') from custom layer model",
+            "domains_custom_XY": "Incoherent summing ('domains') from custom XY model",
+            "domains_standard_layers": "Incoherent summing ('domains') from standard layer model",
+            "DSPC_custom_layers": "Reflectivity analysis of a floating bilayer of DSPC using custom layer model",
+            "DSPC_custom_XY": "Reflectivity analysis of a floating bilayer of DSPC using custom XY model",
+            "DSPC_standard_layers": "Reflectivity analysis of a floating bilayer of DSPC using standard layer model",
+            }
 
 
 class StartupDialog(QtWidgets.QDialog):
@@ -51,8 +61,16 @@ class StartupDialog(QtWidgets.QDialog):
             button_layout.addWidget(button)
         main_layout.addStretch(1)
         main_layout.addLayout(button_layout)
+        main_layout.addWidget(self.create_loading_bar())
 
         self.setLayout(main_layout)
+
+    def create_loading_bar(self):
+        self.loading_bar = QtWidgets.QProgressBar()
+        self.loading_bar.setMinimum(0)
+        self.loading_bar.setMaximum(0)
+        self.loading_bar.setVisible(False)
+        return self.loading_bar
 
     def create_buttons(self) -> list[QtWidgets.QWidget]:
         """Create buttons for the bottom of the dialog.
@@ -162,9 +180,17 @@ class StartupDialog(QtWidgets.QDialog):
             self.parent().toolbar.setEnabled(True)
         self.accept()
 
-    def project_start_failed(self, exception, _args):
-        self.set_folder_error(str(exception))
+    def project_start_failed(self, exception, args):
+        folder_name = args[0]
+        error = str(exception).strip().replace("\n", "")
+        if isinstance(exception, OSError):
+            message = f'An error occurred while opening this project ({folder_name}).\nPlease check that ' \
+                      'the file exist and also that this user has access privileges for this file.'
+        else:
+            message = f'The Project ({folder_name}) could not be opened because:\n\n{error}'
 
+        logging.error(message, exc_info=exception)
+        QtWidgets.QMessageBox.critical(self, self.windowTitle(), message)
 
 
 class NewProjectDialog(StartupDialog):
@@ -223,35 +249,108 @@ class NewProjectDialog(StartupDialog):
             self.accept()
 
 
+class DisplayWidget(QtWidgets.QWidget):
+    def __init__(self, title, desc):
+        super().__init__()
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(15, 15, 15, 15)
+        title_widget = QtWidgets.QLabel(title)
+        title_widget.setObjectName('title')
+        desc_widget = QtWidgets.QLabel(desc)
+        desc_widget.setObjectName('desc')
+        layout.addWidget(title_widget)
+        layout.addWidget(desc_widget)
+        self.setLayout(layout)
+
+
 class LoadDialog(StartupDialog):
     """Dialog to load an existing project."""
 
-    def create_form(self, form_layout):
+    def compose_layout(self):
+        """Add widgets and layouts to the dialog's main layout."""
         self.setWindowTitle("Load Project")
+        main_layout = QtWidgets.QVBoxLayout()
+        main_layout.setSpacing(0)
 
-        recent_projects = update_recent_projects()
-        recent_projects = recent_projects[:3]
+        self.tabs = QtWidgets.QTabWidget()
+        self.tabs.setContentsMargins(0, 0, 0, 0)
+        self.create_load_tab()
+        self.create_recent_tab()
+        self.create_example_tab()
+        main_layout.addWidget(self.tabs)
+        main_layout.addWidget(self.create_loading_bar())
 
+        self.setLayout(main_layout)
+
+    def create_load_tab(self):
+        """Creates the load project widget"""
+        layout = QtWidgets.QVBoxLayout()
+        layout.setSpacing(20)
+
+        load_tab = QtWidgets.QWidget()
+        load_tab.setLayout(layout)
+
+        form_layout = QtWidgets.QGridLayout()
+        form_layout.setVerticalSpacing(10)
+        form_layout.setHorizontalSpacing(0)
+        layout.addLayout(form_layout)
         super().create_form(form_layout)
 
-        if recent_projects:
-            recent_projects_layout = QtWidgets.QVBoxLayout()
-            recent_projects_title = QtWidgets.QLabel("Recent projects:")
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        buttons = self.create_buttons()
+        for button in buttons:
+            button_layout.addWidget(button)
+        layout.addStretch(1)
+        layout.addLayout(button_layout)
 
-            for project in recent_projects:
-                button = QtWidgets.QPushButton(f"{project}", objectName="PreviousProjectButton")
+        self.tabs.addTab(load_tab, 'Load Project')
 
-                button.pressed.connect(self.load_recent_project(project))
-                recent_projects_layout.addWidget(button)
+    def create_list_widget_tab(self, tab_name):
+        layout = QtWidgets.QVBoxLayout()
 
-            num_rows = form_layout.rowCount()
-            form_layout.addWidget(recent_projects_title, num_rows, 0, 1, 1, QtCore.Qt.AlignmentFlag.AlignTop)
-            form_layout.addLayout(recent_projects_layout, num_rows, 1, 1, -1)
+        new_tab = QtWidgets.QWidget()
+        layout.setContentsMargins(0, 0, 0, 0)
+        new_tab.setLayout(layout)
 
-        self.loading_bar = QtWidgets.QProgressBar()
-        self.loading_bar.setMinimum(0)
-        self.loading_bar.setMaximum(0)
-        form_layout.addWidget(self.loading_bar, form_layout.rowCount(), 0, 1, -1, QtCore.Qt.AlignmentFlag.AlignTop)
+        list_widget = QtWidgets.QListWidget()
+        list_widget.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
+        list_widget.setSpacing(0)
+
+        list_widget.itemClicked.connect(self.load_project)
+        layout.addWidget(list_widget)
+        self.tabs.addTab(new_tab, tab_name)
+
+        return list_widget
+
+    def create_example_tab(self):
+        """Creates the example widget"""
+        self.example_list_widget = self.create_list_widget_tab("Examples")
+
+        for name, desc in EXAMPLES.items():
+            item = QtWidgets.QListWidgetItem()
+            self.example_list_widget.addItem(item)
+            item_widget = DisplayWidget(name.replace('_', ' '), desc)
+            self.example_list_widget.setItemWidget(item, item_widget)
+
+            item.setData(QtCore.Qt.ItemDataRole.UserRole, str(EXAMPLES_PATH / name))
+            item.setSizeHint(item_widget.sizeHint())
+
+    def create_recent_tab(self):
+        """Creates the recent project widget"""
+        recent_projects = update_recent_projects()
+        recent_projects = recent_projects[:6]
+        self.recent_list_widget = self.create_list_widget_tab("Recent Projects")
+
+        for i in range(len(recent_projects)):
+            path_name = Path(recent_projects[i]).name
+
+            item = QtWidgets.QListWidgetItem()
+            self.recent_list_widget.addItem(item)
+            item_widget = DisplayWidget(path_name, recent_projects[i])
+            self.recent_list_widget.setItemWidget(item, item_widget)
+            item.setData(QtCore.Qt.ItemDataRole.UserRole, recent_projects[i])
+            item.setSizeHint(item_widget.sizeHint())
 
     def load_recent_project(self, path: str):
         # use internal function so we can use it as a parameter-free slot
@@ -275,16 +374,29 @@ class LoadDialog(StartupDialog):
         if not all(Path(folder_path, file).exists() for file in PROJECT_FILES):
             raise ValueError("No project found in this folder.")
 
-    def load_project(self):
+    def load_project(self, item=None):
         """Load the project if inputs are valid."""
-        if self.project_folder.text() == "":
-            self.set_folder_error("Please specify a project folder.")
-        if self.project_folder_error.isHidden():
-            self.worker = Worker.call(self.parent().presenter.load_project_and_run,
-                                      [self.project_folder.text()],
-                                      self.project_start_success,
-                                      self.project_start_failed,
-                                      )
+        if item is not None:
+            path = item.data(QtCore.Qt.ItemDataRole.UserRole)
+        else:
+            if self.project_folder.text() == "":
+                self.set_folder_error("Please specify a project folder.")
+            if self.project_folder_error.isHidden():
+                return
+            path = self.project_folder.text()
+
+        self.worker = Worker.call(self.parent().presenter.load_project_and_run,
+                                  [path],
+                                  self.project_start_success,
+                                  self.project_start_failed,
+                                  lambda: self.block_for_worker(False),
+                                  )
+        self.block_for_worker(True)
+
+    def block_for_worker(self, disabled):
+        self.recent_list_widget.setDisabled(disabled)
+        self.example_list_widget.setDisabled(disabled)
+        self.loading_bar.setVisible(disabled)
 
 
 class LoadR1Dialog(StartupDialog):
@@ -322,12 +434,11 @@ class LoadR1Dialog(StartupDialog):
         if self.project_folder.text() == "":
             self.set_folder_error("Please specify a project file.")
         if self.project_folder_error.isHidden():
+
             self.worker = Worker.call(self.parent().presenter.load_r1_project_and_run,
                                       [self.project_folder.text()],
                                       self.project_start_success,
                                       self.project_start_failed,
+                                      self.loading_bar.hide,
                                       )
-            self.parent().presenter.load_r1_project(self.project_folder.text())
-            if not self.parent().toolbar.isEnabled():
-                self.parent().toolbar.setEnabled(True)
-            self.accept()
+            self.loading_bar.setVisible(True)
