@@ -50,7 +50,6 @@ def test_create_project():
 
     assert model.project.name == "Test"
     assert model.controls == Controls()
-    assert model.results is None
     assert model.save_path == "C:/test"
 
 

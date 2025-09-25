@@ -295,8 +295,9 @@ class ProjectFieldWidget(QtWidgets.QWidget):
         """
         presenter = self.parent.parent.parent.presenter
         presenter.model.blockSignals(True)
-        presenter.edit_project({self.field: self.model.classlist},
-                               preview=recalculate and presenter.view.settings.live_recalculate)
+        presenter.edit_project(
+            {self.field: self.model.classlist}, preview=recalculate and presenter.view.settings.live_recalculate
+        )
         presenter.model.blockSignals(False)
 
 

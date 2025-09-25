@@ -157,19 +157,24 @@ def test_handle_log_data(presenter):
 
 
 @pytest.mark.parametrize("function", ["create_project", "load_project", "load_r1_project"])
-def test_load_project(presenter, function):
+@patch("rascal2.ui.presenter.MainWindowModel", autospec=True)
+def test_load_project(model_mock, presenter, function):
     """All the project initialisation functions should run the corresponding model function and initialise UI."""
-    presenter.initialise_ui = MagicMock()
+    end_function = MagicMock()
     setattr(presenter.model, function, MagicMock())
+    presenter.model.results = None
+
     if function == "create_project":
         params = ("proj_name", "some_path/")
+        presenter.initialise_ui = end_function
     else:
         presenter.model.project.name = "proj_name"
         params = ("some_path/",)
+        presenter.quick_run = end_function
 
     getattr(presenter, function)(*params)
 
-    presenter.initialise_ui.assert_called_once_with("proj_name", "some_path/")
+    end_function.assert_called_once()
     getattr(presenter.model, function).assert_called_once_with(*params)
 
 

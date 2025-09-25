@@ -1,6 +1,7 @@
 """File for Qt commands."""
 
 import copy
+import logging
 from enum import IntEnum, unique
 from typing import Callable, Union
 
@@ -64,7 +65,6 @@ class AbstractModelEdit(QtGui.QUndoCommand):
     def redo(self):
         self.update_attribute(self.new_values)
         if self.preview and self.new_result is None:
-            print(1)
             self.get_preview()
         elif self.preview and self.new_result is not None:
             self.presenter.model.update_results(self.new_result)
@@ -72,26 +72,27 @@ class AbstractModelEdit(QtGui.QUndoCommand):
             self.new_result = self.old_result
 
     def get_preview(self):
-        print(2)
-        self.worker = Worker.call(self.presenter.quick_run,
-                                  [self.presenter.model.project],
-                                  self.quick_run_success,
-                                  self.quick_run_failed,
-                                  )
+        self.worker = Worker.call(
+            self.presenter.quick_run,
+            [self.presenter.model.project],
+            self.quick_run_success,
+            self.quick_run_failed,
+        )
 
     def quick_run_success(self, result):
         self.new_result = result
         self.presenter.model.update_results(self.new_result)
 
     def quick_run_failed(self, exception, _args):
-        print(exception)
-        #TODO Logging
+        self.new_result = self.old_result
+        message = f"Error occurred when generating result preview:\n\n{exception}"
+        logging.error(message, exc_info=exception)
+        self.presenter.view.terminal_widget.write(message)
 
     def mergeWith(self, command):
         """Merges consecutive Edit controls commands if the attributes are the
         same."""
-        print(3)
-        worker = getattr(command, 'worker', None)
+        worker = getattr(command, "worker", None)
         if worker is not None:
             worker.stop()
 

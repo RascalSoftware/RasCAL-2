@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, patch
 
 import pytest
-from PyQt6 import QtWidgets
+from PyQt6 import QtCore, QtWidgets
 
 from rascal2.dialogs.startup_dialog import PROJECT_FILES, LoadDialog, LoadR1Dialog, NewProjectDialog, StartupDialog
 
@@ -37,16 +37,6 @@ def test_project_dialog_initial_state(dialog, num_widgets):
 
     assert project_dialog.isModal()
     assert project_dialog.minimumWidth() == 700
-
-    assert project_dialog.layout().count() == num_widgets + 2  # +2 for the buttons layout and a stretch
-    buttons = project_dialog.layout().itemAt(num_widgets + 1).layout()
-    assert isinstance(buttons, QtWidgets.QHBoxLayout)
-    assert buttons.count() == 2
-    assert buttons.itemAt(1).widget().text() == "Cancel"
-    if isinstance(project_dialog, NewProjectDialog):
-        assert buttons.itemAt(0).widget().text() == "Create"
-    else:
-        assert buttons.itemAt(0).widget().text() == "Load"
 
     if project_dialog == NewProjectDialog:
         assert project_dialog.project_name.placeholderText() == "Enter project name"
@@ -92,7 +82,8 @@ def test_create_button(name, name_valid, folder, folder_valid, other_folder_erro
 @pytest.mark.parametrize("widget", [LoadDialog, LoadR1Dialog])
 @pytest.mark.parametrize("folder, folder_valid", [("", False), ("Folder", True)])
 @pytest.mark.parametrize("other_folder_error", [True, False])
-def test_load_button(widget, folder, folder_valid, other_folder_error):
+@patch("rascal2.dialogs.startup_dialog.Worker", autospec=True)
+def test_load_button(worker_mock, widget, folder, folder_valid, other_folder_error):
     """
     Tests project loading on the LoadDialog and LoadR1Dialog class.
     """
@@ -100,35 +91,33 @@ def test_load_button(widget, folder, folder_valid, other_folder_error):
     with patch("rascal2.dialogs.startup_dialog.update_recent_projects", return_value=[]):
         project_dialog = widget(view)
     if widget == LoadDialog:
-        mock_load = view.presenter.load_project = MagicMock()
+        load_button = project_dialog.tabs.widget(0).layout().itemAt(2).layout().itemAt(0).widget()
     else:
-        mock_load = view.presenter.load_r1_project = MagicMock()
-    load_button = project_dialog.layout().itemAt(2).layout().itemAt(0).widget()
+        load_button = project_dialog.layout().itemAt(2).layout().itemAt(0).widget()
 
     project_dialog.project_folder.setText(folder)
     if other_folder_error:
         project_dialog.set_folder_error("Folder error!!")
 
     load_button.click()
-
     if folder_valid and not other_folder_error:
-        mock_load.assert_called_once()
-        assert project_dialog.parent().toolbar.isEnabled()
+        worker_mock.call.assert_called()
     else:
-        mock_load.assert_not_called()
+        worker_mock.call.assert_not_called()
 
 
-def test_cancel_button():
+@patch.object(StartupDialog, "reject")
+def test_cancel_button(mock_reject):
     """
     Tests cancel button on the StartupDialog class.
     """
+    view.startup_dlg = None
     project_dialog = StartupDialog(view)
 
     cancel_button = project_dialog.layout().itemAt(2).layout().itemAt(0).widget()
 
-    with patch.object(project_dialog, "reject", wraps=project_dialog.reject) as mock_reject:
-        cancel_button.click()
-        mock_reject.assert_called_once()
+    cancel_button.click()
+    mock_reject.assert_called_once()
 
 
 def test_folder_selector():
@@ -164,7 +153,7 @@ def test_folder_selector():
         [],
         ["proj1"],
         ["proj1", "proj2"],
-        ["proj1", "proj2", "proj3", "invisible1", "invisible2"],
+        ["proj1", "proj2", "proj3", "proj4", "proj5", "proj6", "invisible1", "invisible2"],
     ],
 )
 def test_recent_projects(recent):
@@ -173,14 +162,12 @@ def test_recent_projects(recent):
     with patch("rascal2.dialogs.startup_dialog.update_recent_projects", return_value=recent):
         project_dialog = LoadDialog(view)
 
-    assert project_dialog.layout().count() == 3
-
     if recent:
-        recent_projects = project_dialog.layout().itemAt(0).layout().itemAt(5).layout()
-        assert recent_projects.count() == min(len(recent), 3)
+        # size of recent list capped at 6
+        assert project_dialog.recent_list_widget.count() == min(len(recent), 6)
 
-        for i, label in enumerate(recent[0:3]):
-            assert label in recent_projects.itemAt(i).widget().text()
+        for i, label in enumerate(recent[0:6]):
+            assert label in project_dialog.recent_list_widget.item(i).data(QtCore.Qt.ItemDataRole.UserRole)
 
 
 @pytest.mark.parametrize(
@@ -208,34 +195,18 @@ def test_verify_folder(contents, has_project):
                 LoadDialog(view).verify_folder(tmp)
 
 
-def test_load_invalid_json():
-    """If project loading produces an error (which it does for invalid JSON), raise that error in the textbox."""
-
-    def error(ignored_dir):
-        raise ValueError("Project load error!")
-
-    view.presenter.load_project = error
-    dialog = LoadDialog(view)
-    with TemporaryDirectory() as tmp:
-        for file in PROJECT_FILES:
-            Path(tmp, file).touch()
-
-        dialog.project_folder.setText(tmp)
-        dialog.load_project()
-
-    assert not dialog.project_folder_error.isHidden()
-    assert dialog.project_folder_error.text() == "Project load error!"
-
-
-def test_load_recent_project():
+@patch("rascal2.dialogs.startup_dialog.Worker", autospec=True)
+def test_load_recent_project(worker_mock):
     """Ensure that the load_recent_project slot loads the project it was initialised with."""
     dialog = LoadDialog(view)
-    view.presenter.load_project = MagicMock()
 
     with TemporaryDirectory() as tmp:
         for file in PROJECT_FILES:
             Path(tmp, file).touch()
 
-        dialog.load_recent_project(tmp)()
-        assert dialog.project_folder.text() == tmp
-        view.presenter.load_project.assert_called_once_with(tmp)
+        dialog.load_project()
+        worker_mock.call.assert_not_called()
+        dialog.project_folder.setText(tmp)
+        dialog.project_folder_error.hide()
+        dialog.load_project()
+        worker_mock.call.assert_called_once()

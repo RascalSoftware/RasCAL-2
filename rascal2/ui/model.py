@@ -150,6 +150,7 @@ class MainWindowModel(QtCore.QObject):
         self.project = rat.utils.convert.r1_to_project(load_path)
 
         # TODO remove this when it is fixed in ratapi
+        # https://github.com/RascalSoftware/python-RAT/issues/183
         for file in self.project.custom_files:
             file.path = Path(load_path).parent
         self.controls = rat.Controls()

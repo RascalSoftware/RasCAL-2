@@ -5,19 +5,20 @@ from pathlib import Path
 from PyQt6 import QtCore, QtWidgets
 
 from rascal2.config import EXAMPLES_PATH
-from rascal2.settings import update_recent_projects
 from rascal2.core.worker import Worker
+from rascal2.settings import update_recent_projects
 
 # global variable for required project files
 PROJECT_FILES = ["controls.json", "project.json"]
-EXAMPLES = {"absorption": "Shows absorption (imaginary SLD) effect of usually seen below the critical edge",
-            "domains_custom_layers": "Incoherent summing ('domains') from custom layer model",
-            "domains_custom_XY": "Incoherent summing ('domains') from custom XY model",
-            "domains_standard_layers": "Incoherent summing ('domains') from standard layer model",
-            "DSPC_custom_layers": "Reflectivity analysis of a floating bilayer of DSPC using custom layer model",
-            "DSPC_custom_XY": "Reflectivity analysis of a floating bilayer of DSPC using custom XY model",
-            "DSPC_standard_layers": "Reflectivity analysis of a floating bilayer of DSPC using standard layer model",
-            }
+EXAMPLES = {
+    "absorption": "Shows absorption (imaginary SLD) effect of usually seen below the critical edge",
+    "domains_custom_layers": "Incoherent summing ('domains') from custom layer model",
+    "domains_custom_XY": "Incoherent summing ('domains') from custom XY model",
+    "domains_standard_layers": "Incoherent summing ('domains') from standard layer model",
+    "DSPC_custom_layers": "Reflectivity analysis of a floating bilayer of DSPC using custom layer model",
+    "DSPC_custom_XY": "Reflectivity analysis of a floating bilayer of DSPC using custom XY model",
+    "DSPC_standard_layers": "Reflectivity analysis of a floating bilayer of DSPC using standard layer model",
+}
 
 
 class StartupDialog(QtWidgets.QDialog):
@@ -66,6 +67,7 @@ class StartupDialog(QtWidgets.QDialog):
         self.setLayout(main_layout)
 
     def create_loading_bar(self):
+        """Creates non-deterministic progress bar"""
         self.loading_bar = QtWidgets.QProgressBar()
         self.loading_bar.setMinimum(0)
         self.loading_bar.setMaximum(0)
@@ -118,9 +120,7 @@ class StartupDialog(QtWidgets.QDialog):
         form_layout.addWidget(self.project_folder_error, num_rows + 1, 1, 1, 4)
 
     def open_folder_selector(self) -> None:
-        """
-        Open folder selector.
-        """
+        """Open folder selector."""
         folder_path = self.folder_selector(self, "Select Folder")
         if folder_path:
             try:
@@ -172,7 +172,7 @@ class StartupDialog(QtWidgets.QDialog):
     def reject(self):
         super().reject()
         if self.parent().centralWidget() is self.parent().startup_dlg:
-           self.parent().startup_dlg.setVisible(True)
+            self.parent().startup_dlg.setVisible(True)
 
     def project_start_success(self):
         self.parent().presenter.initialise_ui()
@@ -183,12 +183,7 @@ class StartupDialog(QtWidgets.QDialog):
     def project_start_failed(self, exception, args):
         folder_name = args[0]
         error = str(exception).strip().replace("\n", "")
-        if isinstance(exception, OSError):
-            message = f'An error occurred while opening this project ({folder_name}).\nPlease check that ' \
-                      'the file exist and also that this user has access privileges for this file.'
-        else:
-            message = f'The Project ({folder_name}) could not be opened because:\n\n{error}'
-
+        message = f"The Project ({folder_name}) could not be opened because:\n\n{error}"
         logging.error(message, exc_info=exception)
         QtWidgets.QMessageBox.critical(self, self.windowTitle(), message)
 
@@ -250,14 +245,16 @@ class NewProjectDialog(StartupDialog):
 
 
 class DisplayWidget(QtWidgets.QWidget):
+    """Fancy display widget for title and description items in a list"""
+
     def __init__(self, title, desc):
         super().__init__()
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(15, 15, 15, 15)
         title_widget = QtWidgets.QLabel(title)
-        title_widget.setObjectName('title')
+        title_widget.setObjectName("title")
         desc_widget = QtWidgets.QLabel(desc)
-        desc_widget.setObjectName('desc')
+        desc_widget.setObjectName("desc")
         layout.addWidget(title_widget)
         layout.addWidget(desc_widget)
         self.setLayout(layout)
@@ -304,9 +301,16 @@ class LoadDialog(StartupDialog):
         layout.addStretch(1)
         layout.addLayout(button_layout)
 
-        self.tabs.addTab(load_tab, 'Load Project')
+        self.tabs.addTab(load_tab, "Load Project")
 
-    def create_list_widget_tab(self, tab_name):
+    def create_list_widget_tab(self, tab_name: str):
+        """Create the list widget and add it to tab with given name
+
+        Parameters
+        ----------
+        tab_name : str
+            The name of tab to add list to.
+        """
         layout = QtWidgets.QVBoxLayout()
 
         new_tab = QtWidgets.QWidget()
@@ -330,7 +334,7 @@ class LoadDialog(StartupDialog):
         for name, desc in EXAMPLES.items():
             item = QtWidgets.QListWidgetItem()
             self.example_list_widget.addItem(item)
-            item_widget = DisplayWidget(name.replace('_', ' '), desc)
+            item_widget = DisplayWidget(name.replace("_", " "), desc)
             self.example_list_widget.setItemWidget(item, item_widget)
 
             item.setData(QtCore.Qt.ItemDataRole.UserRole, str(EXAMPLES_PATH / name))
@@ -352,15 +356,6 @@ class LoadDialog(StartupDialog):
             item.setData(QtCore.Qt.ItemDataRole.UserRole, recent_projects[i])
             item.setSizeHint(item_widget.sizeHint())
 
-    def load_recent_project(self, path: str):
-        # use internal function so we can use it as a parameter-free slot
-        def _load():
-            self.project_folder_error.hide()
-            self.project_folder.setText(path)
-            self.load_project()
-
-        return _load
-
     def create_buttons(self) -> list[QtWidgets.QWidget]:
         load_button = QtWidgets.QPushButton("Load", objectName="LoadButton")
         load_button.clicked.connect(self.load_project)
@@ -375,25 +370,39 @@ class LoadDialog(StartupDialog):
             raise ValueError("No project found in this folder.")
 
     def load_project(self, item=None):
-        """Load the project if inputs are valid."""
-        if item is not None:
+        """Load the project if inputs are valid.
+
+        Parameters
+        ----------
+        item : Optional[QtWidgets.QListWidgetItem]
+            item if load project was called from list widget.
+        """
+        if isinstance(item, QtWidgets.QListWidgetItem):
             path = item.data(QtCore.Qt.ItemDataRole.UserRole)
         else:
             if self.project_folder.text() == "":
                 self.set_folder_error("Please specify a project folder.")
-            if self.project_folder_error.isHidden():
+            if not self.project_folder_error.isHidden():
                 return
             path = self.project_folder.text()
 
-        self.worker = Worker.call(self.parent().presenter.load_project_and_run,
-                                  [path],
-                                  self.project_start_success,
-                                  self.project_start_failed,
-                                  lambda: self.block_for_worker(False),
-                                  )
+        self.worker = Worker.call(
+            self.parent().presenter.load_project,
+            [path],
+            self.project_start_success,
+            self.project_start_failed,
+            lambda: self.block_for_worker(False),
+        )
         self.block_for_worker(True)
 
-    def block_for_worker(self, disabled):
+    def block_for_worker(self, disabled: bool):
+        """Disable UI while worker is completing
+
+        Parameters
+        ----------
+        disabled : bool
+            indicates if ui should be disabled.
+        """
         self.recent_list_widget.setDisabled(disabled)
         self.example_list_widget.setDisabled(disabled)
         self.loading_bar.setVisible(disabled)
@@ -434,11 +443,11 @@ class LoadR1Dialog(StartupDialog):
         if self.project_folder.text() == "":
             self.set_folder_error("Please specify a project file.")
         if self.project_folder_error.isHidden():
-
-            self.worker = Worker.call(self.parent().presenter.load_r1_project_and_run,
-                                      [self.project_folder.text()],
-                                      self.project_start_success,
-                                      self.project_start_failed,
-                                      self.loading_bar.hide,
-                                      )
+            self.worker = Worker.call(
+                self.parent().presenter.load_r1_project,
+                [self.project_folder.text()],
+                self.project_start_success,
+                self.project_start_failed,
+                self.loading_bar.hide,
+            )
             self.loading_bar.setVisible(True)
