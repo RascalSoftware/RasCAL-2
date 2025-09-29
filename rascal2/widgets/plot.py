@@ -80,6 +80,7 @@ class BayesPlotsDialog(QtWidgets.QDialog):
         self.parent_model = parent.presenter.model
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.setWindowFlag(QtCore.Qt.WindowType.WindowMaximizeButtonHint, True)
 
         layout = QtWidgets.QVBoxLayout()
 
