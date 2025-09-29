@@ -2,20 +2,22 @@ from PyQt6 import QtCore
 
 
 class Worker(QtCore.QThread):
-    """Creates worker thread object
+    """Creates worker thread object.
 
-    :param _exec: function to run on ``QThread``
-    :type _exec: Callable[..., Any]
-    :param args: arguments of function ``_exec``
-    :type args: Tuple[Any, ...]
+    Parameters
+    ----------
+    func : Callable[..., Any]
+        function to run on ``QThread``.
+    args : Tuple[Any, ...]
+        arguments of function ``func``.
     """
 
     job_succeeded = QtCore.pyqtSignal("PyQt_PyObject")
     job_failed = QtCore.pyqtSignal(Exception, "PyQt_PyObject")
 
-    def __init__(self, _exec, args):
+    def __init__(self, func, args):
         super().__init__()
-        self._exec = _exec
+        self.func = func
         self._args = args
         self.stopped = False
 
@@ -26,7 +28,7 @@ class Worker(QtCore.QThread):
             return
 
         try:
-            result = self._exec(*self._args)
+            result = self.func(*self._args)
             self.job_succeeded.emit(result)
         except Exception as e:
             self.job_failed.emit(e, self._args)
@@ -38,20 +40,25 @@ class Worker(QtCore.QThread):
 
     @classmethod
     def call(cls, func, args, on_success=None, on_failure=None, on_complete=None):
-        """Calls the given function from a new worker thread object
+        """Calls the given function from a new worker thread object.
 
-        :param func: function to run on ``QThread``
-        :type func: Callable[..., Any]
-        :param args: arguments of function ``func``
-        :type args: Tuple[Any, ...]
-        :param on_success: function to call if success
-        :type on_success: Union[Callable[..., None], None]
-        :param on_failure: function to call if failed
-        :type on_failure: Union[Callable[..., None], None]
-        :param on_complete: function to call when complete
-        :type on_complete: Union[Callable[..., None], None]
-        :return: worker thread running ``func``
-        :rtype: Worker
+        Parameters
+        ----------
+        func : Callable[..., Any]
+            function to run on ``QThread``.
+        args : Tuple[Any, ...]
+            arguments of function ``func``.
+        on_success : Union[Callable[..., None], None]
+            function to call on success.
+        on_failure : Union[Callable[..., None], None]
+            function to call on failure.
+        on_complete : Union[Callable[..., None], None]
+            function to call when complete.
+
+        Returns
+        -------
+        Worker
+            worker thread running ``func``.
         """
         worker = cls(func, args)
         if on_success is not None:
