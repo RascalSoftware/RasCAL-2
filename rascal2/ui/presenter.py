@@ -27,7 +27,6 @@ class MainWindowPresenter:
     def __init__(self, view):
         self.view = view
         self.model = MainWindowModel()
-        self.title = self.view.windowTitle()
         self.worker = None
 
     def create_project(self, name: str, save_path: str):
@@ -73,7 +72,7 @@ class MainWindowPresenter:
     def initialise_ui(self):
         """Initialise UI for a project."""
         self.view.setWindowTitle(
-            self.title + " - " + self.model.project.name,
+            self.view.windowTitle() + " - " + self.model.project.name,
         )
         self.view.init_settings_and_log(self.model.save_path)
         self.view.setup_mdi()

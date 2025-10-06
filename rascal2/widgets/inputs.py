@@ -585,12 +585,8 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
 class ProgressButton(QtWidgets.QPushButton):
     """Creates a custom button that displays a busy indicator
 
-    Parameters
-    ----------
-    default_text : str
-        normal button text.
-    progress_text : str
-        text to display when showing progress.
+    :param default_text: button text
+    :type default_text: str
     """
 
     def __init__(self, default_text, progress_text):
