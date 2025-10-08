@@ -13,6 +13,8 @@ from rascal2.settings import Settings, get_global_settings
 if getattr(sys, "frozen", False):
     # we are running in a bundle
     SOURCE_PATH = pathlib.Path(sys.executable).parent.parent
+    if pathlib.Path(SOURCE_PATH / 'MacOS').is_dir():
+        SOURCE_PATH = SOURCE_PATH / 'Resources'
     SITE_PATH = SOURCE_PATH / "bin/_internal"
     EXAMPLES_PATH = SOURCE_PATH / "examples"
 else:

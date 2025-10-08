@@ -114,7 +114,7 @@ def build_exe():
             shutil.copytree(src_path, dest_path, ignore=shutil.ignore_patterns("__pycache__"))
 
     if IS_MAC:
-        shutil.rmtree(PACKAGING_PATH / "bundle" / "app" / "rascal")
+        shutil.rmtree(PACKAGING_PATH / "bundle" / "rascal")
 
     if IS_WINDOWS:
         with open(PACKAGING_PATH / "windows" / "version.nsh", "w") as ver_file:
