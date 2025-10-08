@@ -151,9 +151,9 @@ echo ""
 echo "Copying executable and other files ..."
 
 GROUP=$(id -gn "$USER")
-cp -ar "./rascal/packaging/bundle/." "${INSTALL_DIR}"
+cp -r "./rascal/packaging/bundle/." "${INSTALL_DIR}"
 if [ "$INSTALL_EXAMPLES" = y ]; then
-    cp -ar "./rascal/examples" "$INSTALL_DIR/examples"
+    cp -r "./rascal/examples" "$INSTALL_DIR/examples"
 fi
 chown -R "$USER:$GROUP" "$INSTALL_DIR"
 
