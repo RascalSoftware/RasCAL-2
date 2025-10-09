@@ -155,6 +155,10 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.open_help_action.setIcon(QtGui.QIcon(path_for("help.png")))
         self.open_help_action.triggered.connect(self.open_docs)
 
+        self.open_about_action = QtGui.QAction("&About", self)
+        self.open_about_action.setStatusTip("Report RAT version&info")
+        self.open_about_action.triggered.connect(self.open_about_info)
+
         self.exit_action = QtGui.QAction("E&xit", self)
         self.exit_action.setStatusTip(f"Quit {MAIN_WINDOW_TITLE}")
         self.exit_action.setShortcut(QtGui.QKeySequence.StandardKey.Quit)
@@ -229,7 +233,18 @@ class MainWindowView(QtWidgets.QMainWindow):
         tools_menu.addAction(self.setup_matlab_action)
 
         help_menu = self.main_menu.addMenu("&Help")
+        help_menu.addAction(self.open_about_action)
         help_menu.addAction(self.open_help_action)
+
+    def open_about_info(self):
+        """Opens about menu"""
+        from PyQt6.QtWidgets import QMessageBox
+        msg = QMessageBox()
+        msg.setWindowTitle("About RasCAL 2")
+        msg.setText("RasCAL 2")
+        msg.setInformativeText("A GUI for Reflectivity Algorithms Toolbox (RAT)\nAdditional information")
+
+        msg.exec()
 
     def open_matlab_setup(self):
         """Opens the MATLAB setup dialog"""
