@@ -69,7 +69,7 @@ class BayesPlotsDialog(QtWidgets.QDialog):
         super().__init__(parent)
         self.parent_model = parent.presenter.model
         self.installEventFilter(self)
-        self.is_resizing = False
+        self.resize_timer = 0
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowFlag(QtCore.Qt.WindowType.WindowMaximizeButtonHint, True)
@@ -144,17 +144,18 @@ class BayesPlotsDialog(QtWidgets.QDialog):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        self.is_resizing = True
+        if self.resize_timer != 0:
+            self.killTimer(self.resize_timer)
+            self.resize_timer = 0
+        self.resize_timer = self.startTimer(500)
+
+    def timerEvent(self, event):
+        self._draw_current_panel_plot()
+        self.killTimer(event.timerId())
+        self.resize_timer = 0
 
     def eventFilter(self, _obj, event):
-        if (
-            event.type() == QtCore.QEvent.Type.MouseButtonRelease
-            or event.type() == QtCore.QEvent.Type.NonClientAreaMouseButtonRelease
-        ):
-            if self.is_resizing:
-                self._draw_current_panel_plot()
-                return True
-        elif event.type() == QtCore.QEvent.Type.WindowStateChange:
+        if event.type() == QtCore.QEvent.Type.WindowStateChange:
             self._draw_current_panel_plot()
             return True
         return False
@@ -189,7 +190,6 @@ class AbstractPlotWidget(QtWidgets.QWidget):
         self.current_plot_data = None
 
         main_layout = QtWidgets.QHBoxLayout()
-        main_layout.setContentsMargins(5, 5, 5, 10)
 
         plot_settings = self.make_control_layout()
 
@@ -221,6 +221,7 @@ class AbstractPlotWidget(QtWidgets.QWidget):
             sub_layout.addWidget(slider)
             sub_layout.addStretch(1)
             plot_toolbar.addLayout(sub_layout)
+            plot_toolbar.addSpacing(15)
 
         sidebar = QtWidgets.QHBoxLayout()
         sidebar.addWidget(self.plot_controls)
@@ -235,7 +236,7 @@ class AbstractPlotWidget(QtWidgets.QWidget):
         self.canvas.setStyleSheet("background-color: transparent;")
 
         self.canvas.setParent(self)
-        self.setMinimumSize(400, 300)
+        self.setMinimumSize(500, 300)
 
         scroll_area = QtWidgets.QScrollArea(self)
         scroll_area.setWidget(self.canvas)
@@ -348,15 +349,11 @@ class RefSLDWidget(AbstractPlotWidget):
         return self.slider
 
     def make_figure(self) -> matplotlib.figure.Figure:
+        self.resize_timer = 0
         figure = matplotlib.figure.Figure()
         figure.subplots(1, 2)
 
         return figure
-
-    def clear(self):
-        super().clear()
-        # Figure has incorrect size after initial draw so looks right aligned this is a workaround
-        self.figure.set_size_inches((7, 2.8))
 
     def handle_control_changed(self):
         if self.blit_plot is None:
@@ -364,7 +361,21 @@ class RefSLDWidget(AbstractPlotWidget):
         else:
             self.plot_with_blit()
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.resize_timer != 0:
+            self.killTimer(self.resize_timer)
+            self.resize_timer = 0
+        self.resize_timer = self.startTimer(500)
+
+    def timerEvent(self, event):
+        if self.blit_plot is None:
+            self.plot_event()
+        self.killTimer(event.timerId())
+        self.resize_timer = 0
+
     def plot(self, project: ratapi.Project, results: ratapi.outputs.Results | ratapi.outputs.BayesResults):
+
         """Plots the reflectivity and SLD profiles.
 
         Parameters
