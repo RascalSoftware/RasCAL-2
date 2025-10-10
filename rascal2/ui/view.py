@@ -6,6 +6,7 @@ from rascal2.config import EXAMPLES_PATH, get_logger, path_for, setup_logging, s
 from rascal2.core.enums import UnsavedReply
 from rascal2.dialogs.matlab_setup_dialog import MatlabSetupDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog
+from rascal2.dialogs.about_dialog import AboutDialog
 from rascal2.dialogs.startup_dialog import PROJECT_FILES, LoadDialog, LoadR1Dialog, NewProjectDialog, StartupDialog
 from rascal2.settings import MDIGeometries, Settings, get_global_settings
 from rascal2.widgets import ControlsWidget, PlotWidget, TerminalWidget
@@ -54,6 +55,8 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.logging = get_logger()
         self.startup_dlg = StartUpWidget(self)
         self.setCentralWidget(self.startup_dlg)
+
+        self.about_dialog = AboutDialog(self)
 
     def closeEvent(self, event):
         if self.presenter.ask_to_save_project():
@@ -237,14 +240,9 @@ class MainWindowView(QtWidgets.QMainWindow):
         help_menu.addAction(self.open_help_action)
 
     def open_about_info(self):
-        """Opens about menu"""
-        from PyQt6.QtWidgets import QMessageBox
-        msg = QMessageBox()
-        msg.setWindowTitle("About RasCAL 2")
-        msg.setText("RasCAL 2")
-        msg.setInformativeText("A GUI for Reflectivity Algorithms Toolbox (RAT)\nAdditional information")
-
-        msg.exec()
+        """Opens about menu containing information about RASCAL gui"""
+        self.about_dialog.update_rascal_info(self)
+        self.about_dialog.show()
 
     def open_matlab_setup(self):
         """Opens the MATLAB setup dialog"""
