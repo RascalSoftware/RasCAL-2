@@ -37,7 +37,7 @@ class PlotWidget(QtWidgets.QWidget):
         layout.addLayout(button_layout)
         layout.addWidget(self.reflectivity_plot)
         layout.setSpacing(0)
-        layout.setContentsMargins(0, 5, 0, 30)
+        layout.setContentsMargins(0, 5, 0, 20)
         self.setLayout(layout)
 
     def update_plots(self, project: ratapi.Project, results: ratapi.outputs.Results | ratapi.outputs.BayesResults):
@@ -78,11 +78,15 @@ class BayesPlotsDialog(QtWidgets.QDialog):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent_model = parent.presenter.model
+        self.installEventFilter(self)
+        self.resize_timer = 0
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowFlag(QtCore.Qt.WindowType.WindowMaximizeButtonHint, True)
 
         layout = QtWidgets.QVBoxLayout()
+        self.result_summary = QtWidgets.QLabel()
+        self.result_summary.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
 
         self.plot_tabs = QtWidgets.QTabWidget()
 
@@ -96,12 +100,14 @@ class BayesPlotsDialog(QtWidgets.QDialog):
         for plot_type, plot_widget in plots.items():
             self.add_tab(plot_type, plot_widget)
 
+        self._sync_and_update_model()
+        layout.addWidget(self.result_summary)
         layout.addWidget(self.plot_tabs)
         self.setLayout(layout)
-
         self.setModal(True)
         self.resize(900, 600)
         self.setWindowTitle("Bayes Results")
+        self.plot_tabs.currentChanged.connect(self.redraw_panel_plot)
 
     def add_tab(self, plot_type: str, plot_widget: "AbstractPlotWidget"):
         """Add a widget as a tab to the plot widget.
@@ -124,8 +130,64 @@ class BayesPlotsDialog(QtWidgets.QDialog):
 
         if self.parent_model.results is not None:
             plot_widget.plot(self.parent_model.project, self.parent_model.results)
-            if isinstance(plot_widget, CornerPlotWidget):
-                plot_widget.param_combobox.select_items(self.parent_model.results.fitNames)
+
+    def _sync_and_update_model(self):
+        """Set all parameter comboboxes to same model the update result summary."""
+        if self.parent_model.results is None:
+            return
+
+        widget = self.plot_tabs.widget(1)
+        model = widget.param_combobox.model()
+        model.itemChanged.connect(self.redraw_panel_plot)
+        widget.param_combobox.addItems(self.parent_model.results.fitNames)
+        widget.param_combobox.select_items(self.parent_model.results.fitNames)
+        for i in [2, 3]:
+            widget = self.plot_tabs.widget(i)
+            widget.param_combobox.setModel(model)
+            widget.redraw_plot = True
+        samples = self.parent_model.results.nestedSamplerOutput.nestSamples
+        if samples.shape != (1, 2):
+            self.result_summary.setText(
+                f"log (Z) = {self.parent_model.results.nestedSamplerOutput.logZ:.5f}\n"
+                f"log (Z) error = {self.parent_model.results.nestedSamplerOutput.logZErr:.5f}"
+            )
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.resize_timer != 0:
+            self.killTimer(self.resize_timer)
+            self.resize_timer = 0
+        self.resize_timer = self.startTimer(500)
+
+    def timerEvent(self, event):
+        self._draw_current_panel_plot()
+        self.killTimer(event.timerId())
+        self.resize_timer = 0
+
+    def eventFilter(self, _obj, event):
+        if event.type() == QtCore.QEvent.Type.WindowStateChange:
+            self._draw_current_panel_plot()
+            return True
+        return False
+
+    def _draw_current_panel_plot(self):
+        """Draw the current panel plot (if not corner) when resizing"""
+        if self.plot_tabs.currentIndex() > 1:
+            self.plot_tabs.currentWidget().draw_plot()
+        self.set_redraw_state()
+        self.is_resizing = False
+
+    def set_redraw_state(self):
+        """Set the redraw state of not visible panel plots"""
+        index = self.plot_tabs.currentIndex()
+        self.plot_tabs.widget(2).redraw_plot = index != 2
+        self.plot_tabs.widget(3).redraw_plot = index != 3
+
+    def redraw_panel_plot(self):
+        """Draw current panel plot if its redraw state is True"""
+        widget = self.plot_tabs.currentWidget()
+        if isinstance(widget, AbstractPanelPlotWidget) and widget.redraw_plot:
+            widget.draw_plot()
 
 
 class AbstractPlotWidget(QtWidgets.QWidget):
@@ -169,6 +231,7 @@ class AbstractPlotWidget(QtWidgets.QWidget):
             sub_layout.addWidget(slider)
             sub_layout.addStretch(1)
             plot_toolbar.addLayout(sub_layout)
+            plot_toolbar.addSpacing(15)
 
         sidebar = QtWidgets.QHBoxLayout()
         sidebar.addWidget(self.plot_controls)
@@ -183,7 +246,7 @@ class AbstractPlotWidget(QtWidgets.QWidget):
         self.canvas.setStyleSheet("background-color: transparent;")
 
         self.canvas.setParent(self)
-        self.setMinimumSize(400, 300)
+        self.setMinimumSize(500, 300)
 
         scroll_area = QtWidgets.QScrollArea(self)
         scroll_area.setWidget(self.canvas)
@@ -225,7 +288,7 @@ class AbstractPlotWidget(QtWidgets.QWidget):
             The figure to plot onto.
 
         """
-        return matplotlib.figure.Figure()
+        return matplotlib.figure.Figure(figsize=(9, 6))
 
     @abstractmethod
     def plot(self, project: ratapi.Project, results: Union[ratapi.outputs.Results, ratapi.outputs.BayesResults]):
@@ -243,8 +306,7 @@ class AbstractPlotWidget(QtWidgets.QWidget):
 
     def clear(self):
         """Clear the canvas."""
-        for axis in self.figure.axes:
-            axis.clear()
+        self.figure.clear()
         self.canvas.draw()
 
     def export(self):
@@ -297,6 +359,7 @@ class RefSLDWidget(AbstractPlotWidget):
         return self.slider
 
     def make_figure(self) -> matplotlib.figure.Figure:
+        self.resize_timer = 0
         figure = matplotlib.figure.Figure()
         figure.subplots(1, 2)
 
@@ -307,6 +370,19 @@ class RefSLDWidget(AbstractPlotWidget):
             self.plot_event()
         else:
             self.plot_with_blit()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.resize_timer != 0:
+            self.killTimer(self.resize_timer)
+            self.resize_timer = 0
+        self.resize_timer = self.startTimer(500)
+
+    def timerEvent(self, event):
+        if self.blit_plot is None:
+            self.plot_event()
+        self.killTimer(event.timerId())
+        self.resize_timer = 0
 
     def plot(self, project: ratapi.Project, results: Union[ratapi.outputs.Results, ratapi.outputs.BayesResults]):
         """Plots the reflectivity and SLD profiles.
@@ -432,18 +508,6 @@ class ShadedPlotWidget(AbstractPlotWidget):
 
         self.draw_plot()
 
-    def make_figure(self) -> matplotlib.figure.Figure:
-        """Make the figure to plot onto.
-
-        Returns
-        -------
-        Figure
-            The figure to plot onto.
-
-        """
-        fig = matplotlib.figure.Figure()
-        return fig
-
     def draw_plot(self):
         """Plots the shaded reflectivity and SLD profiles."""
         self.clear()
@@ -463,6 +527,10 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
     These widgets all share a parameter multi-select box, so it is defined here.
 
     """
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.redraw_plot = False
 
     def make_control_layout(self):
         layout = QtWidgets.QVBoxLayout()
@@ -486,6 +554,8 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
         select_deselect_row.addWidget(select_button)
         select_deselect_row.addWidget(deselect_button)
 
+        self.update_label = QtWidgets.QLabel()
+        layout.addWidget(self.update_label)
         param_layout.addWidget(QtWidgets.QLabel("Parameters"))
         param_layout.addWidget(self.param_combobox)
         param_layout.addLayout(select_deselect_row)
@@ -497,15 +567,26 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
 
     def plot(self, _, results):
         self.results = results
-        self.param_combobox.clear()
-        self.param_combobox.addItems(results.fitNames)
         self.draw_plot()
+
+    def update_ui(self, current, total):
+        if current + 1 == total:
+            self.update_label.setText("")
+        else:
+            self.update_label.setText(f"<b>Updating plot {current + 1} of {total}</b>")
+        QtWidgets.QApplication.instance().processEvents()
 
     def draw_plot(self):
         raise NotImplementedError
 
     def resize_canvas(self):
         self.canvas.setMinimumSize(900, 600)
+
+    def clear(self):
+        self.canvas.setMinimumSize(0, 0)
+        self.canvas.resize(100, 100)
+        self.canvas.figure.clear()
+        self.canvas.draw()
 
 
 class CornerPlotWidget(AbstractPanelPlotWidget):
@@ -549,13 +630,17 @@ class CornerPlotWidget(AbstractPanelPlotWidget):
             self.plot_button.show_progress()
             QtWidgets.QApplication.instance().processEvents()
 
+            self.resize_canvas()
+            self.figure.set_visible(False)
             ratapi.plotting.plot_corner(
                 self.results, params=plot_params, smooth=smooth, fig=self.figure, progress_callback=self.update_ui
             )
-            self.resize_canvas()
+            self.figure.set_visible(True)
             self.canvas.draw()
-
             self.plot_button.hide_progress()
+        else:
+            self.clear()
+        self.redraw_plot = False
 
 
 class HistPlotWidget(AbstractPanelPlotWidget):
@@ -587,7 +672,6 @@ class HistPlotWidget(AbstractPanelPlotWidget):
 
         layout.addLayout(smooth_row)
         layout.addLayout(est_density_row)
-
         return layout
 
     def draw_plot(self):
@@ -596,15 +680,21 @@ class HistPlotWidget(AbstractPanelPlotWidget):
         est_dens = self.est_density_combobox.currentData()
 
         if plot_params:
+            self.resize_canvas()
+            self.figure.set_visible(False)
             ratapi.plotting.plot_hists(
                 self.results,
                 params=plot_params,
                 smooth=smooth,
                 estimated_density={"default": est_dens},
                 fig=self.figure,
+                progress_callback=self.update_ui,
             )
-
+            self.figure.set_visible(True)
             self.canvas.draw()
+        else:
+            self.clear()
+        self.redraw_plot = False
 
 
 class ChainPlotWidget(AbstractPanelPlotWidget):
@@ -639,6 +729,18 @@ class ChainPlotWidget(AbstractPanelPlotWidget):
         maxpoints = self.maxpoints_box.value()
 
         if plot_params:
-            ratapi.plotting.plot_chain(self.results, params=plot_params, maxpoints=maxpoints, fig=self.figure)
             self.resize_canvas()
+            self.figure.set_visible(False)
+            ratapi.plotting.plot_chain(
+                self.results,
+                params=plot_params,
+                maxpoints=maxpoints,
+                fig=self.figure,
+                return_fig=True,
+                progress_callback=self.update_ui,
+            )
+            self.figure.set_visible(True)
             self.canvas.draw()
+        else:
+            self.clear()
+        self.redraw_plot = False
