@@ -87,6 +87,12 @@ class ControlsWidget(QtWidgets.QWidget):
         # clear any chi-squared from previous controls
         self.chi_squared.setText("")
 
+        # Remove old controls before adding new one
+        for _ in range(self.fit_settings_layout.count()):
+            widget = self.fit_settings_layout.takeAt(0).widget()
+            widget.hide()
+            widget.deleteLater()
+
         # add fit settings for each procedure
         for procedure in Procedures:
             proc_settings = [f for f in fields.get(procedure, []) if f != "procedure"]
