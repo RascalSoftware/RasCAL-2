@@ -2,7 +2,6 @@
 
 from abc import abstractmethod
 from inspect import isclass
-from typing import Optional, Union
 
 import matplotlib
 import ratapi
@@ -228,7 +227,7 @@ class AbstractPlotWidget(QtWidgets.QWidget):
         return matplotlib.figure.Figure()
 
     @abstractmethod
-    def plot(self, project: ratapi.Project, results: Union[ratapi.outputs.Results, ratapi.outputs.BayesResults]):
+    def plot(self, project: ratapi.Project, results: ratapi.outputs.Results | ratapi.outputs.BayesResults):
         """Plot from the current project and results.
 
         Parameters
@@ -308,7 +307,7 @@ class RefSLDWidget(AbstractPlotWidget):
         else:
             self.plot_with_blit()
 
-    def plot(self, project: ratapi.Project, results: Union[ratapi.outputs.Results, ratapi.outputs.BayesResults]):
+    def plot(self, project: ratapi.Project, results: ratapi.outputs.Results | ratapi.outputs.BayesResults):
         """Plots the reflectivity and SLD profiles.
 
         Parameters
@@ -335,7 +334,7 @@ class RefSLDWidget(AbstractPlotWidget):
         data.contrastNames = [contrast.name for contrast in project.contrasts]
         self.plot_event(data)
 
-    def plot_event(self, data: Optional[ratapi.events.PlotEventData] = None):
+    def plot_event(self, data: ratapi.events.PlotEventData | None = None):
         """Updates the ref and SLD plots from a provided or cached plot event
 
         Parameters
@@ -368,7 +367,7 @@ class RefSLDWidget(AbstractPlotWidget):
         self.figure.tight_layout(pad=1)
         self.canvas.draw()
 
-    def plot_with_blit(self, data: Optional[ratapi.events.PlotEventData] = None):
+    def plot_with_blit(self, data: ratapi.events.PlotEventData | None = None):
         """Updates the ref and SLD plots with blitting
 
         Parameters

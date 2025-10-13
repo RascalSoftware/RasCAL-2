@@ -1,8 +1,9 @@
 """Tab model/views which are based on a list at the side of the widget."""
 
+from collections.abc import Callable
 from itertools import count
 from pathlib import Path
-from typing import Any, Callable, Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 import ratapi
 from PyQt6 import QtCore, QtGui, QtWidgets

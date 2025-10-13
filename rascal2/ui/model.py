@@ -1,6 +1,5 @@
 from json import JSONDecodeError
 from pathlib import Path
-from typing import Union
 
 import ratapi as rat
 import ratapi.outputs
@@ -59,7 +58,7 @@ class MainWindowModel(QtCore.QObject):
         self.results = rat.run(self.project, rat.Controls(display="off"))[1]
         self.save_path = save_path
 
-    def update_results(self, results: Union[ratapi.outputs.Results, ratapi.outputs.BayesResults]):
+    def update_results(self, results: ratapi.outputs.Results | ratapi.outputs.BayesResults):
         """Update the project given a set of results.
 
         Parameters

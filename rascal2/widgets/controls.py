@@ -1,6 +1,7 @@
 """Widget for setting up the Controls class."""
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from pydantic import ValidationError
 from PyQt6 import QtCore, QtWidgets
