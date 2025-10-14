@@ -23,7 +23,7 @@ jobs:
     needs: ruff  # avoid wasting CI time if static analysis failed
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-13]
+        os: [ubuntu-latest, windows-latest, macos-latest]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     
