@@ -123,7 +123,8 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
         item_list = QtWidgets.QVBoxLayout()
 
         self.list = QtWidgets.QListView(parent)
-        self.list.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
+        self.list.setMinimumWidth(100)
+        self.list.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum)
 
         button_layout = QtWidgets.QHBoxLayout()
         button_layout.setContentsMargins(0, 0, 0, 0)
@@ -143,9 +144,8 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
 
         layout.addLayout(item_list, 1)
 
-        self.item_view = QtWidgets.QScrollArea(parent)
-        self.item_view.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
-        self.item_view.setWidgetResizable(True)
+        self.item_view = QtWidgets.QGroupBox()
+        self.item_view.setLayout(QtWidgets.QVBoxLayout())
         layout.addSpacing(10)
         layout.addWidget(self.item_view, 3)
 
@@ -173,6 +173,8 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
         """Update the item views to correspond with the list model."""
 
         self.view_stack = QtWidgets.QStackedWidget(self)
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.view_stack)
 
         if self.model is not None:
             # if there are no items, replace the widget with information
@@ -189,7 +191,9 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
                     widget = self.create_view(i)
                 self.view_stack.addWidget(widget)
 
-            self.item_view.setWidget(self.view_stack)
+            # Hack to remove old layout - needs redesign later
+            QtWidgets.QWidget().setLayout(self.item_view.layout())
+            self.item_view.setLayout(layout)
 
     def edit(self):
         """Update the view to be in edit mode."""
@@ -214,7 +218,10 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
         # handle if no contrasts currently exist
         if isinstance(self.view_stack, QtWidgets.QLabel):
             self.view_stack = QtWidgets.QStackedWidget(self)
-            self.item_view.setWidget(self.view_stack)
+            layout = QtWidgets.QVBoxLayout()
+            layout.addWidget(self.view_stack)
+            QtWidgets.QWidget().setLayout(self.item_view.layout())
+            self.item_view.setLayout(layout)
 
         # add contrast viewer/editor to stack without resetting entire stack
         if self.edit_mode:
@@ -311,18 +318,15 @@ class StandardLayerModelWidget(QtWidgets.QWidget):
             self.model.index(0, 0), QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect
         )
 
-        self.add_button = QtWidgets.QPushButton("Add Model", icon=QtGui.QIcon(path_for("create-dark.png")))
-        self.add_button.setToolTip("Add a layer after the currently selected layer (Shift+Enter)")
-        if self.model.rowCount() == 2:
+        self.setup_buttons()
+        if self.domains and self.model.rowCount() == 2:
             self.add_button.setEnabled(False)
         add_shortcut = QtGui.QShortcut(QtGui.QKeySequence("Shift+Return"), self)
         self.add_button.pressed.connect(self.append_item)
         add_shortcut.activated.connect(self.append_item)
 
-        delete_button = QtWidgets.QPushButton("Delete Model", icon=QtGui.QIcon(path_for("delete-dark.png")))
-        delete_button.setToolTip("Delete the currently selected layer (Del)")
         delete_shortcut = QtGui.QShortcut(QtGui.QKeySequence.StandardKey.Delete, self)
-        delete_button.pressed.connect(self.delete_item)
+        self.delete_button.pressed.connect(self.delete_item)
         delete_shortcut.activated.connect(self.delete_item)
 
         edit_shortcut = QtGui.QShortcut(QtGui.QKeySequence("Tab"), self)
@@ -336,7 +340,7 @@ class StandardLayerModelWidget(QtWidgets.QWidget):
         buttons = QtWidgets.QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.addWidget(self.add_button)
-        buttons.addWidget(delete_button)
+        buttons.addWidget(self.delete_button)
         buttons.setSpacing(10)
         buttons.addStretch(1)
 
@@ -347,6 +351,21 @@ class StandardLayerModelWidget(QtWidgets.QWidget):
         layout.addLayout(buttons)
 
         self.setLayout(layout)
+
+    def setup_buttons(self):
+        model_type = "domain contrast" if self.domains else "layer"
+
+        self.add_button = QtWidgets.QPushButton(
+            f"Add {model_type.title()}", icon=QtGui.QIcon(path_for("create-dark.png"))
+        )
+        self.add_button.setToolTip(
+            f"Add a {model_type.title()} after the currently selected {model_type.title()} (Shift+Enter)"
+        )
+
+        self.delete_button = QtWidgets.QPushButton(
+            f"Delete {model_type.title()}", icon=QtGui.QIcon(path_for("delete-dark.png"))
+        )
+        self.delete_button.setToolTip(f"Delete the currently selected {model_type.title()} (Del)")
 
     def append_item(self):
         """Append an item below the currently selected item."""
@@ -498,30 +517,53 @@ class ContrastWidget(AbstractProjectListWidget):
         grid.addWidget(data_widget("name"), 0, 1, 1, -1)
 
         grid.addWidget(QtWidgets.QLabel("Background:"), 1, 0)
-        grid.addWidget(data_widget("background"), 1, 1, 1, 2)
-        grid.addWidget(QtWidgets.QLabel("Background Action:"), 1, 3)
-        grid.addWidget(data_widget("background_action"), 1, 4, 1, 2)
+        grid.addWidget(data_widget("background"), 1, 1)
+        grid.addWidget(QtWidgets.QLabel("Background Action:"), 1, 2)
+        grid.addWidget(data_widget("background_action"), 1, 3)
 
         grid.addWidget(QtWidgets.QLabel("Resolution:"), 2, 0)
         grid.addWidget(data_widget("resolution"), 2, 1)
         grid.addWidget(QtWidgets.QLabel("Scalefactor:"), 2, 2)
         grid.addWidget(data_widget("scalefactor"), 2, 3)
-        grid.addWidget(QtWidgets.QLabel("Data:"), 2, 4)
-        grid.addWidget(data_widget("data"), 2, 5)
+        grid.addWidget(QtWidgets.QLabel("Data:"), 3, 0)
+        grid.addWidget(data_widget("data"), 3, 1)
         if self.model.domains:
-            grid.addWidget(QtWidgets.QLabel("Domain Ratio:"), 3, 0)
-            grid.addWidget(data_widget("domain_ratio"), 3, 1, 1, -1)
+            grid.addWidget(QtWidgets.QLabel("Domain Ratio:"), 3, 2)
+            grid.addWidget(data_widget("domain_ratio"), 3, 3)
 
         grid.setVerticalSpacing(10)
 
+        layout = QtWidgets.QHBoxLayout()
         resampling_checkbox = QtWidgets.QCheckBox()
         resampling_checkbox.setChecked(self.model.get_item(i).resample)
         resampling_checkbox.checkStateChanged.connect(
-            lambda s: self.model.set_data(i, "resample", (s == QtCore.Qt.CheckState.Checked))
+            lambda s: self.update_project(i, "resample", (s == QtCore.Qt.CheckState.Checked))
         )
 
-        grid.addWidget(QtWidgets.QLabel("Use resampling:"), 4, 0)
-        grid.addWidget(resampling_checkbox, 4, 1)
+        repeat_layer_spinbox = QtWidgets.QSpinBox()
+        repeat_layer_spinbox.setMinimum(1)
+        repeat_layer_spinbox.setValue(self.model.get_item(i).repeat_layers)
+        repeat_layer_spinbox.editingFinished.connect(
+            lambda: self.update_project(i, "repeat_layers", repeat_layer_spinbox.value())
+        )
+
+        main_row_four_label = QtWidgets.QLabel()
+        if self.project_widget.draft_project["model"] != LayerModels.CustomXY:
+            main_row_four_label.setText("Use resampling:")
+            layout.addWidget(resampling_checkbox)
+
+        if self.project_widget.draft_project["model"] == LayerModels.StandardLayers:
+            if main_row_four_label.text():
+                layout.addWidget(QtWidgets.QLabel("Repeat Layers:"))
+            else:
+                main_row_four_label.setText("Repeat Layers:")
+            layout.addWidget(repeat_layer_spinbox)
+
+        if layout.count() > 0:
+            layout.addStretch(1)
+            grid.addWidget(main_row_four_label, 4, 0)
+            grid.addLayout(layout, 4, 1, 1, -1)
+
         grid.addWidget(QtWidgets.QLabel("Bulk in:"), 5, 0)
         grid.addWidget(data_widget("bulk_in"), 5, 1, 1, -1)
         grid.addWidget(QtWidgets.QLabel("Model:"), 6, 0, QtCore.Qt.AlignmentFlag.AlignTop)
@@ -612,6 +654,19 @@ class ContrastWidget(AbstractProjectListWidget):
 
         return self.compose_widget(i, data_combobox)
 
+    def update_project(self, index, prop, value):
+        """Update parent project data and recalculate plots."""
+        self.model.set_data(index, prop, value)
+        if not self.edit_mode:
+            presenter = self.parent.parent.parent.presenter
+            presenter.model.blockSignals(True)
+            presenter.edit_project(
+                {"contrasts": self.model.classlist}, preview=presenter.view.settings.live_recalculate
+            )
+            presenter.model.blockSignals(False)
+            if presenter.view.settings.live_recalculate:
+                presenter.view.plot_widget.update_plots()
+
     def set_name_data(self, index: int, name: str):
         """Set name data, ensuring name isn't empty.
 
@@ -665,6 +720,7 @@ class DataWidget(AbstractProjectListWidget):
     """Widget for viewing and editing Data."""
 
     item_type = "dataset"
+    edited = QtCore.pyqtSignal()
 
     def __init__(self, field: str, parent):
         super().__init__(field, parent)
@@ -692,6 +748,7 @@ class DataWidget(AbstractProjectListWidget):
         self.list.selectionModel().currentChanged.connect(
             lambda index, _: self.delete_button.setEnabled(index.row() != 0)
         )
+        self.list.model().modelReset.connect(lambda: self.edited.emit())
 
     def compose_widget(self, i: int, data_widget: Callable[[str], QtWidgets.QWidget]) -> QtWidgets.QWidget:
         """Create the base grid layouts for the widget.
@@ -833,6 +890,8 @@ class DataWidget(AbstractProjectListWidget):
         presenter.model.blockSignals(True)
         presenter.edit_project({"data": self.model.classlist}, preview=presenter.view.settings.live_recalculate)
         presenter.model.blockSignals(False)
+        if presenter.view.settings.live_recalculate:
+            presenter.view.plot_widget.update_plots()
 
     def set_name_data(self, index: int, name: str):
         """Set name data, ensuring name isn't empty.

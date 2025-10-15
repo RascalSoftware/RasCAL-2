@@ -27,7 +27,6 @@ view = MockWindowView()
 @pytest.fixture
 def plot_widget():
     plot_widget = PlotWidget(view)
-    plot_widget.parent_model = MagicMock()
     plot_widget.reflectivity_plot = MagicMock()
 
     return plot_widget
@@ -80,13 +79,15 @@ class MockPanelPlot(AbstractPanelPlotWidget):
 
 def test_plot_widget_update_plots(plot_widget):
     """Test that the plots are updated correctly when update_plots is called."""
-    plot_widget.update_plots(MagicMock(), MagicMock(spec=ratapi.outputs.Results))
+    plot_widget.parent.presenter.model.results = MagicMock(spec=ratapi.outputs.Results)
+    plot_widget.update_plots()
 
     assert not plot_widget.bayes_plots_button.isVisibleTo(plot_widget)
     plot_widget.reflectivity_plot.plot.assert_called_once()
     plot_widget.reflectivity_plot.reset_mock()
 
-    plot_widget.update_plots(MagicMock(), MagicMock(spec=ratapi.outputs.BayesResults))
+    plot_widget.parent.presenter.model.results = MagicMock(spec=ratapi.outputs.BayesResults)
+    plot_widget.update_plots()
 
     assert plot_widget.bayes_plots_button.isVisibleTo(plot_widget)
     plot_widget.reflectivity_plot.plot.assert_called_once()

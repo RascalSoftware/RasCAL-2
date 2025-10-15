@@ -77,7 +77,7 @@ class MainWindowPresenter:
         )
         self.view.init_settings_and_log(self.model.save_path)
         self.view.setup_mdi()
-        self.view.plot_widget.update_plots(self.model.project, self.model.results)
+        self.view.plot_widget.update_plots()
         self.view.undo_stack.clear()
         self.view.enable_elements()
 

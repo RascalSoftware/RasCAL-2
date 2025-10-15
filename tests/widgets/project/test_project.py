@@ -124,7 +124,7 @@ def test_project_widget_initial_state(setup_project_widget):
 
     # Check the layout of the edit view
     assert project_widget.save_project_button.isEnabled()
-    assert project_widget.save_project_button.text() == "Save Project"
+    assert project_widget.save_project_button.text() == "Accept Changes"
 
     assert project_widget.cancel_button.isEnabled()
     assert project_widget.cancel_button.text() == "Cancel"

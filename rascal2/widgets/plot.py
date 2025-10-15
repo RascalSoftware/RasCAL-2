@@ -19,9 +19,7 @@ class PlotWidget(QtWidgets.QWidget):
         super().__init__(parent)
 
         self.parent = parent
-        self.parent.presenter.model.results_updated.connect(
-            lambda: self.update_plots(self.parent.presenter.model.project, self.parent.presenter.model.results)
-        )
+        self.parent.presenter.model.results_updated.connect(self.update_plots)
 
         layout = QtWidgets.QVBoxLayout()
 
@@ -39,18 +37,11 @@ class PlotWidget(QtWidgets.QWidget):
         layout.setContentsMargins(0, 5, 0, 30)
         self.setLayout(layout)
 
-    def update_plots(self, project: ratapi.Project, results: ratapi.outputs.Results | ratapi.outputs.BayesResults):
-        """Update the plot widget to match the parent model.
-
-        Parameters
-        ----------
-        project : ratapi.Project
-            The project
-        results : Union[ratapi.outputs.Results, ratapi.outputs.BayesResults]
-            The calculation results.
-        """
-        self.reflectivity_plot.plot(project, results)
-        self.bayes_plots_button.setVisible(isinstance(results, ratapi.outputs.BayesResults))
+    def update_plots(self):
+        """Update the plot widget to match the parent model."""
+        model = self.parent.presenter.model
+        self.reflectivity_plot.plot(model.project, model.results)
+        self.bayes_plots_button.setVisible(isinstance(model.results, ratapi.outputs.BayesResults))
 
     def plot_with_blit(self, event: ratapi.events.PlotEventData):
         """Handle plot event data.

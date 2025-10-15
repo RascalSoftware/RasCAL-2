@@ -150,7 +150,7 @@ class ProjectWidget(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(20)
 
-        self.save_project_button = QtWidgets.QPushButton("Save Project", self, objectName="greybutton")
+        self.save_project_button = QtWidgets.QPushButton("Accept Changes", self, objectName="greybutton")
         self.save_project_button.setIcon(QtGui.QIcon(path_for("save-project.png")))
         self.save_project_button.clicked.connect(self.save_changes)
 
@@ -232,8 +232,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.edit_absorption_checkbox.checkStateChanged.connect(
             lambda s: self.edit_tabs["Layers"].tables["layers"].set_absorption(s == QtCore.Qt.CheckState.Checked)
         )
-
-        for tab in ["Experimental Parameters", "Layers", "Backgrounds", "Domains"]:
+        for tab in ["Experimental Parameters", "Layers", "Backgrounds", "Resolutions", "Data", "Domains"]:
             for table in self.edit_tabs[tab].tables.values():
                 table.edited.connect(lambda: self.edit_tabs["Contrasts"].tables["contrasts"].update_item_view())
 
@@ -345,7 +344,7 @@ class ProjectWidget(QtWidgets.QWidget):
                 contrast.model = self.old_contrast_models.get(contrast.name, [])
 
             self.old_contrast_models = old_contrast_models
-            self.edit_tabs["Contrasts"].tables["contrasts"].update_item_view()
+        self.edit_tabs["Contrasts"].tables["contrasts"].update_item_view()
 
     def show_project_view(self) -> None:
         """Show project view"""
