@@ -42,9 +42,13 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.project_widget = ProjectWidget(self)
 
         self.disabled_elements = []
+        self._help_actions = {}
 
         self.create_actions()
-        self.create_menus()
+
+        self.main_menu = self.menuBar()
+        self.add_submenus(self.main_menu)
+
         self.create_toolbar()
         self.create_status_bar()
 
@@ -153,14 +157,16 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.settings_action.setEnabled(False)
         self.disabled_elements.append(self.settings_action)
 
-        self.open_help_action = QtGui.QAction("&Help", self)
-        self.open_help_action.setStatusTip("Open Documentation")
-        self.open_help_action.setIcon(QtGui.QIcon(path_for("help.png")))
-        self.open_help_action.triggered.connect(self.open_docs)
+        open_help_action = QtGui.QAction("&Help", self)
+        open_help_action.setStatusTip("Open Documentation")
+        open_help_action.setIcon(QtGui.QIcon(path_for("help.png")))
+        open_help_action.triggered.connect(self.open_docs)
+        self._help_actions["OpenDocumentation"] = open_help_action
 
-        self.open_about_action = QtGui.QAction("&About", self)
-        self.open_about_action.setStatusTip("Report RAT version&info")
-        self.open_about_action.triggered.connect(self.open_about_info)
+        open_about_action = QtGui.QAction("&About", self)
+        open_about_action.setStatusTip("Report RAT version&info")
+        open_about_action.triggered.connect(self.open_about_info)
+        self._help_actions["About"] = open_about_action
 
         self.exit_action = QtGui.QAction("E&xit", self)
         self.exit_action.setStatusTip(f"Quit {MAIN_WINDOW_TITLE}")
@@ -196,48 +202,53 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.setup_matlab_action.setStatusTip("Set the path of the MATLAB executable")
         self.setup_matlab_action.triggered.connect(self.open_matlab_setup)
 
-    def create_menus(self):
-        """Creates the main menu and sub menus"""
-        self.main_menu = self.menuBar()
-        self.main_menu.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
+    def add_submenus(self,main_menu: QtWidgets.QMenuBar):
+        """Add sub menus to the main menu bar"""
 
-        self.file_menu = self.main_menu.addMenu("&File")
-        self.file_menu.addAction(self.new_project_action)
-        self.file_menu.addSeparator()
-        self.file_menu.addAction(self.open_project_action)
-        self.file_menu.addAction(self.open_r1_action)
-        self.file_menu.addSeparator()
-        self.file_menu.addAction(self.save_project_action)
-        self.file_menu.addAction(self.save_as_action)
-        self.file_menu.addSeparator()
-        self.file_menu.addAction(self.export_results_action)
-        self.file_menu.addSeparator()
-        self.file_menu.addAction(self.settings_action)
-        self.file_menu.addSeparator()
-        self.file_menu.addAction(self.exit_action)
+        main_menu.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
 
-        edit_menu = self.main_menu.addMenu("&Edit")
+        file_menu = main_menu.addMenu("&File")
+        file_menu.setObjectName("&File")
+        file_menu.addAction(self.new_project_action)
+        file_menu.addSeparator()
+        file_menu.addAction(self.open_project_action)
+        file_menu.addAction(self.open_r1_action)
+        file_menu.addSeparator()
+        file_menu.addAction(self.save_project_action)
+        file_menu.addAction(self.save_as_action)
+        file_menu.addSeparator()
+        file_menu.addAction(self.export_results_action)
+        file_menu.addSeparator()
+        file_menu.addAction(self.settings_action)
+        file_menu.addSeparator()
+        file_menu.addAction(self.exit_action)
+
+        edit_menu = main_menu.addMenu("&Edit")
+        edit_menu.setObjectName("&Edit")
         edit_menu.addAction(self.undo_action)
         edit_menu.addAction(self.redo_action)
         edit_menu.addAction(self.undo_view_action)
 
         # tools_menu = main_menu.addMenu("&Tools")
 
-        self.windows_menu = self.main_menu.addMenu("&Windows")
-        self.windows_menu.addAction(self.tile_windows_action)
-        self.windows_menu.addAction(self.reset_windows_action)
-        self.windows_menu.addAction(self.save_default_windows_action)
-        self.windows_menu.setEnabled(False)
-        self.disabled_elements.append(self.windows_menu)
+        windows_menu = main_menu.addMenu("&Windows")
+        windows_menu.setObjectName("&Windows")
+        windows_menu.addAction(self.tile_windows_action)
+        windows_menu.addAction(self.reset_windows_action)
+        windows_menu.addAction(self.save_default_windows_action)
+        windows_menu.setEnabled(False)
+        self.disabled_elements.append(windows_menu)
 
-        tools_menu = self.main_menu.addMenu("&Tools")
+        tools_menu = main_menu.addMenu("&Tools")
+        tools_menu.setObjectName("&Tools")
         tools_menu.addAction(self.clear_terminal_action)
         tools_menu.addSeparator()
         tools_menu.addAction(self.setup_matlab_action)
 
-        help_menu = self.main_menu.addMenu("&Help")
-        help_menu.addAction(self.open_about_action)
-        help_menu.addAction(self.open_help_action)
+        help_menu = main_menu.addMenu("&Help")
+        help_menu.setObjectName("&Help")
+        help_menu.addAction(self._help_actions["About"])
+        help_menu.addAction(self._help_actions["OpenDocumentation"])
 
     def open_about_info(self):
         """Opens about menu containing information about RASCAL gui"""
@@ -267,7 +278,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.toolbar.addAction(self.redo_action)
         self.toolbar.addAction(self.export_plots_action)
         self.toolbar.addAction(self.settings_action)
-        self.toolbar.addAction(self.open_help_action)
+        self.toolbar.addAction(self._help_actions["OpenDocumentation"])
 
     def create_status_bar(self):
         """Creates the status bar"""

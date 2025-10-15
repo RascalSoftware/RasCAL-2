@@ -121,3 +121,41 @@ def test_get_project_folder(mock_get_dir: MagicMock):
         assert view.get_project_folder() == "OTHERPATH"
 
     mock_overwrite.assert_called_once()
+
+def test_menu_bar_present(test_view):
+    """Test menu bar is present"""
+
+    assert hasattr(test_view, "main_menu")
+    assert isinstance(test_view.main_menu,QtWidgets.QMenuBar);
+
+@pytest.mark.parametrize("submenu_name",
+    ["&File","&Edit","&Windows","&Tools","&Help"])
+
+def test_menu_element_present(test_view,submenu_name):
+    """Test requested menu items are present"""
+
+    main_menu = test_view.main_menu
+
+    elements = main_menu.children()
+    assert any(hasattr(submenu,"title") and submenu.title()==submenu_name for submenu in elements)
+
+@pytest.mark.parametrize(
+    "submenu_name, action_names_and_layout",
+    [
+        ("&File",["&New Project","","&Open Project","Open &RasCAL-1 Project","","&Save","Save To &Folder...","","Export Results","","Settings","","E&xit"]),
+        ("&Edit",["&Undo","&Redo","Undo &History"]),
+        ("&Windows",["Tile Windows","Reset to Default","Save Current Window Positions"]),
+        ("&Tools",["Clear Terminal","","Setup MATLAB"]),
+        ("&Help",["&About","&Help"])
+    ]
+)
+def test_help_menu_actions_present(test_view,submenu_name,action_names_and_layout):
+    """Test if menu actions are available and their layouts are as specified in parameterize"""
+
+    main_menu = test_view.main_menu
+    submenu = main_menu.findChild(QtWidgets.QMenu,submenu_name)
+    actions = submenu.actions()
+    assert len(actions)==len(action_names_and_layout)
+    for action,name in zip(actions, action_names_and_layout):
+        assert action.text() == name
+

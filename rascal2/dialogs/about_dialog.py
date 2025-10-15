@@ -17,8 +17,6 @@ class AboutDialog(QtWidgets.QDialog):
         self.setWindowTitle("About RasCAL 2")
         self.setMinimumWidth(800)
         self.setMaximumHeight(400)
-        #self.setMinimumHeight(400)
-        self.adjustSize()
 
         self._rascal_label = QtWidgets.QLabel("RASCAL-2 and info about RASCAL")
         self._rascal_label.setWordWrap(True)
@@ -80,21 +78,21 @@ class AboutDialog(QtWidgets.QDialog):
         Working_dir = "None"
 
         # Main header. Format information about Rascal 2
-        info_template = """       
+        info_template = """
             <b><i><span style="font-family:Georgia; font-size:42pt; text-align:center;">
             RasCAL 2
-            </span></i></b><br>         
-            <span style="font-family:Georgia; font-size:20pt;">            
+            </span></i></b><br>
+            <span style="font-family:Georgia; font-size:20pt;">
             A GUI for Reflectivity Algorithm Toolbox (RAT)
             </span><br><br>
                
-            <span style="font-family:Georgia; font-size:12pt;">                               
+            <span style="font-family:Georgia; font-size:12pt;">
                <table style="text-align:left;">
                    <tr><td>Version:    </td><td>{}</td></tr>
                    <tr><td>Matlab Path:</td><td>{}</td></tr>
                    <tr><td>Log Level:  </td><td>{}</td></tr>
                    <tr><td>Log File:   </td><td>{}</td></tr> 
-               </table><br><br>                
+               </table><br><br>
 
               Distributed under the BSD 3-Clause License<br>
               <p>Copyright &copy; 2018-{} ISIS Neutron and Muon Source.</p>
