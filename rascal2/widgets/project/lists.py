@@ -123,7 +123,7 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
         item_list = QtWidgets.QVBoxLayout()
 
         self.list = QtWidgets.QListView(parent)
-        self.list.setMinimumWidth(100)
+        self.list.setMinimumWidth(70)
         self.list.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum)
 
         button_layout = QtWidgets.QHBoxLayout()
@@ -145,6 +145,7 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
         layout.addLayout(item_list, 1)
 
         self.item_view = QtWidgets.QGroupBox()
+        self.item_view.setMinimumWidth(500)
         self.item_view.setLayout(QtWidgets.QVBoxLayout())
         layout.addSpacing(10)
         layout.addWidget(self.item_view, 3)

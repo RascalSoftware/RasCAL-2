@@ -212,7 +212,7 @@ class ProjectWidget(QtWidgets.QWidget):
         )
         # when calculation type changed, update the draft project, show/hide the domains tab,
         # and change contrasts to have ratio
-        self.calculation_combobox.currentTextChanged.connect(lambda s: self.update_draft_project({"calculation": s}))
+        self.calculation_combobox.currentTextChanged.connect(lambda s: self.handle_model_update(s))
         self.calculation_combobox.currentTextChanged.connect(lambda: self.handle_tabs())
         self.calculation_combobox.currentTextChanged.connect(
             lambda s: self.edit_tabs["Contrasts"].tables["contrasts"].set_domains(s == Calculations.Domains)
@@ -320,23 +320,30 @@ class ProjectWidget(QtWidgets.QWidget):
             self.view_tabs[tab].handle_controls_update(controls)
             self.edit_tabs[tab].handle_controls_update(controls)
 
-    def handle_model_update(self, new_type):
+    def handle_model_update(self, new_entry):
         """Handle updates to the model type.
 
         Parameters
         ----------
-        new_type : LayerModels
-            The new layer model.
+        new_entry : LayerModels | Calculations
+            The new layer model or calculation.
 
         """
         if self.draft_project is None:
             return
 
-        old_type = self.draft_project["model"]
-        self.update_draft_project({"model": new_type})
+        if new_entry in [Calculations.Normal.value, Calculations.Domains.value]:
+            old_entry = self.draft_project["calculation"]
+            self.update_draft_project({"calculation": new_entry})
+            contrast_invalid = self.draft_project["model"] == LayerModels.StandardLayers and old_entry != new_entry
+        else:
+            old_entry = self.draft_project["model"]
+            self.update_draft_project({"model": new_entry})
+            # we use 'xor' (^) as "if the old type was standard layers and the new type isn't, or vice versa"
+            contrast_invalid = (old_entry == LayerModels.StandardLayers) ^ (new_entry == LayerModels.StandardLayers)
 
-        # we use 'xor' (^) as "if the old type was standard layers and the new type isn't, or vice versa"
-        if (old_type == LayerModels.StandardLayers) ^ (new_type == LayerModels.StandardLayers):
+        print(contrast_invalid, old_entry, new_entry)
+        if contrast_invalid:
             old_contrast_models = {}
             # clear contrasts as what the 'model' means has changed!
             for contrast in self.draft_project["contrasts"]:
