@@ -1,4 +1,5 @@
 import pytest
+
 from rascal2.dialogs.about_dialog import AboutDialog
 from rascal2.ui.view import MainWindowView
 
