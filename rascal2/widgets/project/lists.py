@@ -145,6 +145,7 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
         layout.addLayout(item_list, 1)
 
         self.item_view = QtWidgets.QGroupBox()
+        self.item_view.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.item_view.setMinimumWidth(500)
         self.item_view.setLayout(QtWidgets.QVBoxLayout())
         layout.addSpacing(10)
@@ -164,11 +165,23 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
         self.model = self.classlist_model(classlist, self)
         self.list.setModel(self.model)
         # this signal changes the current contrast shown in the editor to be the currently highlighted list item
-        self.list.selectionModel().currentChanged.connect(lambda index, _: self.view_stack.setCurrentIndex(index.row()))
+        self.list.selectionModel().currentChanged.connect(self.item_changed)
         self.update_item_view()
         self.list.selectionModel().setCurrentIndex(
             self.model.index(0, 0), self.list.selectionModel().SelectionFlag.ClearAndSelect
         )
+
+    def item_changed(self, index):
+        """Update widget when a new item is selected from list
+
+        Parameters
+        ----------
+        index : QModelIndex
+            The index of selected item.
+
+        """
+        self.item_view.setTitle(f"{index.data()} {self.item_type}")
+        self.view_stack.setCurrentIndex(index.row())
 
     def update_item_view(self):
         """Update the item views to correspond with the list model."""

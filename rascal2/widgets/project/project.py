@@ -342,7 +342,6 @@ class ProjectWidget(QtWidgets.QWidget):
             # we use 'xor' (^) as "if the old type was standard layers and the new type isn't, or vice versa"
             contrast_invalid = (old_entry == LayerModels.StandardLayers) ^ (new_entry == LayerModels.StandardLayers)
 
-        print(contrast_invalid, old_entry, new_entry)
         if contrast_invalid:
             old_contrast_models = {}
             # clear contrasts as what the 'model' means has changed!
