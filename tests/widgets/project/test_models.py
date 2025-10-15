@@ -334,7 +334,7 @@ def test_layer_model_set_absorption():
     model.parent = MagicMock()
 
     model.set_absorption(True)
-    for expected, actual in zip(init_list, model.classlist):
+    for expected, actual in zip(init_list, model.classlist, strict=False):
         assert isinstance(actual, ratapi.models.AbsorptionLayer)
         assert expected.name == actual.name
         assert expected.thickness == actual.thickness

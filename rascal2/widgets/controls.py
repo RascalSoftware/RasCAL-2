@@ -1,6 +1,7 @@
 """Widget for setting up the Controls class."""
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from pydantic import ValidationError
 from PyQt6 import QtCore, QtWidgets
@@ -86,6 +87,12 @@ class ControlsWidget(QtWidgets.QWidget):
         """Setup the parts of the widget which depend on the Controls object."""
         # clear any chi-squared from previous controls
         self.chi_squared.setText("")
+
+        # Remove old controls before adding new one
+        for _ in range(self.fit_settings_layout.count()):
+            widget = self.fit_settings_layout.takeAt(0).widget()
+            widget.hide()
+            widget.deleteLater()
 
         # add fit settings for each procedure
         for procedure in Procedures:

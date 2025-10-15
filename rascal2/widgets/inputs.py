@@ -1,10 +1,9 @@
 """Widgets for validated user inputs."""
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from enum import Enum
 from math import floor, log10
 from pathlib import Path
-from typing import Callable
 
 from pydantic.fields import FieldInfo
 from PyQt6 import QtCore, QtGui, QtWidgets
@@ -508,7 +507,7 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
 
         """
         data_list = data_list or [None] * len(texts)
-        for text, data in zip(texts, data_list):
+        for text, data in zip(texts, data_list, strict=False):
             self.addItem(text, data)
 
     def clear(self):

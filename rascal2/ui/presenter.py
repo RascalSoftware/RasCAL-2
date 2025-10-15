@@ -56,6 +56,7 @@ class MainWindowPresenter:
         self.model.load_project(load_path)
         if self.model.results is None:
             self.model.results = self.quick_run()
+        update_recent_projects(load_path)
 
     def load_r1_project(self, load_path: str):
         """Load a RAT project from a RasCAL-1 project file.

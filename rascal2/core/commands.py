@@ -2,8 +2,8 @@
 
 import copy
 import logging
+from collections.abc import Callable
 from enum import IntEnum, unique
-from typing import Callable, Union
 
 import ratapi
 from PyQt6 import QtGui
@@ -157,7 +157,7 @@ class SaveCalculationOutputs(QtGui.QUndoCommand):
     def __init__(
         self,
         problem: ratapi.rat_core.ProblemDefinition,
-        results: Union[ratapi.outputs.Results, ratapi.outputs.BayesResults],
+        results: ratapi.outputs.Results | ratapi.outputs.BayesResults,
         log: str,
         presenter,
     ):
@@ -221,7 +221,7 @@ class SaveCalculationOutputs(QtGui.QUndoCommand):
     def update_calculation_outputs(
         self,
         problem: ratapi.rat_core.ProblemDefinition,
-        results: Union[ratapi.outputs.Results, ratapi.outputs.BayesResults],
+        results: ratapi.outputs.Results | ratapi.outputs.BayesResults,
         log: str,
     ):
         """Updates the project, results and log in the main window model

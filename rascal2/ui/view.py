@@ -229,8 +229,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         edit_menu.addAction(self.redo_action)
         edit_menu.addAction(self.undo_view_action)
 
-        # tools_menu = main_menu.addMenu("&Tools")
-
         windows_menu = main_menu.addMenu("&Windows")
         windows_menu.setObjectName("&Windows")
         windows_menu.addAction(self.tile_windows_action)
