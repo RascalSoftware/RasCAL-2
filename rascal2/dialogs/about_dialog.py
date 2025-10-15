@@ -8,6 +8,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 # Local application
 import rascal2
 import rascal2.widgets
+
 from rascal2.config import MATLAB_HELPER, path_for
 from rascal2.settings import LogLevels
 
