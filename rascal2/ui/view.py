@@ -202,7 +202,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.setup_matlab_action.setStatusTip("Set the path of the MATLAB executable")
         self.setup_matlab_action.triggered.connect(self.open_matlab_setup)
 
-    def add_submenus(self,main_menu: QtWidgets.QMenuBar):
+    def add_submenus(self, main_menu: QtWidgets.QMenuBar):
         """Add sub menus to the main menu bar"""
 
         main_menu.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
