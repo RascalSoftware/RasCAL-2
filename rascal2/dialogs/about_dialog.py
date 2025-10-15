@@ -1,11 +1,13 @@
-from PyQt6 import QtGui, QtWidgets, QtCore
-import logging as log_class
-import rascal2.widgets
 from datetime import datetime
+import logging as log_class
+
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 import rascal2
-from rascal2.config import MATLAB_HELPER, STATIC_PATH, path_for
+import rascal2.widgets
+from rascal2.config import MATLAB_HELPER, path_for
 from rascal2.settings import LogLevels
+
 
 
 class AboutDialog(QtWidgets.QDialog):
@@ -75,7 +77,7 @@ class AboutDialog(QtWidgets.QDialog):
                 log_file = h.baseFilename
                 log_level  = str(LogLevels(logger.level))
 
-        Working_dir = "None"
+        #working_dir = "None" #TODO: Do we want to add this to info too?
 
         # Main header. Format information about Rascal 2
         info_template = """

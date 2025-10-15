@@ -4,9 +4,9 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 from rascal2.config import EXAMPLES_PATH, get_logger, path_for, setup_logging, setup_settings
 from rascal2.core.enums import UnsavedReply
+from rascal2.dialogs.about_dialog import AboutDialog
 from rascal2.dialogs.matlab_setup_dialog import MatlabSetupDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog
-from rascal2.dialogs.about_dialog import AboutDialog
 from rascal2.dialogs.startup_dialog import PROJECT_FILES, LoadDialog, LoadR1Dialog, NewProjectDialog, StartupDialog
 from rascal2.settings import MDIGeometries, Settings, get_global_settings
 from rascal2.widgets import ControlsWidget, PlotWidget, TerminalWidget

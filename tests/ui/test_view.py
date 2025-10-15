@@ -126,7 +126,7 @@ def test_menu_bar_present(test_view):
     """Test menu bar is present"""
 
     assert hasattr(test_view, "main_menu")
-    assert isinstance(test_view.main_menu,QtWidgets.QMenuBar);
+    assert isinstance(test_view.main_menu,QtWidgets.QMenuBar)
 
 @pytest.mark.parametrize("submenu_name",
     ["&File","&Edit","&Windows","&Tools","&Help"])
@@ -142,7 +142,9 @@ def test_menu_element_present(test_view,submenu_name):
 @pytest.mark.parametrize(
     "submenu_name, action_names_and_layout",
     [
-        ("&File",["&New Project","","&Open Project","Open &RasCAL-1 Project","","&Save","Save To &Folder...","","Export Results","","Settings","","E&xit"]),
+        ("&File",
+         ["&New Project","","&Open Project","Open &RasCAL-1 Project","",
+          "&Save","Save To &Folder...","","Export Results","","Settings","","E&xit"]),
         ("&Edit",["&Undo","&Redo","Undo &History"]),
         ("&Windows",["Tile Windows","Reset to Default","Save Current Window Positions"]),
         ("&Tools",["Clear Terminal","","Setup MATLAB"]),
@@ -156,6 +158,6 @@ def test_help_menu_actions_present(test_view,submenu_name,action_names_and_layou
     submenu = main_menu.findChild(QtWidgets.QMenu,submenu_name)
     actions = submenu.actions()
     assert len(actions)==len(action_names_and_layout)
-    for action,name in zip(actions, action_names_and_layout):
+    for action,name in zip(actions, action_names_and_layout,strict=True):
         assert action.text() == name
 
