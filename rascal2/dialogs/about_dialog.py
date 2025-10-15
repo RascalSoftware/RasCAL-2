@@ -18,7 +18,7 @@ class AboutDialog(QtWidgets.QDialog):
         self.setMinimumWidth(800)
         self.setMaximumHeight(400)
 
-        self._rascal_label = QtWidgets.QLabel("RASCAL-2 and info about RASCAL")
+        self._rascal_label = QtWidgets.QLabel("information about RASCAL-2")
         self._rascal_label.setWordWrap(True)
 
         # Load RASCAL logo from appropriate image
@@ -103,3 +103,8 @@ class AboutDialog(QtWidgets.QDialog):
         label_text = info_template.format(rascal2.RASCAL2_VERSION,
             matlab_path,log_level,log_file,this_time.year)
         self._rascal_label.setText(label_text)
+
+    @property
+    def rascal_info(self):
+        """ Obtain information about RASCAL stored in the rascal label"""
+        return self._rascal_label.text()
