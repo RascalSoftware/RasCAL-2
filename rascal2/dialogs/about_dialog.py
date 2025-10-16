@@ -91,4 +91,3 @@ class AboutDialog(QtWidgets.QDialog):
         this_time = datetime.now()
         label_text = info_template.format(rascal2.RASCAL2_VERSION, matlab_path, log_file, this_time.year)
         self._rascal_label.setText(label_text)
-
