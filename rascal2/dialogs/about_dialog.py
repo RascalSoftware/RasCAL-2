@@ -1,4 +1,3 @@
-import logging as log_class
 from datetime import datetime
 
 from PyQt6 import QtCore, QtGui, QtWidgets
