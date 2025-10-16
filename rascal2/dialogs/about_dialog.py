@@ -6,7 +6,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 import rascal2
 import rascal2.widgets
 from rascal2.config import MATLAB_HELPER, path_for
-from rascal2.settings import LogLevels
+from rascal2.settings import get_global_settings
 
 
 class AboutDialog(QtWidgets.QDialog):
@@ -16,8 +16,8 @@ class AboutDialog(QtWidgets.QDialog):
 
         # Define main window
         self.setWindowTitle("About RasCAL 2")
-        self.setMinimumWidth(800)
-        self.setMaximumHeight(400)
+        self.setMinimumWidth(750)
+        self.setFixedHeight(380)
 
         self._rascal_label = QtWidgets.QLabel("information about RASCAL-2")
         self._rascal_label.setWordWrap(True)
@@ -28,7 +28,7 @@ class AboutDialog(QtWidgets.QDialog):
         pixmap = QtGui.QPixmap(path_for("logo_small.png"))
         # Attach the pixmap to the logo label
         logo_label.setPixmap(pixmap)
-        logo_label.setMinimumSize(100, 105)
+        logo_label.setFixedSize(100, 105)
 
         # Format all widget into appropriate box layouts
         main_layout = QtWidgets.QVBoxLayout()
@@ -55,35 +55,25 @@ class AboutDialog(QtWidgets.QDialog):
 
         main_layout.addLayout(button_layout)
         main_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
-        # main_layout.setContentsMargins(0, 0, 0, 0)
-        # main_layout.setSpacing(10)
+        main_layout.addStretch(1)
         self.setLayout(main_layout)
 
     def update_rascal_info(self, parent):
         """Obtain info about RASCAL (version, main settings etc.)
         retrieved from general class information
         """
-        # self._Working_dir = parent.settings.get("Working_dir")
         matlab_path = MATLAB_HELPER.get_matlab_path()
         if not matlab_path:
             matlab_path = "None"
 
-        log_file = "None"
-        log_level = "None"
-        logger = parent.logging
-        for h in logger.handlers:
-            if isinstance(h, log_class.FileHandler):
-                log_file = h.baseFilename
-                log_level = str(LogLevels(logger.level))
-
-        # working_dir = "None" # Do we want to add this to the info too?
+        log_file = get_global_settings().fileName()
 
         # Main header. Format information about Rascal 2
         info_template = """
-            <b><i><span style="font-family:Georgia; font-size:42pt; text-align:center;">
+            <b><i><span style="font-family:Georgia; font-size:36pt; text-align:center;">
             RasCAL 2
             </span></i></b><br>
-            <span style="font-family:Georgia; font-size:20pt;">
+            <span style="font-family:Georgia; font-size:18pt;">
             A GUI for Reflectivity Algorithm Toolbox (RAT)
             </span><br><br>
                
@@ -91,7 +81,6 @@ class AboutDialog(QtWidgets.QDialog):
                <table style="text-align:left;">
                    <tr><td>Version:    </td><td>{}</td></tr>
                    <tr><td>Matlab Path:</td><td>{}</td></tr>
-                   <tr><td>Log Level:  </td><td>{}</td></tr>
                    <tr><td>Log File:   </td><td>{}</td></tr> 
                </table><br><br>
 
@@ -101,10 +90,6 @@ class AboutDialog(QtWidgets.QDialog):
             </span>
             """
         this_time = datetime.now()
-        label_text = info_template.format(rascal2.RASCAL2_VERSION, matlab_path, log_level, log_file, this_time.year)
+        label_text = info_template.format(rascal2.RASCAL2_VERSION, matlab_path, log_file, this_time.year)
         self._rascal_label.setText(label_text)
 
-    @property
-    def rascal_info(self):
-        """Obtain information about RASCAL stored in the rascal label"""
-        return self._rascal_label.text()
