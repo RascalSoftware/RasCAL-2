@@ -199,6 +199,10 @@ class ProjectFieldWidget(QtWidgets.QWidget):
 
     def resize_columns(self):
         """Resize the columns of the tableview to avoid truncating content"""
+        if isinstance(self.model, DomainsModel):
+            # Temporary workaround for model table, this function needs a rework
+            self.table.resizeColumnToContents(1)
+            return
         header = self.table.horizontalHeader()
         main_col = "filename" if self.model.headers[1] == "filename" else "name"
         index = self.model.headers.index(main_col) + self.model.col_offset
