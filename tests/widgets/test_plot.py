@@ -69,6 +69,8 @@ class MockPanelPlot(AbstractPanelPlotWidget):
         self.mock_plotter = MagicMock()
 
     def draw_plot(self):
+        self.param_combobox.clear()
+        self.param_combobox.addItems(self.results.fitNames)
         self.all_params = [
             self.param_combobox.model().item(i).data() for i in range(self.param_combobox.model().rowCount())
         ]

@@ -61,4 +61,5 @@ extend-ignore-names = ['allKeys',
                        'stepBy',
                        'supportedDropActions',
                        'textFromValue',
+                       'timerEvent',
                        'valueFromText',]
