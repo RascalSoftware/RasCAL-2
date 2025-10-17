@@ -65,6 +65,7 @@ class AboutDialog(QtWidgets.QDialog):
         if not matlab_path:
             matlab_path = "None"
 
+        #pathlib.Path(get_global_settings().fileName()).parent / "rascal.log"
         log_file = get_global_settings().fileName()
 
         # Main header. Format information about Rascal 2
