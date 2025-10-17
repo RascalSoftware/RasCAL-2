@@ -21,6 +21,7 @@ class AboutDialog(QtWidgets.QDialog):
 
         self._rascal_label = QtWidgets.QLabel("information about RASCAL-2")
         self._rascal_label.setWordWrap(True)
+        self._rascal_label.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
 
         # Load RASCAL logo from appropriate image
         logo_label = QtWidgets.QLabel()
