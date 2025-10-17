@@ -8,6 +8,8 @@ from pathlib import Path
 from pydantic.fields import FieldInfo
 from PyQt6 import QtCore, QtGui, QtWidgets
 
+from rascal2.config import path_for
+
 
 def get_validated_input(field_info: FieldInfo, parent=None) -> QtWidgets.QWidget:
     """Get a validated input widget from Pydantic field info.
@@ -637,3 +639,78 @@ class ProgressButton(QtWidgets.QPushButton):
         """Hides busy indicator"""
         self.setEnabled(True)
         self.setText(self.default_text)
+
+
+class MultiSelectList(QtWidgets.QWidget):
+    """ """
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+        self.select_menu = QtWidgets.QMenu()
+
+        add_button = QtWidgets.QToolButton(icon=QtGui.QIcon(path_for("create-dark.png")))
+        add_button.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
+        add_button.setMenu(self.select_menu)
+
+        delete_button = QtWidgets.QToolButton(icon=QtGui.QIcon(path_for("delete-dark.png")))
+        self.list = QtWidgets.QListWidget()
+        self.list.setFlow(QtWidgets.QListView.Flow.LeftToRight)
+        self.list.setWrapping(True)
+        self.list.setResizeMode(QtWidgets.QListView.ResizeMode.Adjust)
+        self.list.setMinimumWidth(100)
+
+        layout.addWidget(add_button)
+        layout.addWidget(delete_button)
+        layout.addWidget(self.list)
+
+    def update_selection_list(self, items):
+        self.select_menu.clear()
+        for item in items:
+            add_item_action = QtGui.QAction(item, self)
+            add_item_action.triggered.connect(lambda ignore, p=item: self.add_item(p))
+            self.select_menu.addAction(add_item_action)
+
+    def add_item(self, item):
+        list_item = QtWidgets.QListWidgetItem(item)
+        self.list.addItem(list_item)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

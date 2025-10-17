@@ -425,7 +425,18 @@ AbstractProjectListWidget QListView {
 /*****************************
    BayesPlotsDialog Styles
 *****************************/
+
 BayesPlotsDialog QPushButton {
     padding: 5px 12px 5px 12px;
     margin: 4px 0px 4px 0px;
+}
+
+/*****************************
+   MultiSelectList Styles
+*****************************/
+
+MultiSelectList QToolButton {
+    padding: 0;
+    margin: 0;
+    icon-size: 24px;
 }
