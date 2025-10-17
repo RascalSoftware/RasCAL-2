@@ -375,7 +375,6 @@ class RefSLDWidget(AbstractPlotWidget):
         self.resize_timer = 0
 
     def plot(self, project: ratapi.Project, results: ratapi.outputs.Results | ratapi.outputs.BayesResults):
-
         """Plots the reflectivity and SLD profiles.
 
         Parameters
