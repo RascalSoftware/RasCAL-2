@@ -1,3 +1,4 @@
+import pathlib
 from datetime import datetime
 
 from PyQt6 import QtCore, QtGui, QtWidgets
@@ -23,8 +24,9 @@ class AboutDialog(QtWidgets.QDialog):
 
         # Load RASCAL logo from appropriate image
         logo_label = QtWidgets.QLabel()
+        logo_label.setScaledContents(True)
         # Load image into a QPixmap
-        pixmap = QtGui.QPixmap(path_for("logo_small.png"))
+        pixmap = QtGui.QPixmap(path_for("logo.png"))
         # Attach the pixmap to the logo label
         logo_label.setPixmap(pixmap)
         logo_label.setFixedSize(100, 105)
@@ -65,8 +67,7 @@ class AboutDialog(QtWidgets.QDialog):
         if not matlab_path:
             matlab_path = "None"
 
-        #pathlib.Path(get_global_settings().fileName()).parent / "rascal.log"
-        log_file = get_global_settings().fileName()
+        log_file = pathlib.Path(get_global_settings().fileName()).parent / "rascal.log"
 
         # Main header. Format information about Rascal 2
         info_template = """

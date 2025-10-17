@@ -42,7 +42,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.project_widget = ProjectWidget(self)
 
         self.disabled_elements = []
-        self._help_actions = {}
 
         self.create_actions()
 
@@ -161,12 +160,12 @@ class MainWindowView(QtWidgets.QMainWindow):
         open_help_action.setStatusTip("Open Documentation")
         open_help_action.setIcon(QtGui.QIcon(path_for("help.png")))
         open_help_action.triggered.connect(self.open_docs)
-        self._help_actions["OpenDocumentation"] = open_help_action
+        self.open_help_action = open_help_action
 
         open_about_action = QtGui.QAction("&About", self)
         open_about_action.setStatusTip("Report RAT version&info")
         open_about_action.triggered.connect(self.open_about_info)
-        self._help_actions["About"] = open_about_action
+        self.open_about_action = open_about_action
 
         self.exit_action = QtGui.QAction("E&xit", self)
         self.exit_action.setStatusTip(f"Quit {MAIN_WINDOW_TITLE}")
@@ -245,8 +244,8 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         help_menu = main_menu.addMenu("&Help")
         help_menu.setObjectName("&Help")
-        help_menu.addAction(self._help_actions["About"])
-        help_menu.addAction(self._help_actions["OpenDocumentation"])
+        help_menu.addAction(self.open_about_action)
+        help_menu.addAction(self.open_help_action)
 
     def open_about_info(self):
         """Opens about menu containing information about RASCAL gui"""
@@ -276,7 +275,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.toolbar.addAction(self.redo_action)
         self.toolbar.addAction(self.export_plots_action)
         self.toolbar.addAction(self.settings_action)
-        self.toolbar.addAction(self._help_actions["OpenDocumentation"])
+        self.toolbar.addAction(self.open_help_action)
 
     def create_status_bar(self):
         """Creates the status bar"""
