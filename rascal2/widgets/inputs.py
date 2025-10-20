@@ -425,6 +425,10 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
         self.lineEdit().installEventFilter(self)
         self.view().viewport().installEventFilter(self)
 
+    def setModel(self, model: QtCore.QAbstractItemModel):
+        super().setModel(model)
+        self.model().dataChanged.connect(self.update_text)
+
     def resizeEvent(self, event) -> None:
         """Resize event handler.
 
@@ -467,15 +471,11 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
     def update_text(self) -> None:
         """Update the displayed text based on selected items."""
         items = self.selected_items()
-
-        if items:
-            text = ", ".join([str(i) for i in items])
-        else:
-            text = ""
-
+        text = ", ".join([str(i) for i in items]) if items else ""
         metrics = QtGui.QFontMetrics(self.lineEdit().font())
         elided_text = metrics.elidedText(text, QtCore.Qt.TextElideMode.ElideRight, self.lineEdit().width())
         self.lineEdit().setText(elided_text)
+        self.lineEdit().setCursorPosition(0)
 
     def addItem(self, text: str, data: str = None) -> None:
         """Add an item to the combo box.
@@ -488,12 +488,31 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
             The associated data. Default is None.
 
         """
+
+        self.model().appendRow(self.create_item(text, data))
+
+    def create_item(self, text: str, data: str = None):
+        """Create standard item for a given entry in the combo box.
+
+        Parameters
+        ----------
+        text : str
+            The text to display.
+        data : str
+            The associated data. Default is None.
+
+        Returns
+        -------
+        QtGui.QStandardItem
+            The standard item for a given entry.
+        """
         item = QtGui.QStandardItem()
         item.setText(text)
         item.setData(data or text)
         item.setFlags(QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
         item.setData(QtCore.Qt.CheckState.Unchecked, QtCore.Qt.ItemDataRole.CheckStateRole)
-        self.model().appendRow(item)
+
+        return item
 
     def addItems(self, texts: list, data_list: list = None) -> None:
         """Add multiple items to the combo box.
@@ -506,9 +525,10 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
             A list of associated data. Default is None.
 
         """
+        print(texts)
         data_list = data_list or [None] * len(texts)
-        for text, data in zip(texts, data_list, strict=False):
-            self.addItem(text, data)
+        items = [self.create_item(text, data) for text, data in zip(texts, data_list, strict=False)]
+        self.model().appendColumn(items)
 
     def clear(self):
         """Clear all items from the combobox."""
@@ -535,7 +555,7 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
 
         Parameters
         ----------
-        indexes : list
+        indices : list
             A list of indexes to select.
 
         """

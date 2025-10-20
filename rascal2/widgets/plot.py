@@ -90,7 +90,7 @@ class BayesPlotsDialog(QtWidgets.QDialog):
         for plot_type, plot_widget in plots.items():
             self.add_tab(plot_type, plot_widget)
 
-        self._sync_and_update_model()
+        self.sync_and_update_model()
         layout.addWidget(self.result_summary)
         layout.addWidget(self.plot_tabs)
         self.setLayout(layout)
@@ -121,20 +121,19 @@ class BayesPlotsDialog(QtWidgets.QDialog):
         if self.parent_model.results is not None:
             plot_widget.plot(self.parent_model.project, self.parent_model.results)
 
-    def _sync_and_update_model(self):
-        """Set all parameter comboboxes to same model the update result summary."""
+    def sync_and_update_model(self):
+        """Set panel plot parameter comboboxes to the same model so changing parameters in one updates the others."""
         if self.parent_model.results is None:
             return
 
-        widget = self.plot_tabs.widget(1)
-        model = widget.param_combobox.model()
-        model.itemChanged.connect(self.redraw_panel_plot)
-        widget.param_combobox.addItems(self.parent_model.results.fitNames)
-        widget.param_combobox.select_items(self.parent_model.results.fitNames)
-        for i in [2, 3]:
+        model = QtGui.QStandardItemModel()
+        model.dataChanged.connect(self.set_redraw_state)
+        for i in range(1, 4):
             widget = self.plot_tabs.widget(i)
             widget.param_combobox.setModel(model)
-            widget.redraw_plot = True
+            widget.redraw_plot = i != 1
+        widget.param_combobox.addItems(self.parent_model.results.fitNames)
+        widget.param_combobox.select_items(self.parent_model.results.fitNames)
         samples = self.parent_model.results.nestedSamplerOutput.nestSamples
         if samples.shape != (1, 2):
             self.result_summary.setText(
@@ -150,17 +149,17 @@ class BayesPlotsDialog(QtWidgets.QDialog):
         self.resize_timer = self.startTimer(500)
 
     def timerEvent(self, event):
-        self._draw_current_panel_plot()
+        self.draw_current_panel_plot()
         self.killTimer(event.timerId())
         self.resize_timer = 0
 
     def eventFilter(self, _obj, event):
         if event.type() == QtCore.QEvent.Type.WindowStateChange:
-            self._draw_current_panel_plot()
+            self.draw_current_panel_plot()
             return True
         return False
 
-    def _draw_current_panel_plot(self):
+    def draw_current_panel_plot(self):
         """Draw the current panel plot (if not corner) when resizing"""
         if self.plot_tabs.currentIndex() > 1:
             self.plot_tabs.currentWidget().draw_plot()
@@ -573,10 +572,10 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
         self.canvas.setMinimumSize(900, 600)
 
     def clear(self):
-        self.canvas.setMinimumSize(0, 0)
-        self.canvas.resize(100, 100)
         self.canvas.figure.clear()
         self.canvas.draw()
+        self.canvas.setMinimumSize(0, 0)
+        self.canvas.resize(100, 100)
 
 
 class CornerPlotWidget(AbstractPanelPlotWidget):
@@ -630,6 +629,7 @@ class CornerPlotWidget(AbstractPanelPlotWidget):
             self.plot_button.hide_progress()
         else:
             self.clear()
+            self.figure.set_visible(False)
         self.redraw_plot = False
 
 
@@ -684,6 +684,7 @@ class HistPlotWidget(AbstractPanelPlotWidget):
             self.canvas.draw()
         else:
             self.clear()
+            self.figure.set_visible(False)
         self.redraw_plot = False
 
 
@@ -733,4 +734,5 @@ class ChainPlotWidget(AbstractPanelPlotWidget):
             self.canvas.draw()
         else:
             self.clear()
+            self.figure.set_visible(False)
         self.redraw_plot = False
