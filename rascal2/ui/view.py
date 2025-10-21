@@ -162,6 +162,11 @@ class MainWindowView(QtWidgets.QMainWindow):
         open_help_action.triggered.connect(self.open_docs)
         self.open_help_action = open_help_action
 
+        show_or_hide_slider_action = QtGui.QAction("&Show Sliders", self)
+        show_or_hide_slider_action.setStatusTip("Show or Hide Sliders")
+        show_or_hide_slider_action.triggered.connect(self.show_or_hide_sliders)
+        self._show_or_hide_slider_action = show_or_hide_slider_action
+
         open_about_action = QtGui.QAction("&About", self)
         open_about_action.setStatusTip("Report RAT version&info")
         open_about_action.triggered.connect(self.open_about_info)
@@ -238,6 +243,8 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         tools_menu = main_menu.addMenu("&Tools")
         tools_menu.setObjectName("&Tools")
+        tools_menu.addAction(self._show_or_hide_slider_action)
+        tools_menu.addSeparator()
         tools_menu.addAction(self.clear_terminal_action)
         tools_menu.addSeparator()
         tools_menu.addAction(self.setup_matlab_action)
@@ -246,6 +253,14 @@ class MainWindowView(QtWidgets.QMainWindow):
         help_menu.setObjectName("&Help")
         help_menu.addAction(self.open_about_action)
         help_menu.addAction(self.open_help_action)
+
+    def show_or_hide_sliders(self):
+        """Depending on current state, show or hide sliders submenu"""
+        if "Sliders" in self._show_or_hide_slider_action.text():
+            self._show_or_hide_slider_action.setText("&Show Parameters")
+        else:
+            self._show_or_hide_slider_action.setText("&Show Sliders")
+
 
     def open_about_info(self):
         """Opens about menu containing information about RASCAL gui"""
