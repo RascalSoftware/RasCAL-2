@@ -525,9 +525,9 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
             A list of associated data. Default is None.
 
         """
-        print(texts)
         data_list = data_list or [None] * len(texts)
-        items = [self.create_item(text, data) for text, data in zip(texts, data_list, strict=False)]
+        items = self.model().takeColumn(0)
+        items += [self.create_item(text, data) for text, data in zip(texts, data_list, strict=False)]
         self.model().appendColumn(items)
 
     def clear(self):

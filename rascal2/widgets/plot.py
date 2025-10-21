@@ -68,7 +68,6 @@ class BayesPlotsDialog(QtWidgets.QDialog):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent_model = parent.presenter.model
-        self.installEventFilter(self)
         self.resize_timer = 0
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -149,22 +148,17 @@ class BayesPlotsDialog(QtWidgets.QDialog):
         self.resize_timer = self.startTimer(500)
 
     def timerEvent(self, event):
-        self.draw_current_panel_plot()
+        if self.resize_timer != 0:
+            self.draw_current_panel_plot()
         self.killTimer(event.timerId())
         self.resize_timer = 0
-
-    def eventFilter(self, _obj, event):
-        if event.type() == QtCore.QEvent.Type.WindowStateChange:
-            self.draw_current_panel_plot()
-            return True
-        return False
 
     def draw_current_panel_plot(self):
         """Draw the current panel plot (if not corner) when resizing"""
         if self.plot_tabs.currentIndex() > 1:
             self.plot_tabs.currentWidget().draw_plot()
         self.set_redraw_state()
-        self.is_resizing = False
+        self.resize_timer = 0
 
     def set_redraw_state(self):
         """Set the redraw state of not visible panel plots"""
@@ -620,16 +614,18 @@ class CornerPlotWidget(AbstractPanelPlotWidget):
             QtWidgets.QApplication.instance().processEvents()
 
             self.resize_canvas()
-            self.figure.set_visible(False)
+            self.canvas.setVisible(False)
+            self.figure.set_size_inches(self.canvas.width() / self.figure.dpi,
+                                        self.canvas.height() / self.figure.dpi)
             ratapi.plotting.plot_corner(
                 self.results, params=plot_params, smooth=smooth, fig=self.figure, progress_callback=self.update_ui
             )
-            self.figure.set_visible(True)
             self.canvas.draw()
+            self.canvas.setVisible(True)
             self.plot_button.hide_progress()
         else:
             self.clear()
-            self.figure.set_visible(False)
+            self.canvas.setVisible(False)
         self.redraw_plot = False
 
 
@@ -671,7 +667,9 @@ class HistPlotWidget(AbstractPanelPlotWidget):
 
         if plot_params:
             self.resize_canvas()
-            self.figure.set_visible(False)
+            self.canvas.setVisible(False)
+            self.figure.set_size_inches(self.canvas.width()/self.figure.dpi,
+                                        self.canvas.height()/self.figure.dpi)
             ratapi.plotting.plot_hists(
                 self.results,
                 params=plot_params,
@@ -680,11 +678,11 @@ class HistPlotWidget(AbstractPanelPlotWidget):
                 fig=self.figure,
                 progress_callback=self.update_ui,
             )
-            self.figure.set_visible(True)
             self.canvas.draw()
+            self.canvas.setVisible(True)
         else:
             self.clear()
-            self.figure.set_visible(False)
+            self.canvas.setVisible(False)
         self.redraw_plot = False
 
 
@@ -721,7 +719,9 @@ class ChainPlotWidget(AbstractPanelPlotWidget):
 
         if plot_params:
             self.resize_canvas()
-            self.figure.set_visible(False)
+            self.canvas.setVisible(False)
+            self.figure.set_size_inches(self.canvas.width() / self.figure.dpi,
+                                        self.canvas.height() / self.figure.dpi)
             ratapi.plotting.plot_chain(
                 self.results,
                 params=plot_params,
@@ -730,9 +730,9 @@ class ChainPlotWidget(AbstractPanelPlotWidget):
                 return_fig=True,
                 progress_callback=self.update_ui,
             )
-            self.figure.set_visible(True)
             self.canvas.draw()
+            self.canvas.setVisible(True)
         else:
             self.clear()
-            self.figure.set_visible(False)
+            self.canvas.setVisible(False)
         self.redraw_plot = False
