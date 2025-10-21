@@ -615,8 +615,7 @@ class CornerPlotWidget(AbstractPanelPlotWidget):
 
             self.resize_canvas()
             self.canvas.setVisible(False)
-            self.figure.set_size_inches(self.canvas.width() / self.figure.dpi,
-                                        self.canvas.height() / self.figure.dpi)
+            self.figure.set_size_inches(self.canvas.width() / self.figure.dpi, self.canvas.height() / self.figure.dpi)
             ratapi.plotting.plot_corner(
                 self.results, params=plot_params, smooth=smooth, fig=self.figure, progress_callback=self.update_ui
             )
@@ -668,8 +667,7 @@ class HistPlotWidget(AbstractPanelPlotWidget):
         if plot_params:
             self.resize_canvas()
             self.canvas.setVisible(False)
-            self.figure.set_size_inches(self.canvas.width()/self.figure.dpi,
-                                        self.canvas.height()/self.figure.dpi)
+            self.figure.set_size_inches(self.canvas.width() / self.figure.dpi, self.canvas.height() / self.figure.dpi)
             ratapi.plotting.plot_hists(
                 self.results,
                 params=plot_params,
@@ -720,8 +718,7 @@ class ChainPlotWidget(AbstractPanelPlotWidget):
         if plot_params:
             self.resize_canvas()
             self.canvas.setVisible(False)
-            self.figure.set_size_inches(self.canvas.width() / self.figure.dpi,
-                                        self.canvas.height() / self.figure.dpi)
+            self.figure.set_size_inches(self.canvas.width() / self.figure.dpi, self.canvas.height() / self.figure.dpi)
             ratapi.plotting.plot_chain(
                 self.results,
                 params=plot_params,

@@ -5,7 +5,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 import rascal2
 import rascal2.widgets
-from rascal2.config import MATLAB_HELPER, path_for
+from rascal2.config import MatlabHelper, path_for
 from rascal2.settings import get_global_settings
 
 
@@ -66,7 +66,7 @@ class AboutDialog(QtWidgets.QDialog):
         """Obtain info about RASCAL (version, main settings etc.)
         retrieved from general class information
         """
-        matlab_path = MATLAB_HELPER.get_matlab_path()
+        matlab_path = MatlabHelper().get_matlab_path()
         if not matlab_path:
             matlab_path = "None"
 

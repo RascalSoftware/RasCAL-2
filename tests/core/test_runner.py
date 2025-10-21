@@ -34,9 +34,11 @@ def mock_rat_main(*args, **kwargs):
     return 1, 2, 3
 
 
+@patch("rascal2.core.runner.MatlabHelper", autospec=True)
 @patch("rascal2.core.runner.Process")
-def test_start(mock_process):
+def test_start(mock_process, mock_matlab):
     """Test that `start` creates and starts a process and timer."""
+    mock_matlab.return_value = MagicMock()
     runner = RATRunner(make_rat_input(), "", True)
     runner.start()
 
@@ -44,9 +46,11 @@ def test_start(mock_process):
     assert runner.timer.isActive()
 
 
+@patch("rascal2.core.runner.MatlabHelper", autospec=True)
 @patch("rascal2.core.runner.Process")
-def test_interrupt(mock_process):
+def test_interrupt(mock_process, mock_matlab):
     """Test that `interrupt` kills the process and stops the timer."""
+    mock_matlab.return_value = MagicMock()
     runner = RATRunner([], "", True)
     runner.interrupt()
 
@@ -65,9 +69,11 @@ def test_interrupt(mock_process):
         ["message 1!", make_progress_event(0.4), "message 2!"],
     ],
 )
+@patch("rascal2.core.runner.MatlabHelper", autospec=True)
 @patch("rascal2.core.runner.Process")
-def test_check_queue(mock_process, queue_items):
+def test_check_queue(mock_process, mock_matlab, queue_items):
     """Test that queue data is appropriately assigned."""
+    mock_matlab.return_value = MagicMock()
     runner = RATRunner([], "", True)
     runner.queue = Queue()
 
@@ -91,9 +97,11 @@ def test_check_queue(mock_process, queue_items):
         assert str(runner.error) == "Runner error!"
 
 
+@patch("rascal2.core.runner.MatlabHelper", autospec=True)
 @patch("rascal2.core.runner.Process")
-def test_empty_queue(mock_process):
+def test_empty_queue(mock_process, mock_matlab):
     """Test that nothing happens if the queue is empty."""
+    mock_matlab.return_value = MagicMock()
     runner = RATRunner(make_rat_input(), "", True)
     runner.check_queue()
 

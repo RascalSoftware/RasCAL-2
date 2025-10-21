@@ -6,7 +6,7 @@ from typing import Any
 import ratapi as rat
 import ratapi.wrappers
 
-from rascal2.config import EXAMPLES_PATH, MATLAB_HELPER, get_matlab_engine
+from rascal2.config import EXAMPLES_PATH, MatlabHelper, get_matlab_engine
 from rascal2.core import commands
 from rascal2.core.enums import UnsavedReply
 from rascal2.core.runner import LogData, RATRunner
@@ -176,7 +176,8 @@ class MainWindowPresenter:
         if ratapi.wrappers.MatlabWrapper.loader is None and any(
             [file.language == "matlab" for file in self.model.project.custom_files]
         ):
-            result = get_matlab_engine(MATLAB_HELPER.ready_event, MATLAB_HELPER.engine_output)
+            matlab_helper = MatlabHelper()
+            result = get_matlab_engine(matlab_helper.ready_event, matlab_helper.engine_output)
             if isinstance(result, Exception):
                 raise result
         return rat.run(self.model.project, rat.Controls(display="off"))[1]

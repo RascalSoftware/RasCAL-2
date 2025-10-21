@@ -4,7 +4,7 @@ import sys
 
 from PyQt6 import QtCore, QtWidgets
 
-from rascal2.config import MATLAB_ARCH_FILE, MATLAB_HELPER
+from rascal2.config import MATLAB_ARCH_FILE, MatlabHelper
 
 
 class MatlabSetupDialog(QtWidgets.QDialog):
@@ -30,7 +30,7 @@ class MatlabSetupDialog(QtWidgets.QDialog):
         label_layout.addWidget(QtWidgets.QLabel("Current Matlab Directory:"))
         label_layout.addStretch(1)
         self.matlab_path = QtWidgets.QLineEdit(self)
-        self.matlab_path.setText(MATLAB_HELPER.get_matlab_path())
+        self.matlab_path.setText(MatlabHelper().get_matlab_path())
         self.matlab_path.setReadOnly(True)
         self.matlab_path.setPlaceholderText("Select MATLAB directory")
         self.matlab_path.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
@@ -90,7 +90,7 @@ class MatlabSetupDialog(QtWidgets.QDialog):
                 ]
             )
         if should_init:
-            MATLAB_HELPER.async_start()
+            MatlabHelper().async_start()
 
     def accept(self):
         if self.changed:

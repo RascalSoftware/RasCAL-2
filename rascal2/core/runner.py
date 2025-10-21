@@ -8,7 +8,7 @@ import ratapi as rat
 from PyQt6 import QtCore
 from ratapi.utils.enums import Procedures
 
-from rascal2.config import MATLAB_HELPER, get_matlab_engine
+from rascal2.config import MatlabHelper, get_matlab_engine
 
 
 class RATRunner(QtCore.QObject):
@@ -26,6 +26,7 @@ class RATRunner(QtCore.QObject):
 
         # this queue handles both event data and results
         self.queue = Queue()
+        matlab_helper = MatlabHelper()
         self.process = Process(
             target=run,
             args=(
@@ -33,11 +34,10 @@ class RATRunner(QtCore.QObject):
                 rat_inputs,
                 procedure,
                 display_on,
-                MATLAB_HELPER.ready_event,
-                MATLAB_HELPER.engine_output,
+                matlab_helper.ready_event,
+                matlab_helper.engine_output,
             ),
         )
-
         self.updated_problem = None
         self.results = None
         self.error = None
