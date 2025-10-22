@@ -145,7 +145,7 @@ class BayesPlotsDialog(QtWidgets.QDialog):
         if self.resize_timer != 0:
             self.killTimer(self.resize_timer)
             self.resize_timer = 0
-        self.resize_timer = self.startTimer(500)
+        self.resize_timer = self.startTimer(400)
 
     def timerEvent(self, event):
         if self.resize_timer != 0:
@@ -170,6 +170,7 @@ class BayesPlotsDialog(QtWidgets.QDialog):
         """Draw current panel plot if its redraw state is True"""
         widget = self.plot_tabs.currentWidget()
         if isinstance(widget, AbstractPanelPlotWidget) and widget.redraw_plot:
+            widget.canvas.setVisible(False)
             widget.draw_plot()
 
 
@@ -666,7 +667,6 @@ class HistPlotWidget(AbstractPanelPlotWidget):
 
         if plot_params:
             self.resize_canvas()
-            self.canvas.setVisible(False)
             self.figure.set_size_inches(self.canvas.width() / self.figure.dpi, self.canvas.height() / self.figure.dpi)
             ratapi.plotting.plot_hists(
                 self.results,
@@ -717,7 +717,6 @@ class ChainPlotWidget(AbstractPanelPlotWidget):
 
         if plot_params:
             self.resize_canvas()
-            self.canvas.setVisible(False)
             self.figure.set_size_inches(self.canvas.width() / self.figure.dpi, self.canvas.height() / self.figure.dpi)
             ratapi.plotting.plot_chain(
                 self.results,
