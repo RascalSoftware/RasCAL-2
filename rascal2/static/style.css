@@ -242,22 +242,12 @@ TerminalWidget QProgressBar{
      ControlsWidget Styles
 *****************************/
 
-ControlsWidget QPushButton {
-    margin: 0;
-}
-
 ControlsWidget #FitSettings{
     background-color: white;
-    border: 1px solid @Midlight;
 }
 
-ControlsWidget #FitSettingsButton:checked {
-    icon: url(@Path/hide-settings.png);
-    background-color: white;
-}
-
-ControlsWidget #FitSettingsButton{
-    icon: url(@Path/settings.png);
+ControlsWidget QPushButton {
+    margin: 0;
 }
 
 ControlsWidget #PlayButton {
