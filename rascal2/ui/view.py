@@ -143,12 +143,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.export_results_action.setEnabled(False)
         self.disabled_elements.append(self.export_results_action)
 
-        self.export_plots_action = QtGui.QAction("Export", self)
-        self.export_plots_action.setStatusTip("Export Plots")
-        self.export_plots_action.setIcon(QtGui.QIcon(path_for("export-plots.png")))
-        self.export_plots_action.setEnabled(False)
-        self.disabled_elements.append(self.export_plots_action)
-
         self.settings_action = QtGui.QAction("Settings", self)
         self.settings_action.setStatusTip("Settings")
         self.settings_action.setIcon(QtGui.QIcon(path_for("settings.png")))
@@ -273,7 +267,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.toolbar.addAction(self.save_project_action)
         self.toolbar.addAction(self.undo_action)
         self.toolbar.addAction(self.redo_action)
-        self.toolbar.addAction(self.export_plots_action)
         self.toolbar.addAction(self.settings_action)
         self.toolbar.addAction(self.open_help_action)
 
