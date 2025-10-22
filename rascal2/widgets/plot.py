@@ -81,9 +81,9 @@ class BayesPlotsDialog(QtWidgets.QDialog):
 
         plots = {
             "Shaded plot": ShadedPlotWidget,
-            "Corner Plot": CornerPlotWidget,
             "Posteriors": HistPlotWidget,
             "Diagnostics": ChainPlotWidget,
+            "Corner Plot": CornerPlotWidget,
         }
 
         for plot_type, plot_widget in plots.items():
@@ -130,7 +130,7 @@ class BayesPlotsDialog(QtWidgets.QDialog):
         for i in range(1, 4):
             widget = self.plot_tabs.widget(i)
             widget.param_combobox.setModel(model)
-            widget.redraw_plot = i != 1
+            widget.redraw_plot = i != 3
         widget.param_combobox.addItems(self.parent_model.results.fitNames)
         widget.param_combobox.select_items(self.parent_model.results.fitNames)
         samples = self.parent_model.results.nestedSamplerOutput.nestSamples
@@ -155,7 +155,7 @@ class BayesPlotsDialog(QtWidgets.QDialog):
 
     def draw_current_panel_plot(self):
         """Draw the current panel plot (if not corner) when resizing"""
-        if self.plot_tabs.currentIndex() > 1:
+        if 0 < self.plot_tabs.currentIndex() < 3:
             self.plot_tabs.currentWidget().draw_plot()
         self.set_redraw_state()
         self.resize_timer = 0
@@ -163,8 +163,8 @@ class BayesPlotsDialog(QtWidgets.QDialog):
     def set_redraw_state(self):
         """Set the redraw state of not visible panel plots"""
         index = self.plot_tabs.currentIndex()
+        self.plot_tabs.widget(1).redraw_plot = index != 1
         self.plot_tabs.widget(2).redraw_plot = index != 2
-        self.plot_tabs.widget(3).redraw_plot = index != 3
 
     def redraw_panel_plot(self):
         """Draw current panel plot if its redraw state is True"""
