@@ -565,6 +565,9 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
 
     def resize_canvas(self):
         self.canvas.setMinimumSize(900, 600)
+        sx = self.canvas.width() * self.canvas._device_pixel_ratio / self.figure.dpi
+        sy = self.canvas.height() * self.canvas._device_pixel_ratio / self.figure.dpi
+        self.figure.set_size_inches(sx, sy)
 
     def clear(self):
         self.canvas.figure.clear()
@@ -613,10 +616,7 @@ class CornerPlotWidget(AbstractPanelPlotWidget):
         if plot_params:
             self.plot_button.show_progress()
             QtWidgets.QApplication.instance().processEvents()
-
             self.resize_canvas()
-            self.canvas.setVisible(False)
-            self.figure.set_size_inches(self.canvas.width() / self.figure.dpi, self.canvas.height() / self.figure.dpi)
             ratapi.plotting.plot_corner(
                 self.results, params=plot_params, smooth=smooth, fig=self.figure, progress_callback=self.update_ui
             )
@@ -667,7 +667,6 @@ class HistPlotWidget(AbstractPanelPlotWidget):
 
         if plot_params:
             self.resize_canvas()
-            self.figure.set_size_inches(self.canvas.width() / self.figure.dpi, self.canvas.height() / self.figure.dpi)
             ratapi.plotting.plot_hists(
                 self.results,
                 params=plot_params,
@@ -717,7 +716,6 @@ class ChainPlotWidget(AbstractPanelPlotWidget):
 
         if plot_params:
             self.resize_canvas()
-            self.figure.set_size_inches(self.canvas.width() / self.figure.dpi, self.canvas.height() / self.figure.dpi)
             ratapi.plotting.plot_chain(
                 self.results,
                 params=plot_params,

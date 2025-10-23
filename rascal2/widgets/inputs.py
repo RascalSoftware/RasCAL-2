@@ -556,7 +556,7 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
         Parameters
         ----------
         indices : list
-            A list of indexes to select.
+            A list of indices to select.
 
         """
         for i in range(self.model().rowCount()):

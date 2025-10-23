@@ -139,7 +139,7 @@ class MainWindowPresenter:
         proceed = True
 
         if not self.view.undo_stack.isClean():
-            message = f'The project has been modified. Do you want to save changes to "{self.model.project.name}"?'
+            message = "The project has been modified. Do you want to save changes?"
             reply = self.view.show_unsaved_dialog(message)
             if reply == UnsavedReply.Save:
                 proceed = self.save_project()
