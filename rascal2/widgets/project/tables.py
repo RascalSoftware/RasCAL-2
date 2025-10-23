@@ -175,10 +175,9 @@ class ProjectFieldWidget(QtWidgets.QWidget):
         self.parent = parent
         self.project_widget = parent.parent
         self.table = QtWidgets.QTableView(parent)
-        self.table.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.MinimumExpanding)
-        self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
 
         layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         topbar = QtWidgets.QHBoxLayout()
         topbar.addWidget(QtWidgets.QLabel(header, objectName="ProjectFieldWidgetLabel"))
         self.add_button = QtWidgets.QPushButton(
@@ -219,7 +218,7 @@ class ProjectFieldWidget(QtWidgets.QWidget):
                 total_unstretch_width += self.table.columnWidth(i)
 
         # 6 is fudge value to account for content being smaller than table by few pixels
-        width = self.table.width() - total_unstretch_width - 6
+        width = self.table.width() - total_unstretch_width - 20
         header.setSectionResizeMode(index, QtWidgets.QHeaderView.ResizeMode.Interactive)
         self.table.resizeColumnToContents(index)
         content_width = self.table.columnWidth(index)
@@ -250,11 +249,13 @@ class ProjectFieldWidget(QtWidgets.QWidget):
 
     def append_item(self):
         """Append an item to the model if the model exists."""
+        self.model.rowCount()
         if self.model is not None:
             self.model.append_item()
 
         # call edit again to recreate delete buttons
         self.edit()
+        self.table.scrollToBottom()
 
     def delete_item(self, index):
         """Delete an item at the index if the model exists.

@@ -19,7 +19,6 @@ QScrollArea{
 
 QSpinBox, QDoubleSpinBox, QAbstractSpinBox, QLineEdit, QComboBox {
     padding: 4px 6px 4px 6px;
-    min-width: 70px;
 }
 
 QStatusBar {
@@ -206,6 +205,14 @@ DisplayWidget #title{
 
 DisplayWidget #desc{
     color: #555
+}
+
+/*****************************
+     ProjectWidget Styles
+*****************************/
+
+ProjectWidget QPushButton{
+    margin: 4px 8px 0px 8px;
 }
 
 /*****************************

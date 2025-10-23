@@ -74,6 +74,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.stacked_widget.addWidget(project_edit)
 
         layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.stacked_widget)
         self.setLayout(layout)
 
@@ -83,9 +84,7 @@ class ProjectWidget(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(20)
 
-        self.edit_project_button = QtWidgets.QPushButton(
-            "Edit Project", self, objectName="bluebutton", icon=QtGui.QIcon(path_for("edit.png"))
-        )
+        self.edit_project_button = QtWidgets.QPushButton("Edit Project", self, icon=QtGui.QIcon(path_for("edit.png")))
         self.edit_project_button.clicked.connect(self.show_edit_view)
         button_layout = QtWidgets.QHBoxLayout()
         button_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
@@ -150,12 +149,10 @@ class ProjectWidget(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(20)
 
-        self.save_project_button = QtWidgets.QPushButton("Accept Changes", self, objectName="greybutton")
-        self.save_project_button.setIcon(QtGui.QIcon(path_for("save-project.png")))
+        self.save_project_button = QtWidgets.QPushButton("Accept Changes", self, icon=QtGui.QIcon(path_for("save-project.png")))
         self.save_project_button.clicked.connect(self.save_changes)
 
-        self.cancel_button = QtWidgets.QPushButton("Cancel", self, objectName="redbutton")
-        self.cancel_button.setIcon(QtGui.QIcon(path_for("cancel-dark.png")))
+        self.cancel_button = QtWidgets.QPushButton("Cancel", self, icon=QtGui.QIcon(path_for("cancel-dark.png")))
         self.cancel_button.clicked.connect(self.show_project_view)
 
         buttons_layout = QtWidgets.QHBoxLayout()
