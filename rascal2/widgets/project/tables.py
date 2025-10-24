@@ -175,6 +175,8 @@ class ProjectFieldWidget(QtWidgets.QWidget):
         self.parent = parent
         self.project_widget = parent.parent
         self.table = QtWidgets.QTableView(parent)
+        self.table.horizontalHeader().setCascadingSectionResizes(True)
+        self.table.setMinimumHeight(100)
 
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -198,32 +200,36 @@ class ProjectFieldWidget(QtWidgets.QWidget):
 
     def resize_columns(self):
         """Resize the columns of the tableview to avoid truncating content"""
-        if isinstance(self.model, DomainsModel):
-            # Temporary workaround for model table, this function needs a rework
-            self.table.resizeColumnToContents(1)
-            return
         header = self.table.horizontalHeader()
+        header.setStretchLastSection(False)
         main_col = "filename" if self.model.headers[1] == "filename" else "name"
         index = self.model.headers.index(main_col) + self.model.col_offset
-        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.Fixed)
         if self.model.headers[0] == "fit" or self.model.headers[1] == "filename":
             header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Fixed)
+        self.table.resizeColumnsToContents()
 
-        total_unstretch_width = 0
+        total_content_width = 0
+        visible_non_fixed_count = 0
         for i in range(0, self.model.columnCount()):
-            if i != index:
-                header.setSectionResizeMode(i, QtWidgets.QHeaderView.ResizeMode.Interactive)
-                self.table.resizeColumnToContents(i)
-                total_unstretch_width += self.table.columnWidth(i)
+            total_content_width += self.table.columnWidth(i)
+            if not header.isSectionHidden(i) and header.sectionResizeMode(i) != QtWidgets.QHeaderView.ResizeMode.Fixed:
+                visible_non_fixed_count += 1
 
-        # 6 is fudge value to account for content being smaller than table by few pixels
-        width = self.table.width() - total_unstretch_width - 20
-        header.setSectionResizeMode(index, QtWidgets.QHeaderView.ResizeMode.Interactive)
-        self.table.resizeColumnToContents(index)
-        content_width = self.table.columnWidth(index)
-        width = width if width > content_width else content_width
-        self.table.setColumnWidth(index, width)
+        # 20 is fudge value to account for content being smaller than table by few pixels
+        width = self.table.width() - total_content_width - 20
+        if width > 0:
+            # if the table width is larger than the content, the extra space is shared
+            # between the other visible, non-fixed columns then the final column is stretched.
+            large_width = round(width * 0.4)
+            remain_width = round((width - large_width) / (visible_non_fixed_count - 1))
+            for i in range(0, self.model.columnCount()-1):
+                if header.isSectionHidden(i) or header.sectionResizeMode(i) == QtWidgets.QHeaderView.ResizeMode.Fixed:
+                    continue
+                width_offset = large_width if i == index else remain_width
+                self.table.setColumnWidth(i, self.table.columnWidth(i) + width_offset)
+
+        header.setStretchLastSection(True)
 
     def update_model(self, classlist):
         """Update the table model to synchronise with the project field."""
@@ -375,6 +381,7 @@ class ParameterFieldWidget(ProjectFieldWidget):
                 self.table.showColumn(index + 1)
             else:
                 self.table.hideColumn(index + 1)
+        self.resize_columns()
 
     def edit(self):
         super().edit()
