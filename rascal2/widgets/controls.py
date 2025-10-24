@@ -22,7 +22,8 @@ class ControlsWidget(QtWidgets.QWidget):
 
         # create fit settings view and setup connection to model
         self.fit_settings_layout = QtWidgets.QStackedLayout()
-        self.fit_settings = QtWidgets.QWidget()
+        self.fit_settings_layout.setContentsMargins(0, 0, 0, 0)
+        self.fit_settings = QtWidgets.QWidget(objectName="FitSettings")
         self.fit_settings.setLayout(self.fit_settings_layout)
 
         # create run and stop buttons
@@ -56,11 +57,6 @@ class ControlsWidget(QtWidgets.QWidget):
         procedure_layout.addWidget(self.procedure_dropdown, 2)
         procedure_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignVCenter)
 
-        # create button to hide/show fit settings
-        self.fit_settings_button = QtWidgets.QPushButton(objectName="FitSettingsButton")
-        self.fit_settings_button.toggled.connect(self.toggle_fit_settings)
-        self.fit_settings_button.setCheckable(True)
-
         # compose buttons & widget
         buttons_layout = QtWidgets.QVBoxLayout()
         buttons_layout.setContentsMargins(0, 0, 0, 0)
@@ -69,19 +65,22 @@ class ControlsWidget(QtWidgets.QWidget):
         buttons_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignVCenter)
 
         procedure_box = QtWidgets.QVBoxLayout()
+        procedure_box.addSpacing(20)
         procedure_box.addLayout(chi_layout)
+        procedure_box.addSpacing(20)
         procedure_box.addLayout(buttons_layout)
+        procedure_box.addSpacing(20)
         procedure_box.addLayout(procedure_layout)
-        procedure_box.addWidget(self.fit_settings_button, alignment=QtCore.Qt.AlignmentFlag.AlignVCenter)
         procedure_box.addWidget(self.validation_label, alignment=QtCore.Qt.AlignmentFlag.AlignVCenter)
+        procedure_box.addStretch(1)
 
         widget_layout = QtWidgets.QHBoxLayout()
         widget_layout.addStretch(1)
         widget_layout.addLayout(procedure_box, 4)
+        widget_layout.addSpacing(20)
         widget_layout.addWidget(self.fit_settings, 4)
         widget_layout.addStretch(1)
         self.setLayout(widget_layout)
-        self.fit_settings_button.setChecked(True)
 
     def setup_controls(self):
         """Setup the parts of the widget which depend on the Controls object."""
@@ -119,18 +118,6 @@ class ControlsWidget(QtWidgets.QWidget):
             widget.editor.blockSignals(True)
             settings.update_data(field)
             widget.editor.blockSignals(False)
-
-    def toggle_fit_settings(self, toggled: bool):
-        """Toggle whether the fit settings table is visible.
-
-        Parameters
-        ----------
-        toggled : bool
-            Whether the button is toggled on or off.
-
-        """
-        self.fit_settings.setVisible(toggled)
-        self.fit_settings_button.setText("Hide fit settings" if toggled else "Show fit settings")
 
     def toggle_run_button(self, toggled: bool):
         """Toggle whether the optimisation is currently running.
@@ -238,6 +225,7 @@ class FitSettingsWidget(QtWidgets.QWidget):
         scroll_area.setWidget(fit_settings)
         scroll_area.setWidgetResizable(True)
         widget_layout = QtWidgets.QVBoxLayout()
+        widget_layout.setContentsMargins(0, 0, 0, 0)
         widget_layout.addWidget(scroll_area)
 
         self.setLayout(widget_layout)

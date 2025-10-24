@@ -8,6 +8,8 @@ from pathlib import Path
 from pydantic.fields import FieldInfo
 from PyQt6 import QtCore, QtGui, QtWidgets
 
+from rascal2.config import path_for
+
 
 def get_validated_input(field_info: FieldInfo, parent=None) -> QtWidgets.QWidget:
     """Get a validated input widget from Pydantic field info.
@@ -637,3 +639,75 @@ class ProgressButton(QtWidgets.QPushButton):
         """Hides busy indicator"""
         self.setEnabled(True)
         self.setText(self.default_text)
+
+
+class MultiSelectList(QtWidgets.QWidget):
+    """A custom widget that allows repeat selection from a list of options.
+
+
+    Parameters
+    ----------
+    parent : QWidget or None, default None
+        The parent widget of this widget.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+        self.select_menu = QtWidgets.QMenu()
+
+        add_button = QtWidgets.QToolButton(icon=QtGui.QIcon(path_for("create-dark.png")))
+        add_button.setMinimumSize(30, 30)
+        add_button.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
+        add_button.setMenu(self.select_menu)
+
+        delete_button = QtWidgets.QToolButton(icon=QtGui.QIcon(path_for("delete-dark.png")))
+        delete_button.setMinimumSize(30, 30)
+        delete_button.setFixedWidth(delete_button.sizeHint().height())
+        delete_button.clicked.connect(self.delete_items)
+        self.list = QtWidgets.QListWidget()
+        self.list.setSelectionMode(QtWidgets.QListWidget.SelectionMode.ExtendedSelection)
+        self.list.setFlow(QtWidgets.QListView.Flow.LeftToRight)
+        self.list.setWrapping(True)
+        self.list.setResizeMode(QtWidgets.QListView.ResizeMode.Adjust)
+        self.list.setMinimumWidth(100)
+
+        layout.addWidget(add_button)
+        layout.addWidget(delete_button)
+        layout.addWidget(self.list)
+
+    def update_selection_list(self, items):
+        """Add multiple items to the selection button menu.
+
+        Parameters
+        ----------
+        items : list[str]
+            A list of items to add.
+        """
+        self.select_menu.clear()
+        for item in items:
+            add_item_action = QtGui.QAction(item, self)
+            add_item_action.triggered.connect(lambda ignore, p=item: self.add_item(p))
+            self.select_menu.addAction(add_item_action)
+
+    def add_item(self, name):
+        """Add an item with given name to the list
+
+        Parameters
+        ----------
+        name : str
+            The name to display.
+        """
+        list_item = QtWidgets.QListWidgetItem(name)
+        self.list.addItem(list_item)
+
+    def delete_items(self):
+        """Delete selected items from the list."""
+        selected_items = self.list.selectedItems()
+        for item in selected_items:
+            removed_item = self.list.takeItem(self.list.row(item))
+            del removed_item

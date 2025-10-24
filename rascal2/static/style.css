@@ -19,7 +19,6 @@ QScrollArea{
 
 QSpinBox, QDoubleSpinBox, QAbstractSpinBox, QLineEdit, QComboBox {
     padding: 4px 6px 4px 6px;
-    min-width: 70px;
 }
 
 QStatusBar {
@@ -68,33 +67,30 @@ QLineEdit {
     color: black;
     background-color: white;
     selection-color: black;
-    selection-background-color: @Accent;
+    selection-background-color: @Highlight;
     border: 1px solid #aaa;
     border-radius: 3px;
 }
 
 QLineEdit:read-only {
     selection-color: black;
-    selection-background-color: @Accent;
+    selection-background-color: @Highlight;
     background-color: transparent;
 }
 
 QAbstractSpinBox:focus,
 QLineEdit:focus,
 QComboBox:focus {
-    border-color: @Accent;
+    border-color: @Highlight;
 }
-
 
 QCheckBox,
 QRadioButton,
 QCheckBox:disabled,
 QRadioButton:disabled {
-    color: #828282;
     padding: 3px;
     outline: none;
 }
-
 
 /*****************************
        General Styles
@@ -108,10 +104,10 @@ QRadioButton:disabled {
     font-weight: bold;
 }
 
-
 /*****************************
     StartUpWidget Styles
 *****************************/
+
 StartUpWidget QToolButton {
     background-color: #0D69BB;
     icon-size: 4em;
@@ -148,10 +144,10 @@ StartUpWidget QToolButton#ImportR1Button{
     image: url(@Path/import-r1-light.png);
 }
 
-
 /*****************************
     StartUpDialog Styles
 *****************************/
+
 StartupDialog #CancelButton {
     icon: url(@Path/cancel-dark.png);
 }
@@ -177,7 +173,7 @@ StartupDialog QLineEdit[error="true"] {
 }
 
 StartupDialog QListWidget::item:hover {
-    background-color: @Accent;
+    background-color: @Highlight;
 }
 
 StartupDialog QListWidget::item:selected {
@@ -197,8 +193,8 @@ StartupDialog QProgressBar {
     border-radius: 0px;
 }
 
-QProgressBar::chunk {
-    background-color: @Accent;
+StartupDialog QProgressBar::chunk {
+    background-color: @Highlight;
     width: 1px
 }
 
@@ -209,6 +205,14 @@ DisplayWidget #title{
 
 DisplayWidget #desc{
     color: #555
+}
+
+/*****************************
+     ProjectWidget Styles
+*****************************/
+
+ProjectWidget QPushButton{
+    margin: 4px 0px 4px 0px;
 }
 
 /*****************************
@@ -227,26 +231,30 @@ PlotWidget #PlotSettingsButton:unchecked {
                                       stop: 0 #f6f7fa, stop: 1 #dadbde);
 }
 
+/*****************************
+     TerminalWidget Styles
+*****************************/
+
+TerminalWidget QPlainTextEdit{
+    background-color: white;
+}
+
+TerminalWidget QProgressBar{
+    border-radius: 0px;
+    border: 1px solid grey;
+    text-align: center;
+}
 
 /*****************************
      ControlsWidget Styles
 *****************************/
 
-ControlsWidget QPushButton {
-    margin: 0;
-}
-
 ControlsWidget #FitSettings{
-    background-color: @Base;
-}
-
-ControlsWidget #FitSettingsButton:checked {
-    icon: url(@Path/hide-settings.png);
     background-color: white;
 }
 
-ControlsWidget #FitSettingsButton{
-    icon: url(@Path/settings.png);
+ControlsWidget QPushButton {
+    margin: 0;
 }
 
 ControlsWidget #PlayButton {
@@ -291,12 +299,9 @@ ControlsWidget #StopButton:disabled {
     background-color: #777;
 }
 
-
 /*****************************
      TabWidget Styles
 *****************************/
-
-
 
 QTabWidget{
     border: none;
@@ -305,7 +310,6 @@ QTabWidget{
 QTabWidget:focus {
     border: none;
 }
-
 
 QTabWidget::pane {
   border: 1px solid lightgray;
@@ -328,18 +332,25 @@ QTabBar::tab:selected {
   margin-bottom: -1px;
 }
 
-
-
 /*****************************
      QTableView Styles
 *****************************/
 
-QTableView item
+QTableView
 {
-    padding: 0;
-    margin: 0;
+  background-color: white;
 }
 
+QTableView::disabled
+{
+  background-color: @Window;
+}
+
+QTableView item
+{
+  padding: 0;
+  margin: 0;
+}
 
 QTableView QLineEdit,
 QTableView QComboBox,
@@ -354,10 +365,10 @@ QTableView QPushButton {
 	border: transparent;
 }
 
-
 /*****************************
      QMenuBar Styles
 *****************************/
+
 QMenuBar {
   background-color: white;
 }
@@ -381,7 +392,6 @@ QMenuBar::item:pressed {
   color: black;
 }
 
-
 /*****************************
    ProjectListWidget Styles
 *****************************/
@@ -396,6 +406,7 @@ AbstractProjectListWidget QPushButton {
 
 AbstractProjectListWidget QListView {
     border: 1px solid @Midlight;
+    background-color: white;
 }
 
 #DelegateComboBox{
@@ -403,7 +414,25 @@ AbstractProjectListWidget QListView {
     margin: 0;
 }
 
-
 #ProjectFieldWidgetLabel {
     font-weight: 600;
+}
+
+
+/*****************************
+   BayesPlotsDialog Styles
+*****************************/
+
+BayesPlotsDialog QPushButton {
+    padding: 5px 12px 5px 12px;
+    margin: 4px 0px 4px 0px;
+}
+
+/*****************************
+   MultiSelectList Styles
+*****************************/
+
+MultiSelectList QToolButton {
+    padding: 0;
+    margin: 0;
 }

@@ -25,9 +25,8 @@ def ui_execute():
         palette = app.palette()
         replacements = {
             "@Path": IMAGES_PATH.as_posix(),
-            "@Base": palette.base().color().name(),
             "@Window": palette.window().color().name(),
-            "@Accent": palette.accent().color().name(),
+            "@Highlight": palette.highlight().color().name(),
             "@Midlight": palette.midlight().color().name(),
             "@Text": palette.text().color().name(),
         }
