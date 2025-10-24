@@ -49,13 +49,13 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         # define menu controlling switch between table and slider views
         self._sliders_menu_control = {
-            "ShowSliders":"&Show Table", # if state is show sliders, click will show table
+            "ShowSliders":"&Show Tables", # if state is show sliders, click will show table
             "HideSliders":"&Show Sliders"} # if state is show table, click will show sliders
 
         self.create_actions()
 
-        self.main_menu = self.menuBar()
-        self.add_submenus(self.main_menu)
+        main_menu = self.menuBar()
+        self.add_submenus(main_menu)
 
         self.create_toolbar()
         self.create_status_bar()
@@ -268,7 +268,9 @@ class MainWindowView(QtWidgets.QMainWindow):
         help_menu.addAction(self.open_help_action)
 
     def show_or_hide_sliders(self):
-        """Depending on current state, show or hide sliders submenu"""
+        """Depending on current state, show or hide sliders for
+        table properties within Project class view.
+        """
         self.display_sliders = not self.display_sliders
         if self.display_sliders:
             self._show_or_hide_slider_action.setText(self._sliders_menu_control["ShowSliders"])

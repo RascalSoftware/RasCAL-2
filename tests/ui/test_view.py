@@ -123,18 +123,12 @@ def test_get_project_folder(mock_get_dir: MagicMock):
     mock_overwrite.assert_called_once()
 
 
-def test_menu_bar_present(test_view):
-    """Test menu bar is present"""
-
-    assert hasattr(test_view, "main_menu")
-    assert isinstance(test_view.main_menu, QtWidgets.QMenuBar)
-
 
 @pytest.mark.parametrize("submenu_name", ["&File", "&Edit", "&Windows", "&Tools", "&Help"])
 def test_menu_element_present(test_view, submenu_name):
     """Test requested menu items are present"""
 
-    main_menu = test_view.main_menu
+    main_menu = test_view.menuBar()
 
     elements = main_menu.children()
     assert any(hasattr(submenu, "title") and submenu.title() == submenu_name for submenu in elements)
@@ -163,16 +157,61 @@ def test_menu_element_present(test_view, submenu_name):
         ),
         ("&Edit", ["&Undo", "&Redo", "Undo &History"]),
         ("&Windows", ["Tile Windows", "Reset to Default", "Save Current Window Positions"]),
-        ("&Tools", ["Clear Terminal", "", "Setup MATLAB"]),
+        ("&Tools", ["&Show Sliders","","Clear Terminal", "", "Setup MATLAB"]),
         ("&Help", ["&About", "&Help"]),
     ],
 )
 def test_help_menu_actions_present(test_view, submenu_name, action_names_and_layout):
     """Test if menu actions are available and their layouts are as specified in parameterize"""
 
-    main_menu = test_view.main_menu
+    main_menu = test_view.menuBar()
     submenu = main_menu.findChild(QtWidgets.QMenu, submenu_name)
     actions = submenu.actions()
     assert len(actions) == len(action_names_and_layout)
     for action, name in zip(actions, action_names_and_layout, strict=True):
         assert action.text() == name
+
+@patch("rascal2.ui.view.ProjectWidget.select_list_or_sliders_view")
+def test_click_on_select_sliders_works_as_expected(mock_select_view,test_view,qtbot):
+    """Test if click on menu in the state "Show Slider" changes text appropriately
+    and initiates correct callback
+    """
+    qtbot.addWidget(test_view)
+
+    # check initial state -- defined now but needs to be refactored when
+    # this may be included in configuration
+    assert test_view.display_sliders == False
+
+    main_menu = test_view.menuBar()
+    submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
+    all_actions = submenu.actions()
+
+    # Trigger the action
+    all_actions[0].trigger()
+    assert all_actions[0].text() == "&Show Tables"
+    assert test_view.display_sliders == True
+    assert mock_select_view.call_count == 1
+
+@patch("rascal2.ui.view.ProjectWidget.select_list_or_sliders_view")
+def test_click_on_select_tabs_works_as_expected(mock_select_view,test_view,qtbot):
+    """Test if click on menu in the state "Show Tabs" changes text appropriately
+    and initiates correct callback
+    """
+    qtbot.addWidget(test_view)
+    # check initial state -- defined now but needs to be refactored when
+    # this may be included in configuration
+    assert test_view.display_sliders == False
+
+    main_menu = test_view.menuBar()
+    submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
+    all_actions = submenu.actions()
+
+    # Trigger the action
+    all_actions[0].trigger()
+    assert test_view.display_sliders == True
+    # check if next click returns to initial state
+    all_actions[0].trigger()
+
+    assert all_actions[0].text() == "&Show Sliders"
+    assert test_view.display_sliders == False
+    assert mock_select_view.call_count == 2 # 2 as second click returned to initial state
