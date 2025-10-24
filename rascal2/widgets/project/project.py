@@ -149,7 +149,9 @@ class ProjectWidget(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(20)
 
-        self.save_project_button = QtWidgets.QPushButton("Accept Changes", self, icon=QtGui.QIcon(path_for("save-project.png")))
+        self.save_project_button = QtWidgets.QPushButton(
+            "Accept Changes", self, icon=QtGui.QIcon(path_for("save-project.png"))
+        )
         self.save_project_button.clicked.connect(self.save_changes)
 
         self.cancel_button = QtWidgets.QPushButton("Cancel", self, icon=QtGui.QIcon(path_for("cancel-dark.png")))

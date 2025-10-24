@@ -5,7 +5,7 @@ from typing import Literal
 from PyQt6 import QtCore, QtGui, QtWidgets
 from ratapi.utils.enums import TypeOptions
 
-from rascal2.widgets.inputs import AdaptiveDoubleSpinBox, MultiSelectComboBox, get_validated_input, MultiSelectList
+from rascal2.widgets.inputs import AdaptiveDoubleSpinBox, MultiSelectList, get_validated_input
 
 
 class ValidatedInputDelegate(QtWidgets.QStyledItemDelegate):
@@ -202,11 +202,9 @@ class MultiSelectLayerDelegate(QtWidgets.QStyledItemDelegate):
         # index.data produces the display string rather than the underlying data,
         # so we split it back into a list here
         data = index.data(QtCore.Qt.ItemDataRole.DisplayRole).split(", ")
-        layers = self.project_widget.draft_project["layers"]
         editor.list.clear()
         for item in data:
             editor.add_item(item)
-        # editor.select_indices([i for i, layer in enumerate(layers) if layer.name in data])
 
     def setModelData(self, editor, model, index):
         data = [editor.list.item(i).text() for i in range(editor.list.count())]

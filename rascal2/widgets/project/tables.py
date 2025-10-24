@@ -223,7 +223,7 @@ class ProjectFieldWidget(QtWidgets.QWidget):
             # between the other visible, non-fixed columns then the final column is stretched.
             large_width = round(width * 0.4)
             remain_width = round((width - large_width) / (visible_non_fixed_count - 1))
-            for i in range(0, self.model.columnCount()-1):
+            for i in range(0, self.model.columnCount() - 1):
                 if header.isSectionHidden(i) or header.sectionResizeMode(i) == QtWidgets.QHeaderView.ResizeMode.Fixed:
                     continue
                 width_offset = large_width if i == index else remain_width
