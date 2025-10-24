@@ -172,11 +172,10 @@ def test_help_menu_actions_present(test_view, submenu_name, action_names_and_lay
         assert action.text() == name
 
 @patch("rascal2.ui.view.ProjectWidget.select_list_or_sliders_view")
-def test_click_on_select_sliders_works_as_expected(mock_select_view,test_view,qtbot):
+def test_click_on_select_sliders_works_as_expected(mock_select_view,test_view):
     """Test if click on menu in the state "Show Slider" changes text appropriately
     and initiates correct callback
     """
-    qtbot.addWidget(test_view)
 
     # check initial state -- defined now but needs to be refactored when
     # this may be included in configuration
@@ -193,11 +192,11 @@ def test_click_on_select_sliders_works_as_expected(mock_select_view,test_view,qt
     assert mock_select_view.call_count == 1
 
 @patch("rascal2.ui.view.ProjectWidget.select_list_or_sliders_view")
-def test_click_on_select_tabs_works_as_expected(mock_select_view,test_view,qtbot):
+def test_click_on_select_tabs_works_as_expected(mock_select_view,test_view):
     """Test if click on menu in the state "Show Tabs" changes text appropriately
     and initiates correct callback
     """
-    qtbot.addWidget(test_view)
+
     # check initial state -- defined now but needs to be refactored when
     # this may be included in configuration
     assert test_view.display_sliders == False
