@@ -555,6 +555,7 @@ class ContrastWidget(AbstractProjectListWidget):
         )
 
         repeat_layer_spinbox = QtWidgets.QSpinBox()
+        repeat_layer_spinbox.setButtonSymbols(QtWidgets.QSpinBox.ButtonSymbols.NoButtons)
         repeat_layer_spinbox.setMinimum(1)
         repeat_layer_spinbox.setValue(self.model.get_item(i).repeat_layers)
         repeat_layer_spinbox.editingFinished.connect(
@@ -854,7 +855,8 @@ class DataWidget(AbstractProjectListWidget):
                             widget.set_outer_limit(q_range)
                             widget.min_box.valueChanged.connect(lambda v: widget.max_box.setMinimum(v))
                             widget.max_box.valueChanged.connect(lambda v: widget.min_box.setMaximum(v))
-
+                    widget.min_box.setButtonSymbols(QtWidgets.QSpinBox.ButtonSymbols.NoButtons)
+                    widget.max_box.setButtonSymbols(QtWidgets.QSpinBox.ButtonSymbols.NoButtons)
                     widget.data_changed.connect(
                         lambda: setattr(item, field, [widget.min_box.value(), widget.max_box.value()])
                     )

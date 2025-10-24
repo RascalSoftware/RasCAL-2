@@ -119,6 +119,7 @@ class ValueSpinBoxDelegate(QtWidgets.QStyledItemDelegate):
         # fill in background as otherwise you can see the original View text underneath
         widget.setAutoFillBackground(True)
         widget.setBackgroundRole(QtGui.QPalette.ColorRole.Base)
+        widget.setButtonSymbols(QtWidgets.QSpinBox.ButtonSymbols.NoButtons)
 
         return widget
 
@@ -148,12 +149,6 @@ class ProjectFieldDelegate(QtWidgets.QStyledItemDelegate):
             names = [""] + names
         widget.addItems(names)
         widget.setCurrentText(index.data(QtCore.Qt.ItemDataRole.DisplayRole))
-
-        # make combobox searchable
-        widget.setEditable(True)
-        widget.setInsertPolicy(widget.InsertPolicy.NoInsert)
-        widget.setFrame(False)
-        widget.completer().setCompletionMode(QtWidgets.QCompleter.CompletionMode.PopupCompletion)
 
         return widget
 
