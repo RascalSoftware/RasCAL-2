@@ -23,6 +23,10 @@ class MainWindowView(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
+        #Public interface
+        self.disabled_elements = []
+        self.display_sliders = False
+
         self.setWindowTitle(MAIN_WINDOW_TITLE)
 
         window_icon = QtGui.QIcon(path_for("logo.png"))
@@ -41,7 +45,12 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.controls_widget = ControlsWidget(self)
         self.project_widget = ProjectWidget(self)
 
-        self.disabled_elements = []
+        ## protected interface and public properties construction
+
+        # define menu controlling switch between table and slider views
+        self._sliders_menu_control = {
+            "ShowSliders":"&Show Table", # if state is show sliders, click will show table
+            "HideSliders":"&Show Sliders"} # if state is show table, click will show sliders
 
         self.create_actions()
 
@@ -162,7 +171,11 @@ class MainWindowView(QtWidgets.QMainWindow):
         open_help_action.triggered.connect(self.open_docs)
         self.open_help_action = open_help_action
 
-        show_or_hide_slider_action = QtGui.QAction("&Show Sliders", self)
+
+        if self.display_sliders:
+            show_or_hide_slider_action = QtGui.QAction(self._sliders_menu_control["ShowSliders"], self)
+        else:
+            show_or_hide_slider_action = QtGui.QAction(self._sliders_menu_control["HideSliders"], self)
         show_or_hide_slider_action.setStatusTip("Show or Hide Sliders")
         show_or_hide_slider_action.triggered.connect(self.show_or_hide_sliders)
         self._show_or_hide_slider_action = show_or_hide_slider_action
@@ -256,10 +269,13 @@ class MainWindowView(QtWidgets.QMainWindow):
 
     def show_or_hide_sliders(self):
         """Depending on current state, show or hide sliders submenu"""
-        if "Sliders" in self._show_or_hide_slider_action.text():
-            self._show_or_hide_slider_action.setText("&Show Parameters")
+        self.display_sliders = not self.display_sliders
+        if self.display_sliders:
+            self._show_or_hide_slider_action.setText(self._sliders_menu_control["ShowSliders"])
         else:
-            self._show_or_hide_slider_action.setText("&Show Sliders")
+            self._show_or_hide_slider_action.setText(self._sliders_menu_control["HideSliders"])
+
+        self.project_widget.select_list_or_sliders_view(self.display_sliders)
 
 
     def open_about_info(self):

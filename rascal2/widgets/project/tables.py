@@ -381,49 +381,16 @@ class ParameterFieldWidget(ProjectFieldWidget):
             if i in self.model.protected_indices:
                 self.table.setIndexWidget(self.model.index(i, 0), None)
 
-class ParameterSliderWidget(ProjectFieldWidget):
+class ParameterSliderWidget(QtWidgets.QWidget):
     """Subclass of field widgets for slider view"""
+    def __init__(self, field: str, parent):
+        super().__init__(parent)
+        self.field = field
+        layout = QtWidgets.QVBoxLayout()
+        contents = QtWidgets.QLabel(" slides for {} have not been implemented".format(field))
+        layout.addWidget(contents)
+        self.setLayout(layout)
 
-    classlist_model = ParametersModel
-
-    def set_item_delegates(self):
-        for i, header in enumerate(self.model.headers):
-            if header in ["min", "value", "max"]:
-                self.table.setItemDelegateForColumn(i + 1, delegates.ValueSpinBoxDelegate(header, self.table))
-            else:
-                self.table.setItemDelegateForColumn(
-                    i + 1, delegates.ValidatedInputDelegate(self.model.item_type.model_fields[header], self.table)
-                )
-
-    def update_model(self, classlist):
-        super().update_model(classlist)
-        header = self.table.horizontalHeader()
-        header.setSectionResizeMode(
-            self.model.headers.index("fit") + 1, QtWidgets.QHeaderView.ResizeMode.ResizeToContents
-        )
-
-    def handle_bayesian_columns(self, procedure: Procedures):
-        """Hide or show Bayes-related columns based on procedure.
-
-        Parameters
-        ----------
-        procedure : Procedure
-            The procedure in Controls.
-        """
-        is_bayesian = procedure in ["ns", "dream"]
-        bayesian_columns = ["prior_type", "mu", "sigma"]
-        for item in bayesian_columns:
-            index = self.model.headers.index(item)
-            if is_bayesian:
-                self.table.showColumn(index + 1)
-            else:
-                self.table.hideColumn(index + 1)
-
-    def edit(self):
-        super().edit()
-        for i in range(0, self.model.rowCount()):
-            if i in self.model.protected_indices:
-                self.table.setIndexWidget(self.model.index(i, 0), None)
 
 
 class LayersModel(ClassListTableModel):
