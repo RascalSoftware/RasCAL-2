@@ -9,7 +9,7 @@ from rascal2.dialogs.matlab_setup_dialog import MatlabSetupDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog
 from rascal2.dialogs.startup_dialog import PROJECT_FILES, LoadDialog, LoadR1Dialog, NewProjectDialog, StartupDialog
 from rascal2.settings import MDIGeometries, Settings, get_global_settings
-from rascal2.widgets import ControlsWidget, PlotWidget, TerminalWidget
+from rascal2.widgets import ControlsWidget, PlotWidget, TerminalWidget, SlidersViewWidget
 from rascal2.widgets.project import ProjectWidget
 from rascal2.widgets.startup import StartUpWidget
 
@@ -44,6 +44,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.terminal_widget = TerminalWidget()
         self.controls_widget = ControlsWidget(self)
         self.project_widget = ProjectWidget(self)
+        self.sliders_view_widget = SlidersViewWidget(self)
 
         ## protected interface and public properties construction
 
@@ -274,10 +275,12 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.display_sliders = not self.display_sliders
         if self.display_sliders:
             self._show_or_hide_slider_action.setText(self._sliders_menu_control["ShowSliders"])
+            self.sliders_view_widget.show()
         else:
             self._show_or_hide_slider_action.setText(self._sliders_menu_control["HideSliders"])
+            self.sliders_view_widget.hide()
 
-        self.project_widget.select_list_or_sliders_view(self.display_sliders)
+
 
 
     def open_about_info(self):

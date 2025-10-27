@@ -44,3 +44,4 @@ def test_integration(qt_application, make_main_window):
     # Work through the different sections of the UI
 
     window.close()
+
