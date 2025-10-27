@@ -17,7 +17,6 @@ from rascal2.widgets.project.tables import (
     DomainContrastWidget,
     LayerFieldWidget,
     ParameterFieldWidget,
-    ParameterSliderWidget,
     ProjectFieldWidget,
     ResolutionsFieldWidget,
 )
@@ -57,14 +56,9 @@ class ProjectWidget(QtWidgets.QWidget):
         }
         # track which tabs are lists (for syncing)
         self.list_tabs = ["Contrasts", "Data"]
-        # define project tabs which have slider views
-        self._tab_has_sliders = ["Parameters"]
 
-        self._view_tabs = {}
-        self._edit_tabs = {}
-        self._slider_tabs = {}
-        # public tab_stacks property to wire to global tab selection
-        self._tab_stacks  = {}
+        self.view_tabs = {}
+        self.edit_tabs = {}
         self.draft_project = None
         # for making model type changes non-destructive
         self.old_contrast_models = {}
@@ -141,30 +135,13 @@ class ProjectWidget(QtWidgets.QWidget):
         self.project_tab = QtWidgets.QTabWidget()
 
         for tab, fields in self.tabs.items():
-            view_widget = self._view_tabs[tab] = ProjectTabWidget(fields, self,False,False)
-            if tab in self._tab_has_sliders:
-                slider_widget = self._slider_tabs[tab] = ProjectTabWidget(fields, self,False,True)
-                self._tab_stacks[tab] = QtWidgets.QStackedLayout()
-                self._tab_stacks[tab].addWidget(view_widget)
-                self._tab_stacks[tab].addWidget(slider_widget)
-                the_widget = QtWidgets.QWidget()
-                the_widget.setLayout(self._tab_stacks[tab])
-            else:
-                the_widget = view_widget
-            self.project_tab.addTab(the_widget, tab)
+            widget = self.view_tabs[tab] = ProjectTabWidget(fields, self)
+            self.project_tab.addTab(widget, tab)
 
         main_layout.addWidget(self.project_tab)
         project_widget.setLayout(main_layout)
 
         return project_widget
-
-    def select_list_or_sliders_view(self,select_sliders: bool = False) -> None :
-        """Depending on select_sliders variable, display tab with sliders view or list view"""
-        for tab in self._tab_stacks.values():
-            if select_sliders:
-                tab.setCurrentIndex(1)
-            else:
-                tab.setCurrentIndex(0)
 
     def create_edit_view(self) -> None:
         """Creates the project edit view"""
@@ -238,7 +215,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.calculation_combobox.currentTextChanged.connect(lambda s: self.handle_model_update(s))
         self.calculation_combobox.currentTextChanged.connect(lambda: self.handle_tabs())
         self.calculation_combobox.currentTextChanged.connect(
-            lambda s: self._edit_tabs["Contrasts"].tables["contrasts"].set_domains(s == Calculations.Domains)
+            lambda s: self.edit_tabs["Contrasts"].tables["contrasts"].set_domains(s == Calculations.Domains)
         )
 
         # when model type changed, hide/show layers tab and change model field in contrasts
@@ -249,15 +226,15 @@ class ProjectWidget(QtWidgets.QWidget):
         self.edit_project_tab = QtWidgets.QTabWidget()
 
         for tab, fields in self.tabs.items():
-            widget = self._edit_tabs[tab] = ProjectTabWidget(fields, self, edit_mode=True)
+            widget = self.edit_tabs[tab] = ProjectTabWidget(fields, self, edit_mode=True)
             self.edit_project_tab.addTab(widget, tab)
 
         self.edit_absorption_checkbox.checkStateChanged.connect(
-            lambda s: self._edit_tabs["Layers"].tables["layers"].set_absorption(s == QtCore.Qt.CheckState.Checked)
+            lambda s: self.edit_tabs["Layers"].tables["layers"].set_absorption(s == QtCore.Qt.CheckState.Checked)
         )
         for tab in ["Experimental Parameters", "Layers", "Backgrounds", "Resolutions", "Data", "Domains"]:
-            for table in self._edit_tabs[tab].tables.values():
-                table.edited.connect(lambda: self._edit_tabs["Contrasts"].tables["contrasts"].update_item_view())
+            for table in self.edit_tabs[tab].tables.values():
+                table.edited.connect(lambda: self.edit_tabs["Contrasts"].tables["contrasts"].update_item_view())
 
         main_layout.addWidget(self.edit_project_tab)
 
@@ -270,7 +247,7 @@ class ProjectWidget(QtWidgets.QWidget):
 
         if update_tab_index is None:
             update_tab_index = self.stacked_widget.currentIndex()
-        tab_to_update = self._view_tabs if update_tab_index == 0 else self._edit_tabs
+        tab_to_update = self.view_tabs if update_tab_index == 0 else self.edit_tabs
         tab_indices = {}
         for tab in self.list_tabs:
             model = tab_to_update[tab].tables[tab.lower()].list.selectionModel()
@@ -281,8 +258,8 @@ class ProjectWidget(QtWidgets.QWidget):
         self.draft_project: dict = create_draft_project(self.parent_model.project)
 
         for tab in self.tabs:
-            self._view_tabs[tab].update_model(self.draft_project)
-            self._edit_tabs[tab].update_model(self.draft_project)
+            self.view_tabs[tab].update_model(self.draft_project)
+            self.edit_tabs[tab].update_model(self.draft_project)
 
         self.absorption_checkbox.setChecked(self.parent_model.project.absorption)
         self.calculation_type.setText(self.parent_model.project.calculation)
@@ -298,7 +275,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.handle_controls_update()
 
         for tab in self.list_tabs:
-            tab_widget = self._view_tabs[tab].tables[tab.lower()]
+            tab_widget = self.view_tabs[tab].tables[tab.lower()]
             idx = tab_indices[tab]
             tab_widget.list.selectionModel().setCurrentIndex(
                 tab_widget.model.index(idx, 0), QtCore.QItemSelectionModel.SelectionFlag.ClearAndSelect
@@ -319,18 +296,18 @@ class ProjectWidget(QtWidgets.QWidget):
     def handle_tabs(self) -> None:
         """Displays or hides tabs as relevant."""
         # the domains tab should only be visible if calculating domains
-        domain_tab_index = list(self._view_tabs).index("Domains")
+        domain_tab_index = list(self.view_tabs).index("Domains")
         is_domains = self.calculation_combobox.currentText() == Calculations.Domains
         self.project_tab.setTabVisible(domain_tab_index, is_domains)
         self.edit_project_tab.setTabVisible(domain_tab_index, is_domains)
 
         # the layers tab and domain contrasts table should only be visible in standard layers
-        layers_tab_index = list(self._view_tabs).index("Layers")
+        layers_tab_index = list(self.view_tabs).index("Layers")
         is_layers = self.model_combobox.currentText() == LayerModels.StandardLayers
         self.project_tab.setTabVisible(layers_tab_index, is_layers)
         self.edit_project_tab.setTabVisible(layers_tab_index, is_layers)
-        self._view_tabs["Domains"].tables["domain_contrasts"].setVisible(is_layers)
-        self._edit_tabs["Domains"].tables["domain_contrasts"].setVisible(is_layers)
+        self.view_tabs["Domains"].tables["domain_contrasts"].setVisible(is_layers)
+        self.edit_tabs["Domains"].tables["domain_contrasts"].setVisible(is_layers)
 
     def handle_controls_update(self):
         """Handle updates to Controls that need to be reflected in the project."""
@@ -340,8 +317,8 @@ class ProjectWidget(QtWidgets.QWidget):
         controls = self.parent_model.controls
 
         for tab in self.tabs:
-            self._view_tabs[tab].handle_controls_update(controls)
-            self._edit_tabs[tab].handle_controls_update(controls)
+            self.view_tabs[tab].handle_controls_update(controls)
+            self.edit_tabs[tab].handle_controls_update(controls)
 
     def handle_model_update(self, new_entry):
         """Handle updates to the model type.
@@ -373,7 +350,7 @@ class ProjectWidget(QtWidgets.QWidget):
                 contrast.model = self.old_contrast_models.get(contrast.name, [])
 
             self.old_contrast_models = old_contrast_models
-        self._edit_tabs["Contrasts"].tables["contrasts"].update_item_view()
+        self.edit_tabs["Contrasts"].tables["contrasts"].update_item_view()
 
     def show_project_view(self) -> None:
         """Show project view"""
@@ -520,7 +497,7 @@ class ProjectWidget(QtWidgets.QWidget):
         for tab_name, tab_items in self.tabs.items():
             for table in tab_items:
                 if table in ratapi.project.parameter_class_lists:
-                    self._view_tabs[tab_name].tables[table].setEnabled(enabled)
+                    self.view_tabs[tab_name].tables[table].setEnabled(enabled)
 
 
 class ProjectTabWidget(QtWidgets.QWidget):
@@ -533,30 +510,21 @@ class ProjectTabWidget(QtWidgets.QWidget):
     fields : list[str]
         The fields to display in the tab.
     parent : QtWidgets.QWidget
-        ProjectWidget which holds multiple TabWidgets and controls their appearance.
-    edit_mode : bool
-        Build Tab widget in edit mode
-    slider_mode : bool
-        Build Tab widget in slider mode, i.e. generate slider instead of lists.
-        The mode is something intermediate between edit and view mode, as allows
-        changing some values but not adding new properties
+        The parent to this widget.
+
     """
 
-    def __init__(self, fields: list[str], parent, edit_mode: bool = False, slider_mode: bool = False):
+    def __init__(self, fields: list[str], parent, edit_mode: bool = False):
         super().__init__(parent)
         self.parent = parent
         self.fields = fields
         self.edit_mode = edit_mode
         self.tables = {}
 
-
         layout = QtWidgets.QVBoxLayout()
         for field in self.fields:
             if field in ratapi.project.parameter_class_lists:
-                if slider_mode:
-                    self.tables[field] = ParameterSliderWidget(field, self)
-                else:
-                    self.tables[field] = ParameterFieldWidget(field, self)
+                self.tables[field] = ParameterFieldWidget(field, self)
             elif field == "backgrounds":
                 self.tables[field] = BackgroundsFieldWidget(field, self)
             elif field == "resolutions":
