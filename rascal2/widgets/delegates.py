@@ -201,10 +201,12 @@ class MultiSelectLayerDelegate(QtWidgets.QStyledItemDelegate):
     def setEditorData(self, editor: MultiSelectList, index):
         # index.data produces the display string rather than the underlying data,
         # so we split it back into a list here
-        data = index.data(QtCore.Qt.ItemDataRole.DisplayRole).split(", ")
-        editor.list.clear()
-        for item in data:
-            editor.add_item(item)
+        data = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
+        if data:
+            data = data.split(", ")
+            editor.list.clear()
+            for item in data:
+                editor.add_item(item)
 
     def setModelData(self, editor, model, index):
         data = [editor.list.item(i).text() for i in range(editor.list.count())]

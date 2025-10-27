@@ -654,6 +654,7 @@ class MultiSelectList(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         layout = QtWidgets.QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -661,14 +662,17 @@ class MultiSelectList(QtWidgets.QWidget):
         self.select_menu = QtWidgets.QMenu()
 
         add_button = QtWidgets.QToolButton(icon=QtGui.QIcon(path_for("create-dark.png")))
-        add_button.setMinimumSize(30, 30)
+        add_button.setMinimumWidth(40)
+        add_button.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.MinimumExpanding)
         add_button.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
         add_button.setMenu(self.select_menu)
 
         delete_button = QtWidgets.QToolButton(icon=QtGui.QIcon(path_for("delete-dark.png")))
-        delete_button.setMinimumSize(30, 30)
-        delete_button.setFixedWidth(delete_button.sizeHint().height())
+        delete_button.setMinimumWidth(40)
         delete_button.clicked.connect(self.delete_items)
+        delete_button.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.MinimumExpanding
+        )
         self.list = QtWidgets.QListWidget()
         self.list.setSelectionMode(QtWidgets.QListWidget.SelectionMode.ExtendedSelection)
         self.list.setFlow(QtWidgets.QListView.Flow.LeftToRight)
