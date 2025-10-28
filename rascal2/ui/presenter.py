@@ -77,6 +77,7 @@ class MainWindowPresenter:
         self.view.init_settings_and_log(self.model.save_path)
         self.view.setup_mdi()
         self.view.plot_widget.update_plots()
+        self.view.handle_results(self.model.results)
         self.view.undo_stack.clear()
         self.view.enable_elements()
 
@@ -219,7 +220,7 @@ class MainWindowPresenter:
             self.view.logging.info("RAT run interrupted!")
         else:
             self.view.logging.error("RAT run failed with exception.\n", exc_info=self.runner.error)
-        self.view.reset_widgets()
+        self.view.handle_results()
 
     def handle_event(self):
         """Handle event data produced by the RAT run."""
