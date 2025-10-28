@@ -6,6 +6,7 @@ from copy import deepcopy
 import ratapi
 from pydantic import ValidationError
 from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtCore import Qt
 from ratapi.utils.custom_errors import custom_pydantic_validation_error
 from ratapi.utils.enums import Calculations, Geometries, LayerModels
 
@@ -36,22 +37,9 @@ class SlidersViewWidget(QtWidgets.QWidget):
         """
         super().__init__()
         self._parent = parent
+
+        self.create_sliders_layout()
         #self._parent_model = self.parent.presenter.model
-
-        main_layout = QtWidgets.QVBoxLayout()
-        #main_layout.setSpacing(20)
-
-        self._accept_button = QtWidgets.QPushButton("Accept", self, objectName="Accept")
-        self._accept_button.clicked.connect(self.save_changes)
-        self._cancel_button = QtWidgets.QPushButton("Cancel", self, objectName="Cancel")
-        self._cancel_button.clicked.connect(QtWidgets.QDialog.accept)
-
-        button_layout = QtWidgets.QHBoxLayout()
-        button_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        button_layout.addWidget(self._accept_button)
-        button_layout.addWidget(self._cancel_button)
-
-        main_layout.addLayout(button_layout)
 
 
         #self.parent_model.project_updated.connect(self.update_project_view)
@@ -63,7 +51,30 @@ class SlidersViewWidget(QtWidgets.QWidget):
         #self.edit_project_tab.currentChanged.connect(self.project_tab.setCurrentIndex)
 
 
+    def create_sliders_layout(self) -> None:
+        """ Create sliders layout with all necessary controls and connections """
+
+        self.setWindowTitle("Slider view")
+        main_layout = QtWidgets.QVBoxLayout()
+        main_layout.setSpacing(20)
+
+        accept_button = QtWidgets.QPushButton("Accept", self, objectName="AcceptButton")
+        accept_button.clicked.connect(self.save_changes)
+        cancel_button = QtWidgets.QPushButton("Cancel", self, objectName="CancelButton")
+        cancel_button.clicked.connect(self.cancel_changes_from_sliders)
+
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        button_layout.addWidget(accept_button)
+        button_layout.addWidget(cancel_button)
+
+        main_layout.addLayout(button_layout)
+
+        slider = LabeledSlider()
+        main_layout.addWidget(slider)
+
         self.setLayout(main_layout)
+
 
     def create_project_view(self) -> None:
 
@@ -86,25 +97,66 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
         """
 
-    def show_project_view(self) -> None:
+    def show_sliders_view(self) -> None:
         """Show project view"""
+        self._parent.show_or_hide_sliders(True)
 
+    def cancel_changes_from_sliders(self):
+        """Cancel changes to properties obtained from sliders
+        and hide sliders view.
+        """
+        self._parent.show_or_hide_sliders(False)
 
     def save_changes(self) -> None:
         """Save changes to the project."""
         # sync list items (wrap around update_project_view() which sets them to zero by default)
         # the list can lose focus when a contrast is edited... default to first item if this happens
-        errors = "\n  ".join(self.validate_draft_project())
+        #errors = "\n  ".join(self.validate_draft_project())
+        self._parent.show_or_hide_sliders(False)
+        return
+        errors = None
         if errors:
-            self.parent.terminal_widget.write_error(f"Could not save draft project:\n  {errors}")
+            self._parent.terminal_widget.write_error(f"Could not save draft project:\n  {errors}")
         else:
             # catch errors from Pydantic as fallback rather than crashing
             try:
-                self.parent.presenter.edit_project(self.draft_project)
+                self._parent.presenter.edit_project(self.draft_project)
             except ValidationError as err:
                 custom_error_list = custom_pydantic_validation_error(err.errors(include_url=False))
                 custom_errors = ValidationError.from_exception_data(err.title, custom_error_list, hide_input=True)
-                self.parent.terminal_widget.write_error(f"Could not save draft project:\n  {custom_errors}")
+                self._parent.terminal_widget.write_error(f"Could not save draft project:\n  {custom_errors}")
             else:
-                self.show_project_view()
+                self._parent.show_or_hide_sliders(False)
 
+
+class LabeledSlider(QtWidgets.QWidget):
+    def __init__(self, minimum=0, maximum=100, step=10, parent=None):
+        super().__init__(parent)
+
+        self.slider = QtWidgets.QSlider(Qt.Orientation.Horizontal)
+        self.slider.setMinimum(minimum)
+        self.slider.setMaximum(maximum)
+        self.slider.setTickInterval(step)
+        self.slider.setSingleStep(step)
+        self.slider.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBelow)
+        self.slider.setValue((maximum + minimum) // 2)
+
+        self.value_label = QtWidgets.QLabel(str(self.slider.value()), alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # layout for numeric scale below
+        self.scale_layout = QtWidgets.QHBoxLayout()
+        for i in range(minimum, maximum + 1, step):
+            label = QtWidgets.QLabel(str(i))
+            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.scale_layout.addWidget(label)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(self.slider)
+        layout.addLayout(self.scale_layout)
+        layout.addWidget(self.value_label)
+
+        # signal to update label dynamically
+        self.slider.valueChanged.connect(self._update_value)
+
+    def _update_value(self, val):
+        self.value_label.setText(f"Value: {val}")

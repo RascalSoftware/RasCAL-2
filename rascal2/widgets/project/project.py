@@ -77,7 +77,7 @@ class ProjectWidget(QtWidgets.QWidget):
         layout.addWidget(self.stacked_widget)
         self.setLayout(layout)
 
-    def create_project_view(self) -> None:
+    def create_project_view(self) -> QtWidgets.QWidget:
         """Creates the project (non-edit) view"""
         project_widget = QtWidgets.QWidget()
         main_layout = QtWidgets.QVBoxLayout()
@@ -143,7 +143,7 @@ class ProjectWidget(QtWidgets.QWidget):
 
         return project_widget
 
-    def create_edit_view(self) -> None:
+    def create_edit_view(self) -> QtWidgets.QWidget:
         """Creates the project edit view"""
 
         edit_project_widget = QtWidgets.QWidget()

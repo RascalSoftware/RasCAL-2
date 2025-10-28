@@ -171,8 +171,9 @@ def test_help_menu_actions_present(test_view, submenu_name, action_names_and_lay
     for action, name in zip(actions, action_names_and_layout, strict=True):
         assert action.text() == name
 
-@patch("rascal2.ui.view.ProjectWidget.select_list_or_sliders_view")
-def test_click_on_select_sliders_works_as_expected(mock_select_view,test_view):
+@patch("rascal2.ui.view.SlidersViewWidget.show")
+@patch("rascal2.ui.view.SlidersViewWidget.hide")
+def test_click_on_select_sliders_works_as_expected(mock_hide,mock_show,test_view):
     """Test if click on menu in the state "Show Slider" changes text appropriately
     and initiates correct callback
     """
@@ -187,14 +188,15 @@ def test_click_on_select_sliders_works_as_expected(mock_select_view,test_view):
 
     # Trigger the action
     all_actions[0].trigger()
-    assert all_actions[0].text() == "&Show Tables"
+    assert all_actions[0].text() == "&Hide Sliders"
     assert test_view.display_sliders == True
-    assert mock_select_view.call_count == 1
+    assert mock_show.call_count == 1
 
-@patch("rascal2.ui.view.ProjectWidget.select_list_or_sliders_view")
-def test_click_on_select_tabs_works_as_expected(mock_select_view,test_view):
-    """Test if click on menu in the state "Show Tabs" changes text appropriately
-    and initiates correct callback
+@patch("rascal2.ui.view.SlidersViewWidget.show")
+@patch("rascal2.ui.view.SlidersViewWidget.hide")
+def test_click_on_select_tabs_works_as_expected(mock_hide,mock_show,test_view):
+    """Test if click on menu in the state "Show Sliders" changes text appropriately
+        and initiates correct callback
     """
 
     # check initial state -- defined now but needs to be refactored when
@@ -208,9 +210,10 @@ def test_click_on_select_tabs_works_as_expected(mock_select_view,test_view):
     # Trigger the action
     all_actions[0].trigger()
     assert test_view.display_sliders == True
+    assert mock_show.call_count == 1 # this would show sliders widget
     # check if next click returns to initial state
     all_actions[0].trigger()
 
     assert all_actions[0].text() == "&Show Sliders"
     assert test_view.display_sliders == False
-    assert mock_select_view.call_count == 2 # 2 as second click returned to initial state
+    assert mock_hide.call_count == 1 # this would hide sliders widget
