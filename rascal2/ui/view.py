@@ -149,7 +149,7 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         self.export_results_action = QtGui.QAction("Export Results", self)
         self.export_results_action.setStatusTip("Export Results to a specified file.")
-        self.export_results_action.triggered.connect(lambda: self.presenter.export_results())
+        self.export_results_action.triggered.connect(self.presenter.export_result_as_zip)
         self.export_results_action.setEnabled(False)
         self.disabled_elements.append(self.export_results_action)
 

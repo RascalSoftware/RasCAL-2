@@ -2,7 +2,9 @@ import re
 import warnings
 from pathlib import Path
 from typing import Any
+import zipfile
 
+import numpy as np
 import ratapi as rat
 import ratapi.wrappers
 
@@ -161,6 +163,73 @@ class MainWindowPresenter:
                 self.model.results.save(save_file)
             except OSError as err:
                 self.view.logging.error(f"Failed to save project at path {save_file}.\n", exc_info=err)
+
+    def export_result_as_zip(self):
+        if self.model.results is None:
+            return
+
+        results = self.model.results
+        filename = self.model.project.name.replace(" ", "_")
+        save_file = self.view.get_save_file("Export Results as ZIP Archive", filename, "*.zip")
+        if not save_file:
+            return
+        # zipped_file = io.BytesIO()
+        # with zipfile.ZipFile(zipped_file, 'w') as f:
+        #     for i, file in enumerate(files):
+        #         f.writestr("{}.csv".format(i), file.getvalue())
+        #
+        # zipped_file.seek(0)
+        from io import StringIO
+        with zipfile.ZipFile(save_file, 'w') as f:
+            for list_field in rat.outputs.results_fields["list_fields"]:
+                for i, array in enumerate(getattr(results, list_field)):
+                    text_buffer = StringIO()
+                    np.savetxt(text_buffer, array, fmt='%.8f', delimiter=', ')
+                    f.writestr(f"{list_field}(contrast{i}).csv", text_buffer.getvalue())
+
+            for list_field in rat.outputs.results_fields["double_list_fields"]:
+                actual_list = getattr(results, list_field)
+                for i in range(len(actual_list)):
+                    for j, array in enumerate(actual_list[i]):
+                        domain = "" if len(actual_list[i]) == 1 else f"domain{j}"
+                        text_buffer = StringIO()
+                        np.savetxt(text_buffer, array, fmt='%.8f', delimiter=', ')
+                        f.writestr(f"{list_field}(contrast{i}{domain}).csv", text_buffer.getvalue())
+
+            contrast_param_fields = [
+                "scalefactors",
+                "bulkIn",
+                "bulkOut",
+                "subRoughs",
+                "resample",
+            ]
+            for field in contrast_param_fields:
+                text_buffer = StringIO()
+                np.savetxt(text_buffer, getattr(results.contrastParams, field), fmt='%.8f', delimiter=', ')
+                f.writestr(f"{field}.csv", text_buffer.getvalue())
+
+            if not isinstance(results, rat.outputs.BayesResults):
+                return
+
+            for inner_class in ["predictionIntervals", "confidenceIntervals"]:
+                subclass = getattr(results, inner_class)
+
+                for field in ratapi.outputs.bayes_results_fields["list_fields"][inner_class]:
+                    for i, array in enumerate(getattr(subclass, field)):
+                        text_buffer = StringIO()
+                        np.savetxt(text_buffer, array, fmt='%.8f', delimiter=', ')
+                        print(text_buffer.getvalue())
+                        f.writestr(f"bayes_{field}(contrast{i}).csv", text_buffer.getvalue())
+
+                for field in ratapi.outputs.bayes_results_fields["double_list_fields"][inner_class]:
+                    actual_list = getattr(subclass, field)
+                    for i in range(len(actual_list)):
+                        for j, array in enumerate(actual_list[i]):
+                            domain = "" if len(actual_list[i]) == 1 else f"domain{j}"
+                            text_buffer = StringIO()
+                            np.savetxt(text_buffer, array, fmt='%.8f', delimiter=', ')
+                            print(text_buffer.getvalue())
+                            f.writestr(f"bayes_{field}(contrast{i}{domain}).csv", text_buffer.getvalue())
 
     def interrupt_terminal(self):
         """Sends an interrupt signal to the RAT runner."""
