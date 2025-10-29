@@ -172,49 +172,62 @@ def test_help_menu_actions_present(test_view, submenu_name, action_names_and_lay
         assert action.text() == name
 
 
+@pytest.fixture
+def test_view_with_mdi():
+    """An instance of MainWindowView with mdi property defined to some rubbish 
+       for mimicking operations performed in MainWindowView.reset_mdi_layout
+    """
+    with patch("rascal2.widgets.plot.FigureCanvas", return_value=MockFigureCanvas()):
+        mw = MainWindowView()
+        mw.mdi.addSubWindow(mw.sliders_view_widget)
+        mdi_windows = mw.mdi.subWindowList()
+        mw.sliders_view_widget.mdi_holder = mdi_windows[0]
+        yield mw
+
+
 @patch("rascal2.ui.view.SlidersViewWidget.show")
 @patch("rascal2.ui.view.SlidersViewWidget.hide")
-def test_click_on_select_sliders_works_as_expected(mock_hide,mock_show,test_view):
+def test_click_on_select_sliders_works_as_expected(mock_hide,mock_show,test_view_with_mdi):
     """Test if click on menu in the state "Show Slider" changes text appropriately
     and initiates correct callback
     """
 
     # check initial state -- defined now but needs to be refactored when
     # this may be included in configuration
-    assert test_view.show_sliders == False
+    assert test_view_with_mdi.show_sliders == False
 
-    main_menu = test_view.menuBar()
+    main_menu = test_view_with_mdi.menuBar()
     submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
     all_actions = submenu.actions()
 
     # Trigger the action
     all_actions[0].trigger()
     assert all_actions[0].text() == "&Hide Sliders"
-    assert test_view.show_sliders == True
+    assert test_view_with_mdi.show_sliders == True
     assert mock_show.call_count == 1
 
 @patch("rascal2.ui.view.SlidersViewWidget.show")
 @patch("rascal2.ui.view.SlidersViewWidget.hide")
-def test_click_on_select_tabs_works_as_expected(mock_hide,mock_show,test_view):
+def test_click_on_select_tabs_works_as_expected(mock_hide,mock_show,test_view_with_mdi):
     """Test if click on menu in the state "Show Sliders" changes text appropriately
         and initiates correct callback
     """
 
     # check initial state -- defined now but needs to be refactored when
     # this may be included in configuration
-    assert test_view.show_sliders == False
+    assert test_view_with_mdi.show_sliders == False
 
-    main_menu = test_view.menuBar()
+    main_menu = test_view_with_mdi.menuBar()
     submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
     all_actions = submenu.actions()
 
     # Trigger the action
     all_actions[0].trigger()
-    assert test_view.show_sliders == True
+    assert test_view_with_mdi.show_sliders == True
     assert mock_show.call_count == 1 # this would show sliders widget
     # check if next click returns to initial state
     all_actions[0].trigger()
 
     assert all_actions[0].text() == "&Show Sliders"
-    assert test_view.show_sliders == False
+    assert test_view_with_mdi.show_sliders == False
     assert mock_hide.call_count == 1 # this would hide sliders widget
