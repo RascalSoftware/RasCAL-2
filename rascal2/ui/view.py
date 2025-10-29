@@ -25,7 +25,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         super().__init__()
         #Public interface
         self.disabled_elements = []
-        self.display_sliders = False # no one displays sliders initially
+        self.show_sliders = False # no one displays sliders initially
 
         self.setWindowTitle(MAIN_WINDOW_TITLE)
 
@@ -70,6 +70,14 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.setCentralWidget(self.startup_dlg)
 
         self.about_dialog = AboutDialog(self)
+        # dictionary of main widgets present in the main operation area
+        # There are other widgets (sliders_view) which are initially hidden.
+        self._main_window_widgets = {
+            "Plots": self.plot_widget,
+            "Project": self.project_widget,
+            "Terminal": self.terminal_widget,
+            "Fitting Controls": self.controls_widget
+        }
 
     def closeEvent(self, event):
         if self.presenter.ask_to_save_project():
@@ -174,8 +182,8 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         # done this way expecting the value "display_sliders" being stored
         # in configuration in a future.
-        if self.display_sliders:
-            # if display_sliders state is True, action will be hide
+        if self.show_sliders:
+            # if show_sliders state is True, action will be hide
             show_or_hide_slider_action = QtGui.QAction(self._sliders_menu_control_text["HideSliders"], self)
         else:
             # if display_sliders state is False, action will be show
@@ -271,26 +279,29 @@ class MainWindowView(QtWidgets.QMainWindow):
         help_menu.addAction(self.open_about_action)
         help_menu.addAction(self.open_help_action)
 
-    def show_or_hide_sliders(self,do_display_sliders = None):
+    def show_or_hide_sliders(self,do_show_sliders = None):
         """Depending on current state, show or hide sliders for
         table properties within Project class view.
 
-        do_display_sliders -- if provided, sets self.display_sliders logical variable
+        do_show_sliders -- if provided, sets self.show_sliders logical variable
                               into the requested state (True/False), forcing sliders
                               widget to appear/disappear
         """
-        if do_display_sliders is None:
-            self.display_sliders = not self.display_sliders
+        if do_show_sliders is None:
+            self.show_sliders = not self.show_sliders
         else:
-            self.display_sliders = do_display_sliders
+            self.show_sliders = do_show_sliders
 
-        if self.display_sliders:
+        # ignore show/hide operations if project and its mdi container are not defined
+        if self.sliders_view_widget.mdi_holder is None:
+            return
+
+        if self.show_sliders:
             self._show_or_hide_slider_action.setText(self._sliders_menu_control_text["HideSliders"])
             self.sliders_view_widget.show()
         else:
             self._show_or_hide_slider_action.setText(self._sliders_menu_control_text["ShowSliders"])
             self.sliders_view_widget.hide()
-
 
     def open_about_info(self):
         """Opens about menu containing information about RASCAL gui"""
@@ -331,43 +342,61 @@ class MainWindowView(QtWidgets.QMainWindow):
         """Creates the multi-document interface"""
         # if windows are already created, don't set them up again,
         # just refresh the widget data
-        if len(self.mdi.subWindowList()) == 4:
-            self.setup_mdi_widgets()
+        if len(self.mdi.subWindowList()) == 5:
+            self.init_mdi_widgets()
             return
 
-        widgets = {
-            "Plots": self.plot_widget,
-            "Project": self.project_widget,
-            "Terminal": self.terminal_widget,
-            "Fitting Controls": self.controls_widget,
-        }
-        self.setup_mdi_widgets()
+        self.init_mdi_widgets()
 
-        for title, widget in reversed(widgets.items()):
+        for title, widget in reversed(self._main_window_widgets.items()):
             widget.setWindowTitle(title)
             window = self.mdi.addSubWindow(
                 widget, QtCore.Qt.WindowType.WindowMinMaxButtonsHint | QtCore.Qt.WindowType.WindowTitleHint
             )
             window.setWindowTitle(title)
+        #  Add sliders view widget separately, as it will behave and is controlled differently from other
+        # mdi windows
+        self.mdi.addSubWindow(
+             self.sliders_view_widget, QtCore.Qt.WindowType.WindowMinMaxButtonsHint | QtCore.Qt.WindowType.WindowTitleHint
+        )
+        self.sliders_view_widget.setWindowTitle("Sliders View")
+
         self.reset_mdi_layout()
         self.startup_dlg = self.takeCentralWidget()
         self.setCentralWidget(self.mdi)
 
-    def setup_mdi_widgets(self):
-        """Performs setup of MDI widgets that relies on the Project existing."""
+    def init_mdi_widgets(self):
+        """Performs initialization of MDI widgets that relies on the Project existing."""
         self.controls_widget.setup_controls()
         self.project_widget.show_project_view()
         self.plot_widget.clear()
         self.terminal_widget.clear()
         self.terminal_widget.write_startup()
+        self.sliders_view_widget.init()
 
     def reset_mdi_layout(self):
         """Reset MDI layout to the default."""
+
+        main_widget_names = self._main_window_widgets.keys()
         if self.settings.mdi_defaults is None:
+            # logic expects "Sliders View" the only widget in the mdi list
+            slider_view_wrapper = None
             for window in self.mdi.subWindowList():
-                window.showNormal()
+                if window.windowTitle() in main_widget_names:
+                    window.showNormal()
+                else:
+                    window.hide()
+                    slider_view_wrapper = window
             self.mdi.tileSubWindows()
+            self.sliders_view_widget.mdi_holder = slider_view_wrapper
         else:
+            # reliability check. Can we have project saved previously with mdi defaults
+            # and initialized here newer entering the "if mdi_defaults" loop above?
+            if self.sliders_view_widget.mdi_holder is None:
+                for window in self.mdi.subWindowList():
+                    if window.windowTitle() == "Sliders View":
+                        self.sliders_view_widget.mdi_holder = window
+
             for window in self.mdi.subWindowList():
                 # get corresponding MDIGeometries entry for the widget
                 widget_name = window.windowTitle().lower().split(" ")[-1]
@@ -376,7 +405,6 @@ class MainWindowView(QtWidgets.QMainWindow):
                     window.showMinimized()
                 else:
                     window.showNormal()
-
                 window.setGeometry(x, y, width, height)
 
     def save_mdi_layout(self):

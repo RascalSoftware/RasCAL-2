@@ -36,6 +36,10 @@ class SlidersViewWidget(QtWidgets.QWidget):
                 An instance of the MainWindowView
         """
         super().__init__()
+        self.mdi_holder = None # the variable contains reference to mdi container holding this window
+        self._view_geometry = None # holder for slider view geometry, created to store slider view location
+        # within the main window for subsequent calls to show sliders. Not yet restored from hdd properly
+        # inherits project geometry on the first view.
         self._parent = parent
 
         self.create_sliders_layout()
@@ -50,11 +54,32 @@ class SlidersViewWidget(QtWidgets.QWidget):
         #self.project_tab.currentChanged.connect(self.edit_project_tab.setCurrentIndex)
         #self.edit_project_tab.currentChanged.connect(self.project_tab.setCurrentIndex)
 
+    def show(self):
+        """Overload parent show method to deal with mdi container"""
+        if self.mdi_holder is None:
+            self._view_geometry = None
+            super().show()
+        else:
+            if self._view_geometry is None: # inherit geometry from project view
+                for window in self._parent.mdi.subWindowList():
+                    if window.windowTitle() == "Project":
+                        self._view_geometry = window.geometry()
+            self.mdi_holder.setGeometry(self._view_geometry)
+            self.mdi_holder.show()
+
+    def hide(self):
+        """Overload parent hide method to deal with mdi container"""
+        if self.mdi_holder is None:
+            super().hide()
+        else:
+            # store sliders geometry which may be user changed for the following view
+            self._view_geometry = self.mdi_holder.geometry()
+            self.mdi_holder.hide()
+
 
     def create_sliders_layout(self) -> None:
         """ Create sliders layout with all necessary controls and connections """
 
-        self.setWindowTitle("Slider view")
         main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(20)
 
@@ -74,6 +99,11 @@ class SlidersViewWidget(QtWidgets.QWidget):
         main_layout.addWidget(slider)
 
         self.setLayout(main_layout)
+
+    def init(self) -> None:
+        """Initialize state, position and construction of the sliders widget
+        i.e. set up everything except its show/hide state
+         """
 
 
     def create_project_view(self) -> None:

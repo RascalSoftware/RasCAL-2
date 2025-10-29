@@ -171,6 +171,7 @@ def test_help_menu_actions_present(test_view, submenu_name, action_names_and_lay
     for action, name in zip(actions, action_names_and_layout, strict=True):
         assert action.text() == name
 
+
 @patch("rascal2.ui.view.SlidersViewWidget.show")
 @patch("rascal2.ui.view.SlidersViewWidget.hide")
 def test_click_on_select_sliders_works_as_expected(mock_hide,mock_show,test_view):
@@ -180,7 +181,7 @@ def test_click_on_select_sliders_works_as_expected(mock_hide,mock_show,test_view
 
     # check initial state -- defined now but needs to be refactored when
     # this may be included in configuration
-    assert test_view.display_sliders == False
+    assert test_view.show_sliders == False
 
     main_menu = test_view.menuBar()
     submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
@@ -189,7 +190,7 @@ def test_click_on_select_sliders_works_as_expected(mock_hide,mock_show,test_view
     # Trigger the action
     all_actions[0].trigger()
     assert all_actions[0].text() == "&Hide Sliders"
-    assert test_view.display_sliders == True
+    assert test_view.show_sliders == True
     assert mock_show.call_count == 1
 
 @patch("rascal2.ui.view.SlidersViewWidget.show")
@@ -201,7 +202,7 @@ def test_click_on_select_tabs_works_as_expected(mock_hide,mock_show,test_view):
 
     # check initial state -- defined now but needs to be refactored when
     # this may be included in configuration
-    assert test_view.display_sliders == False
+    assert test_view.show_sliders == False
 
     main_menu = test_view.menuBar()
     submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
@@ -209,11 +210,11 @@ def test_click_on_select_tabs_works_as_expected(mock_hide,mock_show,test_view):
 
     # Trigger the action
     all_actions[0].trigger()
-    assert test_view.display_sliders == True
+    assert test_view.show_sliders == True
     assert mock_show.call_count == 1 # this would show sliders widget
     # check if next click returns to initial state
     all_actions[0].trigger()
 
     assert all_actions[0].text() == "&Show Sliders"
-    assert test_view.display_sliders == False
+    assert test_view.show_sliders == False
     assert mock_hide.call_count == 1 # this would hide sliders widget
