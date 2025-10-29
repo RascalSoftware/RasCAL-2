@@ -70,7 +70,8 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.setCentralWidget(self.startup_dlg)
 
         self.about_dialog = AboutDialog(self)
-        # dictionary of main widgets present in the main operation area
+        # dictionary of main widgets present in the main operation area controlled
+        # by mdi interface.
         # There are other widgets (sliders_view) which are initially hidden.
         self._main_window_widgets = {
             "Plots": self.plot_widget,
@@ -191,6 +192,8 @@ class MainWindowView(QtWidgets.QMainWindow):
         show_or_hide_slider_action.setStatusTip("Show or Hide Sliders")
         show_or_hide_slider_action.triggered.connect(lambda: self.show_or_hide_sliders(None))
         self._show_or_hide_slider_action = show_or_hide_slider_action
+        self._show_or_hide_slider_action.setEnabled(False)
+        self.disabled_elements.append(self._show_or_hide_slider_action)
 
         open_about_action = QtGui.QAction("&About", self)
         open_about_action.setStatusTip("Report RAT version&info")
