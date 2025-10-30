@@ -310,6 +310,8 @@ class ProjectFieldWidget(QtWidgets.QWidget):
             {self.field: self.model.classlist}, preview=recalculate and presenter.view.settings.live_recalculate
         )
         presenter.model.blockSignals(False)
+        if presenter.view.settings.live_recalculate:
+            presenter.view.plot_widget.update_plots()
 
 
 class ParametersModel(ClassListTableModel):
