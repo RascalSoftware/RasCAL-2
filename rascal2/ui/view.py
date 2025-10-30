@@ -402,7 +402,7 @@ class MainWindowView(QtWidgets.QMainWindow):
 
             for window in self.mdi.subWindowList():
                 # get corresponding MDIGeometries entry for the widget
-                widget_name = window.windowTitle().lower().split(" ")[-1]
+                widget_name = window.windowTitle().replace(" ", "")
                 x, y, width, height, minimized = getattr(self.settings.mdi_defaults, widget_name)
                 if minimized:
                     window.showMinimized()
@@ -415,7 +415,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         geoms = {}
         for window in self.mdi.subWindowList():
             # get corresponding MDIGeometries entry for the widget
-            widget_name = window.windowTitle().lower().split(" ")[-1]
+            widget_name = window.windowTitle().replace(" ","")
             geom = window.geometry()
             geoms[widget_name] = (geom.x(), geom.y(), geom.width(), geom.height(), window.isMinimized())
 

@@ -28,8 +28,8 @@ def test_view():
 @pytest.mark.parametrize(
     "geometry",
     [
-        ((1, 2, 196, 24, True), (1, 2, 196, 24, True), (1, 2, 196, 24, True), (1, 2, 196, 24, True)),
-        ((1, 2, 196, 24, True), (3, 78, 196, 24, True), (1, 2, 204, 66, False), (12, 342, 196, 24, True)),
+        ((1, 2, 196, 24, True), (1, 2, 196, 24, True), (1, 2, 196, 24, True), (1, 2, 196, 24, True), (1, 2, 196, 24, True)),
+        ((1, 2, 196, 24, True), (3, 78, 196, 24, True), (1, 2, 204, 66, False), (12, 342, 196, 24, True), (5, 6, 200, 28, True)),
     ],
 )
 @patch("rascal2.ui.view.ProjectWidget.show_project_view")
@@ -41,12 +41,12 @@ class TestMDISettings:
         test_view.settings = Settings()
         test_view.setup_mdi()
         test_view.settings.mdi_defaults = MDIGeometries(
-            plots=geometry[0], project=geometry[1], terminal=geometry[2], controls=geometry[3]
+            Plots=geometry[0], Project=geometry[1], Terminal=geometry[2], FittingControls=geometry[3], SlidersView=geometry[4]
         )
         test_view.reset_mdi_layout()
         for window in test_view.mdi.subWindowList():
             # get corresponding MDIGeometries entry for the widget
-            widget_name = window.windowTitle().lower().split(" ")[-1]
+            widget_name = window.windowTitle().replace(" ", "")
             w_geom = window.geometry()
             assert getattr(test_view.settings.mdi_defaults, widget_name) == (
                 w_geom.x(),
@@ -63,7 +63,7 @@ class TestMDISettings:
         widgets_in_order = []
 
         for i, window in enumerate(test_view.mdi.subWindowList()):
-            widgets_in_order.append(window.windowTitle().lower().split(" ")[-1])
+            widgets_in_order.append(window.windowTitle().replace(" ", ""))
             window.setGeometry(*geometry[i][0:4])
             if geometry[i][4] is True:
                 window.showMinimized()
@@ -182,6 +182,7 @@ def test_view_with_mdi():
         mw.mdi.addSubWindow(mw.sliders_view_widget)
         mdi_windows = mw.mdi.subWindowList()
         mw.sliders_view_widget.mdi_holder = mdi_windows[0]
+        mw.enable_elements()
         yield mw
 
 
