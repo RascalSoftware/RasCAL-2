@@ -206,20 +206,27 @@ def get_matlab_engine(engine_ready, engine_output, is_local=False):
 class MatlabHelper:
     """Helper to start MATLAB on another process"""
 
-    def __init__(self):
-        self.error = ""
-        self.ready_event = mp.Event()
-        self.close_event = mp.Event()
-        self.engine_output = None
+    _instance = None
 
-        self.__engine = None
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.ready_event = mp.Event()
+            cls._instance.close_event = mp.Event()
+            cls._instance.engine_output = None
+            cls._instance.__engine = None
+            cls._instance.async_start()
+
+        return cls._instance
 
     def async_start(self):
         """Start MATLAB on a new process"""
-        if not self.get_matlab_path():
-            return
         self.manager = mp.Manager()
         self.engine_output = self.manager.list()
+
+        if not self.get_matlab_path():
+            return
+
         self.process = mp.Process(
             target=run_matlab,
             args=(
@@ -258,20 +265,20 @@ class MatlabHelper:
             Return MATLAB install directory.
         """
         install_dir = ""
-        self.error = ""
+        error = ""
+
         try:
             with open(MATLAB_ARCH_FILE) as path_file:
                 lines = path_file.readlines()
                 if len(lines) == 4:
                     install_dir = pathlib.Path(lines[1]).parent.parent
-                elif len(lines) != 0:
-                    self.error = "Matlab not found, use 'Tools > Setup Matlab' to specify MATLAB location "
+                else:
+                    error = "Matlab not found, use 'Tools > Setup Matlab' to specify MATLAB location "
         except FileNotFoundError:
-            self.error = "Matlab engine could not be found, ensure it is installed properly"
-        if self.error:
+            error = "Matlab engine could not be found, ensure it is installed properly"
+        if error:
+            self.engine_output[:] = []
+            self.engine_output.append(Exception(error))
             logger = logging.getLogger("rascal_log")
-            logger.error(f"{self.error}. Attempt to read MATLAB _arch file failed {MATLAB_ARCH_FILE}.")
+            logger.error(f"{error}. Attempt to read MATLAB _arch file failed {MATLAB_ARCH_FILE}.")
         return str(install_dir)
-
-
-MATLAB_HELPER = MatlabHelper()

@@ -162,12 +162,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.export_results_action.setEnabled(False)
         self.disabled_elements.append(self.export_results_action)
 
-        self.export_plots_action = QtGui.QAction("Export", self)
-        self.export_plots_action.setStatusTip("Export Plots")
-        self.export_plots_action.setIcon(QtGui.QIcon(path_for("export-plots.png")))
-        self.export_plots_action.setEnabled(False)
-        self.disabled_elements.append(self.export_plots_action)
-
         self.settings_action = QtGui.QAction("Settings", self)
         self.settings_action.setStatusTip("Settings")
         self.settings_action.setIcon(QtGui.QIcon(path_for("settings.png")))
@@ -332,7 +326,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.toolbar.addAction(self.save_project_action)
         self.toolbar.addAction(self.undo_action)
         self.toolbar.addAction(self.redo_action)
-        self.toolbar.addAction(self.export_plots_action)
         self.toolbar.addAction(self.settings_action)
         self.toolbar.addAction(self.open_help_action)
 
@@ -447,17 +440,28 @@ class MainWindowView(QtWidgets.QMainWindow):
             element.setEnabled(True)
         self.disabled_elements = []
 
-    def handle_results(self, results):
-        """Handle the results of a RAT run."""
-        self.reset_widgets()
-        self.controls_widget.chi_squared.setText(f"{results.calculationResults.sumChi:.6g}")
+    def handle_results(self, results=None):
+        """Handle the results of a RAT run.
 
-    def reset_widgets(self):
-        """Reset widgets after a run."""
+        Parameters
+        ----------
+        results : Optional[Union[ratapi.outputs.Results, ratapi.outputs.BayesResults]]
+            The calculation results.
+
+        """
         self.controls_widget.run_button.setChecked(False)
+        if results is not None:
+            self.controls_widget.chi_squared.setText(f"{results.calculationResults.sumChi:.6g}")
 
     def set_editing_enabled(self, enabled: bool):
-        """Disable or enable project editing, for example during a run."""
+        """Disable or enable project editing, for example during a run.
+
+        Parameters
+        ----------
+        enabled : bool
+            indicates if project editing is enabled.
+
+        """
         self.controls_widget.fit_settings.setEnabled(enabled)
         self.controls_widget.procedure_dropdown.setEnabled(enabled)
         self.undo_action.setEnabled(enabled)

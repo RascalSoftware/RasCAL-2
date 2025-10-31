@@ -58,16 +58,6 @@ class MockPresenter:
         self.terminal_interrupted = True
 
 
-def test_toggle_fit(controls_widget):
-    """Test that fit settings are hidden when the button is toggled."""
-    wg = controls_widget()
-    assert wg.fit_settings.isVisibleTo(wg)
-    wg.fit_settings_button.toggle()
-    assert not wg.fit_settings.isVisibleTo(wg)
-    wg.fit_settings_button.toggle()
-    assert wg.fit_settings.isVisibleTo(wg)
-
-
 def test_toggle_run_disables(controls_widget):
     """Assert that settings are disabled and Stop button enabled when the run button is pressed."""
     wg = controls_widget()

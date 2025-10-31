@@ -8,6 +8,8 @@ from pathlib import Path
 from pydantic.fields import FieldInfo
 from PyQt6 import QtCore, QtGui, QtWidgets
 
+from rascal2.config import path_for
+
 
 def get_validated_input(field_info: FieldInfo, parent=None) -> QtWidgets.QWidget:
     """Get a validated input widget from Pydantic field info.
@@ -425,6 +427,10 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
         self.lineEdit().installEventFilter(self)
         self.view().viewport().installEventFilter(self)
 
+    def setModel(self, model: QtCore.QAbstractItemModel):
+        super().setModel(model)
+        self.model().dataChanged.connect(self.update_text)
+
     def resizeEvent(self, event) -> None:
         """Resize event handler.
 
@@ -467,15 +473,11 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
     def update_text(self) -> None:
         """Update the displayed text based on selected items."""
         items = self.selected_items()
-
-        if items:
-            text = ", ".join([str(i) for i in items])
-        else:
-            text = ""
-
+        text = ", ".join([str(i) for i in items]) if items else ""
         metrics = QtGui.QFontMetrics(self.lineEdit().font())
         elided_text = metrics.elidedText(text, QtCore.Qt.TextElideMode.ElideRight, self.lineEdit().width())
         self.lineEdit().setText(elided_text)
+        self.lineEdit().setCursorPosition(0)
 
     def addItem(self, text: str, data: str = None) -> None:
         """Add an item to the combo box.
@@ -488,12 +490,31 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
             The associated data. Default is None.
 
         """
+
+        self.model().appendRow(self.create_item(text, data))
+
+    def create_item(self, text: str, data: str = None):
+        """Create standard item for a given entry in the combo box.
+
+        Parameters
+        ----------
+        text : str
+            The text to display.
+        data : str
+            The associated data. Default is None.
+
+        Returns
+        -------
+        QtGui.QStandardItem
+            The standard item for a given entry.
+        """
         item = QtGui.QStandardItem()
         item.setText(text)
         item.setData(data or text)
         item.setFlags(QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
         item.setData(QtCore.Qt.CheckState.Unchecked, QtCore.Qt.ItemDataRole.CheckStateRole)
-        self.model().appendRow(item)
+
+        return item
 
     def addItems(self, texts: list, data_list: list = None) -> None:
         """Add multiple items to the combo box.
@@ -507,8 +528,9 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
 
         """
         data_list = data_list or [None] * len(texts)
-        for text, data in zip(texts, data_list, strict=False):
-            self.addItem(text, data)
+        items = self.model().takeColumn(0)
+        items += [self.create_item(text, data) for text, data in zip(texts, data_list, strict=False)]
+        self.model().appendColumn(items)
 
     def clear(self):
         """Clear all items from the combobox."""
@@ -535,8 +557,8 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
 
         Parameters
         ----------
-        indexes : list
-            A list of indexes to select.
+        indices : list
+            A list of indices to select.
 
         """
         for i in range(self.model().rowCount()):
@@ -585,10 +607,6 @@ class MultiSelectComboBox(QtWidgets.QComboBox):
 class ProgressButton(QtWidgets.QPushButton):
     """Creates a custom button that displays a busy indicator
 
-    Parameters
-    ----------
-    default_text : str
-        normal button text.
     progress_text : str
         text to display when showing progress.
     """
@@ -621,3 +639,79 @@ class ProgressButton(QtWidgets.QPushButton):
         """Hides busy indicator"""
         self.setEnabled(True)
         self.setText(self.default_text)
+
+
+class MultiSelectList(QtWidgets.QWidget):
+    """A custom widget that allows repeat selection from a list of options.
+
+
+    Parameters
+    ----------
+    parent : QWidget or None, default None
+        The parent widget of this widget.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
+        layout = QtWidgets.QHBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+        self.select_menu = QtWidgets.QMenu()
+
+        add_button = QtWidgets.QToolButton(icon=QtGui.QIcon(path_for("create-dark.png")))
+        add_button.setMinimumWidth(40)
+        add_button.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.MinimumExpanding)
+        add_button.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
+        add_button.setMenu(self.select_menu)
+
+        delete_button = QtWidgets.QToolButton(icon=QtGui.QIcon(path_for("delete-dark.png")))
+        delete_button.setMinimumWidth(40)
+        delete_button.clicked.connect(self.delete_items)
+        delete_button.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.MinimumExpanding
+        )
+        self.list = QtWidgets.QListWidget()
+        self.list.setSelectionMode(QtWidgets.QListWidget.SelectionMode.ExtendedSelection)
+        self.list.setFlow(QtWidgets.QListView.Flow.LeftToRight)
+        self.list.setWrapping(True)
+        self.list.setResizeMode(QtWidgets.QListView.ResizeMode.Adjust)
+        self.list.setMinimumWidth(100)
+
+        layout.addWidget(add_button)
+        layout.addWidget(delete_button)
+        layout.addWidget(self.list)
+
+    def update_selection_list(self, items):
+        """Add multiple items to the selection button menu.
+
+        Parameters
+        ----------
+        items : list[str]
+            A list of items to add.
+        """
+        self.select_menu.clear()
+        for item in items:
+            add_item_action = QtGui.QAction(item, self)
+            add_item_action.triggered.connect(lambda ignore, p=item: self.add_item(p))
+            self.select_menu.addAction(add_item_action)
+
+    def add_item(self, name):
+        """Add an item with given name to the list
+
+        Parameters
+        ----------
+        name : str
+            The name to display.
+        """
+        list_item = QtWidgets.QListWidgetItem(name)
+        self.list.addItem(list_item)
+
+    def delete_items(self):
+        """Delete selected items from the list."""
+        selected_items = self.list.selectedItems()
+        for item in selected_items:
+            removed_item = self.list.takeItem(self.list.row(item))
+            del removed_item

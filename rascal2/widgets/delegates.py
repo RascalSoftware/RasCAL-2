@@ -5,7 +5,7 @@ from typing import Literal
 from PyQt6 import QtCore, QtGui, QtWidgets
 from ratapi.utils.enums import TypeOptions
 
-from rascal2.widgets.inputs import AdaptiveDoubleSpinBox, MultiSelectComboBox, get_validated_input
+from rascal2.widgets.inputs import AdaptiveDoubleSpinBox, MultiSelectList, get_validated_input
 
 
 class ValidatedInputDelegate(QtWidgets.QStyledItemDelegate):
@@ -119,6 +119,7 @@ class ValueSpinBoxDelegate(QtWidgets.QStyledItemDelegate):
         # fill in background as otherwise you can see the original View text underneath
         widget.setAutoFillBackground(True)
         widget.setBackgroundRole(QtGui.QPalette.ColorRole.Base)
+        widget.setButtonSymbols(QtWidgets.QSpinBox.ButtonSymbols.NoButtons)
 
         return widget
 
@@ -148,12 +149,6 @@ class ProjectFieldDelegate(QtWidgets.QStyledItemDelegate):
             names = [""] + names
         widget.addItems(names)
         widget.setCurrentText(index.data(QtCore.Qt.ItemDataRole.DisplayRole))
-
-        # make combobox searchable
-        widget.setEditable(True)
-        widget.setInsertPolicy(widget.InsertPolicy.NoInsert)
-        widget.setFrame(False)
-        widget.completer().setCompletionMode(QtWidgets.QCompleter.CompletionMode.PopupCompletion)
 
         return widget
 
@@ -196,21 +191,23 @@ class MultiSelectLayerDelegate(QtWidgets.QStyledItemDelegate):
         self.project_widget = project_widget
 
     def createEditor(self, parent, option, index):
-        widget = MultiSelectComboBox(parent)
+        widget = MultiSelectList(parent)
 
         layers = self.project_widget.draft_project["layers"]
-        widget.addItems([layer.name for layer in layers])
+        widget.update_selection_list([layer.name for layer in layers])
 
         return widget
 
-    def setEditorData(self, editor: MultiSelectComboBox, index):
+    def setEditorData(self, editor: MultiSelectList, index):
         # index.data produces the display string rather than the underlying data,
         # so we split it back into a list here
-        data = index.data(QtCore.Qt.ItemDataRole.DisplayRole).split(", ")
-        layers = self.project_widget.draft_project["layers"]
-
-        editor.select_indices([i for i, layer in enumerate(layers) if layer.name in data])
+        data = index.data(QtCore.Qt.ItemDataRole.DisplayRole)
+        if data:
+            data = data.split(", ")
+            editor.list.clear()
+            for item in data:
+                editor.add_item(item)
 
     def setModelData(self, editor, model, index):
-        data = editor.selected_items()
+        data = [editor.list.item(i).text() for i in range(editor.list.count())]
         model.setData(index, data, QtCore.Qt.ItemDataRole.EditRole)

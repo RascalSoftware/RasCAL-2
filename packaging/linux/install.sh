@@ -151,12 +151,14 @@ echo ""
 echo "Copying executable and other files ..."
 
 GROUP=$(id -gn "$USER")
-cp -ar "./rascal/packaging/bundle/." "${INSTALL_DIR}"
+cp -r "./rascal/packaging/bundle/." "${INSTALL_DIR}"
 if [ "$INSTALL_EXAMPLES" = y ]; then
-    cp -ar "./rascal/examples" "$INSTALL_DIR/examples"
+    cp -r "./rascal/examples" "$INSTALL_DIR/examples"
 fi
-chown -R "$USER:$GROUP" "$INSTALL_DIR"
 
+if [[ $EUID -eq 0 ]]; then
+    chown -R "$USER:$GROUP" "$INSTALL_DIR"
+fi
 
 ARCH_FILE="$INSTALL_DIR/bin/_internal/matlab/engine/_arch.txt"
 if [ -f "$ARCH_FILE" ]; then
@@ -179,7 +181,7 @@ if [ -f "$ARCH_FILE" ]; then
       fi
   fi
 
-  if [[ $EUID -ne 1 ]]; then
+  if [[ $EUID -eq 0 ]]; then
      chmod 664 $ARCH_FILE
   fi
 

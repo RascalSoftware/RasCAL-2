@@ -6,7 +6,7 @@ from pathlib import Path
 from PyQt6 import Qsci, QtGui, QtWidgets
 from ratapi.utils.enums import Languages
 
-from rascal2.config import MATLAB_HELPER
+from rascal2.config import MatlabHelper
 
 
 def edit_file(filename: str, language: Languages, parent: QtWidgets.QWidget):
@@ -35,7 +35,7 @@ def edit_file(filename: str, language: Languages, parent: QtWidgets.QWidget):
 def edit_file_matlab(filename: str):
     """Open a file in MATLAB."""
     try:
-        engine = MATLAB_HELPER.get_local_engine()
+        engine = MatlabHelper().get_local_engine()
     except Exception as ex:
         logger = logging.getLogger("rascal_log")
         logger.error("Attempted to edit a file in MATLAB engine" + repr(ex))

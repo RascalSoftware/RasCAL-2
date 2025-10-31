@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 from rascal2.dialogs.about_dialog import AboutDialog
@@ -13,8 +15,10 @@ def test_about_dialog_construction(about):
     assert about._rascal_label.text() == "information about RASCAL-2"
 
 
-def test_update_info_works(about):
+@patch("rascal2.dialogs.about_dialog.MatlabHelper", autospec=True)
+def test_update_info_works(mock_matlab, about):
     """Check if update rascal info add all necessary information to the rascal label"""
+    mock_matlab.return_value = MagicMock()
     main_windows = MainWindowView()
     about.update_rascal_info(main_windows)
     rascal_info = about._rascal_label.text()

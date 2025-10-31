@@ -9,7 +9,7 @@ import pytest
 from pydantic.fields import FieldInfo
 from PyQt6 import QtWidgets
 
-from rascal2.widgets import AdaptiveDoubleSpinBox, MultiSelectComboBox, get_validated_input
+from rascal2.widgets import AdaptiveDoubleSpinBox, MultiSelectComboBox, MultiSelectList, get_validated_input
 
 
 class MyEnum(StrEnum):
@@ -38,7 +38,7 @@ def test_editor_type(field_info, expected_type, example_data):
 
 
 @pytest.mark.parametrize("selected", ([], [1], [0, 2]))
-def test_multi_select_update(selected):
+def test_multi_select_combo_update(selected):
     """Test that the selected data updates correctly."""
     combobox = MultiSelectComboBox()
     assert combobox.lineEdit().text() == ""
@@ -50,3 +50,25 @@ def test_multi_select_update(selected):
     expected_items = [items[i] for i in selected]
     assert combobox.selected_items() == expected_items
     assert combobox.lineEdit().text() == ", ".join(expected_items)
+
+
+@pytest.mark.parametrize("selected", ([], [1], [0, 2]))
+def test_multi_select_list_update(selected):
+    """Test that the selected data updates correctly."""
+    msl = MultiSelectList()
+    assert msl.select_menu.actions() == []
+    assert msl.list.selectedItems() == []
+    items = ["A", "B", "C"]
+    msl.update_selection_list(items)
+
+    actions = msl.select_menu.actions()
+    expected_items = []
+    for i in selected:
+        actions[i].trigger()
+        expected_items.append(items[i])
+        msl.list.item(msl.list.count() - 1).setSelected(True)
+
+    assert expected_items == [msl.list.item(i).text() for i in range(msl.list.count())]
+    buttons = msl.findChildren(QtWidgets.QToolButton)
+    buttons[1].click()
+    assert msl.list.count() == 0

@@ -54,32 +54,34 @@ def test_edit_incorrect_file(dialog_mock, filepath, caplog):
     assert "Attempted to edit a custom file which does not exist!" in caplog.text
 
 
-def test_edit_file_matlab():
+@patch("rascal2.dialogs.custom_file_editor.MatlabHelper", autospec=True)
+def test_edit_file_matlab(mock_matlab):
     """Assert that a file is passed to the engine when the MATLAB editor is called."""
     mock_engine = MagicMock()
     mock_engine.edit = MagicMock()
     mock_helper = MagicMock()
     mock_helper.get_local_engine = MagicMock(return_value=mock_engine)
-    with patch("rascal2.dialogs.custom_file_editor.MATLAB_HELPER", mock_helper):
-        with tempfile.TemporaryDirectory() as tmp:
-            file = Path(tmp, "testfile.m")
-            file.touch()
-            edit_file_matlab(file)
+    mock_matlab.return_value = mock_helper
+    with tempfile.TemporaryDirectory() as tmp:
+        file = Path(tmp, "testfile.m")
+        file.touch()
+        edit_file_matlab(file)
 
-        mock_helper.get_local_engine.assert_called_once()
-        mock_engine.edit.assert_called_once_with(str(file))
+    mock_helper.get_local_engine.assert_called_once()
+    mock_engine.edit.assert_called_once_with(str(file))
 
 
-def test_edit_no_matlab_engine(caplog):
+@patch("rascal2.dialogs.custom_file_editor.MatlabHelper", autospec=True)
+def test_edit_no_matlab_engine(mock_matlab, caplog):
     """A logging error should be produced if a user tries to edit a file in MATLAB with no engine available."""
     mock_helper = MagicMock()
     mock_helper.get_local_engine = MagicMock(side_effect=ValueError)
-    with patch("rascal2.dialogs.custom_file_editor.MATLAB_HELPER", mock_helper):
-        with tempfile.TemporaryDirectory() as tmp:
-            file = Path(tmp, "testfile.m")
-            file.touch()
-            edit_file_matlab(file)
-        mock_helper.get_local_engine.assert_called_once()
+    mock_matlab.return_value = mock_helper
+    with tempfile.TemporaryDirectory() as tmp:
+        file = Path(tmp, "testfile.m")
+        file.touch()
+        edit_file_matlab(file)
+    mock_helper.get_local_engine.assert_called_once()
 
     errors = [record for record in caplog.get_records("call") if record.levelno == logging.ERROR]
     assert len(errors) == 1

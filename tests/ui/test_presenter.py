@@ -41,7 +41,6 @@ class MockWindowView(QtWidgets.QMainWindow):
         self.terminal_widget = MagicMock()
         self.plot_widget = MagicMock()
         self.handle_results = MagicMock()
-        self.reset_widgets = MagicMock()
         self.logging = MagicMock()
         self.settings = MagicMock()
         self.get_project_folder = lambda: "new path/"
@@ -110,7 +109,6 @@ def test_stop_run(presenter):
     presenter.runner.error = None
     presenter.handle_interrupt()
     presenter.view.logging.info.assert_called_once_with("RAT run interrupted!")
-    presenter.view.reset_widgets.assert_called_once()
 
 
 def test_run_error(presenter):

@@ -5,7 +5,7 @@ from contextlib import suppress
 
 from PyQt6 import QtGui, QtWidgets
 
-from rascal2.config import IMAGES_PATH, MATLAB_HELPER, STATIC_PATH, handle_scaling, log_uncaught_exceptions, path_for
+from rascal2.config import IMAGES_PATH, STATIC_PATH, MatlabHelper, handle_scaling, log_uncaught_exceptions, path_for
 from rascal2.ui.view import MainWindowView
 
 
@@ -25,9 +25,8 @@ def ui_execute():
         palette = app.palette()
         replacements = {
             "@Path": IMAGES_PATH.as_posix(),
-            "@Base": palette.base().color().name(),
             "@Window": palette.window().color().name(),
-            "@Accent": palette.accent().color().name(),
+            "@Highlight": palette.highlight().color().name(),
             "@Midlight": palette.midlight().color().name(),
             "@Text": palette.text().color().name(),
         }
@@ -41,10 +40,11 @@ def ui_execute():
 
 def main():
     multiprocessing.freeze_support()
+    multiprocessing.set_start_method("spawn", force=True)
     sys.excepthook = log_uncaught_exceptions
-    MATLAB_HELPER.async_start()
+    matlab_helper = MatlabHelper()
     exit_code = ui_execute()
-    MATLAB_HELPER.close_event.set()
+    matlab_helper.close_event.set()
     sys.exit(exit_code)
 
 
