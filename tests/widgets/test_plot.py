@@ -36,6 +36,7 @@ def plot_widget():
 def sld_widget():
     sld_widget = RefSLDWidget(view)
     sld_widget.canvas = MagicMock()
+    sld_widget.update_figure_size = MagicMock()
 
     return sld_widget
 

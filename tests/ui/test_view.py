@@ -18,10 +18,21 @@ class MockFigureCanvas(QtWidgets.QWidget):
         pass
 
 
+class MockNavigationToolbar(QtWidgets.QWidget):
+    """A mock navigation toolbar."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self._actions = {"pan": None, "zoom": None}
+
+
 @pytest.fixture
 def test_view():
     """An instance of MainWindowView."""
-    with patch("rascal2.widgets.plot.FigureCanvas", return_value=MockFigureCanvas()):
+    with (
+        patch("rascal2.widgets.plot.FigureCanvasQTAgg", return_value=MockFigureCanvas()),
+        patch("rascal2.widgets.plot.NavigationToolbar2QT", return_value=MockNavigationToolbar()),
+    ):
         yield MainWindowView()
 
 
