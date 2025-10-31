@@ -1,9 +1,10 @@
-"""Widget for the Project window."""
+"""Widget for the Sliders View window."""
 
 from collections.abc import Generator
 from copy import deepcopy
 
 import ratapi
+import ratapi.models
 from pydantic import ValidationError
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtCore import Qt
@@ -81,7 +82,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         """ Create sliders layout with all necessary controls and connections """
 
         main_layout = QtWidgets.QVBoxLayout()
-        main_layout.setSpacing(20)
+        #main_layout.setSpacing(20)
 
         accept_button = QtWidgets.QPushButton("Accept", self, objectName="AcceptButton")
         accept_button.clicked.connect(self.save_changes)
@@ -95,8 +96,9 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
         main_layout.addLayout(button_layout)
 
-        slider = LabeledSlider()
-        main_layout.addWidget(slider)
+        self._create_project_view(main_layout)
+        #slider = LabeledSlider()
+        #main_layout.addWidget(slider)
 
         self.setLayout(main_layout)
 
@@ -106,9 +108,15 @@ class SlidersViewWidget(QtWidgets.QWidget):
          """
 
 
-    def create_project_view(self) -> None:
+    def _create_project_view(self,main_layout) -> None:
+        prop_dictionary = self._parent.project_widget.create_draft_project()
+        for obj in prop_dictionary.values():
+            if isinstance(obj, ratapi.ClassList):
+                for prop in obj:
+                    if prop.fittable:
+                        slider = LabeledSlider(prop)
+                        main_layout.addWidget(slider)
 
-        return
 
     def update_project_view(self, update_tab_index=None) -> None:
         """Updates the project view."""
@@ -160,33 +168,63 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
 
 class LabeledSlider(QtWidgets.QWidget):
-    def __init__(self, minimum=0, maximum=100, step=10, parent=None):
+    def __init__(self, param: ratapi.models.Parameter, parent=None):
         super().__init__(parent)
+        self._prop = param  # hold the property controlled by slider
 
-        self.slider = QtWidgets.QSlider(Qt.Orientation.Horizontal)
-        self.slider.setMinimum(minimum)
-        self.slider.setMaximum(maximum)
-        self.slider.setTickInterval(step)
-        self.slider.setSingleStep(step)
-        self.slider.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBelow)
-        self.slider.setValue((maximum + minimum) // 2)
+        # Properties of slider widget:
+        self._slider_min_idx = 0
+        self._slider_max_idx = 100 # defines accuracy of slider motion
+        self._ticks_step = 10      # sliders ticks
 
-        self.value_label = QtWidgets.QLabel(str(self.slider.value()), alignment=Qt.AlignmentFlag.AlignCenter)
+        # Characteristics of the property value to display
+        self._value_min   = self._prop.min
+        self._value_range = (self._prop.max-self._value_min)
+        # the change in property value per single step slider move
+        self._value_step = self._value_range/self._slider_max_idx
+
+        # Build all sliders widget and arrange them as expected
+        self._slider = self._build_slider(param.value)
+
+        name_label = QtWidgets.QLabel(param.name, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
+        self._value_label = QtWidgets.QLabel(str(f"{param.value:.3g}"), alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+        lab_layout = QtWidgets.QHBoxLayout()
+        lab_layout.addWidget(name_label)
+        lab_layout.addWidget(self._value_label)
 
         # layout for numeric scale below
-        self.scale_layout = QtWidgets.QHBoxLayout()
-        for i in range(minimum, maximum + 1, step):
-            label = QtWidgets.QLabel(str(i))
-            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.scale_layout.addWidget(label)
+        scale_layout = QtWidgets.QHBoxLayout()
+        for idx in range(self._slider_min_idx, self._slider_max_idx, self._ticks_step):
+            tick_value = self._slider_pos_to_value(idx)
+            label = QtWidgets.QLabel(str(f"{tick_value:.2g}"))
+            label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+            scale_layout.addWidget(label)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(self.slider)
-        layout.addLayout(self.scale_layout)
-        layout.addWidget(self.value_label)
+        layout.addLayout(lab_layout)
+        layout.addWidget(self._slider)
+        layout.addLayout(scale_layout)
 
         # signal to update label dynamically
-        self.slider.valueChanged.connect(self._update_value)
+        self._slider.valueChanged.connect(self._update_value)
 
-    def _update_value(self, val):
-        self.value_label.setText(f"Value: {val}")
+    def _value_to_slider_pos(self, value: float) -> int:
+        """Convert double property value into slider position"""
+        return int(round(self._slider_max_idx*(value-self._value_min)/self._value_range,0))
+
+    def _slider_pos_to_value(self,index: int) -> float:
+        """convert double property value into slider position"""
+        return self._value_min + index*self._value_step
+
+    def _build_slider(self,initial_value: float) -> QtWidgets.QSlider:
+        """Construct slider widget with integer scales"""
+
+        slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
+        slider.setMinimum(self._slider_min_idx)
+        slider.setMaximum(self._slider_max_idx)
+        slider.setTickInterval(self._ticks_step)
+        slider.setSingleStep(self._slider_max_idx)
+        slider.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBothSides)
+        slider.setValue(self._value_to_slider_pos(initial_value))
+
+        return slider
