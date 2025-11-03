@@ -11,6 +11,9 @@ from PyQt6.QtCore import Qt
 from ratapi.utils.custom_errors import custom_pydantic_validation_error
 from ratapi.utils.enums import Calculations, Geometries, LayerModels
 
+
+from rascal2.widgets.project.project import create_draft_project
+
 from rascal2.widgets.project.lists import ContrastWidget, DataWidget
 from rascal2.widgets.project.tables import (
     BackgroundsFieldWidget,
@@ -43,7 +46,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         # inherits project geometry on the first view.
         self._parent = parent
 
-        self.create_sliders_layout()
+        self._create_slider_view_layout()
         #self._parent_model = self.parent.presenter.model
 
 
@@ -61,10 +64,13 @@ class SlidersViewWidget(QtWidgets.QWidget):
             self._view_geometry = None
             super().show()
         else:
+            main_layout = self.layout()
+            self._create_sliders_view(main_layout)
             if self._view_geometry is None: # inherit geometry from project view
                 for window in self._parent.mdi.subWindowList():
                     if window.windowTitle() == "Project":
                         self._view_geometry = window.geometry()
+
             self.mdi_holder.setGeometry(self._view_geometry)
             self.mdi_holder.show()
 
@@ -78,7 +84,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
             self.mdi_holder.hide()
 
 
-    def create_sliders_layout(self) -> None:
+    def _create_slider_view_layout(self) -> None:
         """ Create sliders layout with all necessary controls and connections """
 
         main_layout = QtWidgets.QVBoxLayout()
@@ -96,10 +102,6 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
         main_layout.addLayout(button_layout)
 
-        self._create_project_view(main_layout)
-        #slider = LabeledSlider()
-        #main_layout.addWidget(slider)
-
         self.setLayout(main_layout)
 
     def init(self) -> None:
@@ -108,14 +110,24 @@ class SlidersViewWidget(QtWidgets.QWidget):
          """
 
 
-    def _create_project_view(self,main_layout) -> None:
-        prop_dictionary = self._parent.project_widget.create_draft_project()
+    def _create_sliders_view(self,main_layout) -> None:
+
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)  # important: resize content to fit area
+        main_layout.addWidget(scroll)
+        content = QtWidgets.QWidget()
+        scroll.setWidget(content)
+        # --- Add content layout
+        content_layout = QtWidgets.QVBoxLayout(content)
+
+        project = self._parent.presenter.model.project
+        prop_dictionary = create_draft_project(project)
         for obj in prop_dictionary.values():
             if isinstance(obj, ratapi.ClassList):
                 for prop in obj:
-                    if prop.fittable:
+                    if hasattr(prop,"fit") and prop.fit:
                         slider = LabeledSlider(prop)
-                        main_layout.addWidget(slider)
+                        content_layout.addWidget(slider)
 
 
     def update_project_view(self, update_tab_index=None) -> None:
@@ -166,7 +178,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
             else:
                 self._parent.show_or_hide_sliders(False)
 
-
+#=======================================================================================================================
 class LabeledSlider(QtWidgets.QWidget):
     def __init__(self, param: ratapi.models.Parameter, parent=None):
         super().__init__(parent)
@@ -228,3 +240,8 @@ class LabeledSlider(QtWidgets.QWidget):
         slider.setValue(self._value_to_slider_pos(initial_value))
 
         return slider
+
+    def _update_value(self, idx: int)->None:
+        val = self._slider_pos_to_value(idx)
+        self._value_label.setText(str(f"{val:.3g}"))
+        self._prop.value = val
