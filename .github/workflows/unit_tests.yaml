@@ -42,4 +42,3 @@ jobs:
       - name: Install and run tests (MacOS/Windows)
         if: runner.os != 'linux'
         uses: ./.github/actions/windows-mac
-

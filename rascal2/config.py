@@ -13,9 +13,10 @@ from rascal2.settings import Settings, get_global_settings
 if getattr(sys, "frozen", False):
     # we are running in a bundle
     SOURCE_PATH = pathlib.Path(sys.executable).parent.parent
-    if pathlib.Path(SOURCE_PATH / 'MacOS').is_dir():
-        SOURCE_PATH = SOURCE_PATH / 'Resources'
     SITE_PATH = SOURCE_PATH / "bin/_internal"
+    if pathlib.Path(SOURCE_PATH / "MacOS").is_dir():
+        SOURCE_PATH = SOURCE_PATH / "Resources"
+        SITE_PATH = SOURCE_PATH
     EXAMPLES_PATH = SOURCE_PATH / "examples"
 else:
     SOURCE_PATH = pathlib.Path(__file__).parent
@@ -275,7 +276,7 @@ class MatlabHelper:
                 if len(lines) == 4:
                     install_dir = pathlib.Path(lines[1]).parent.parent
                 else:
-                    error = "Matlab not found, use 'Tools > Setup Matlab' to specify MATLAB location "
+                    error = "Matlab not found, specify MATLAB location in settings i.e. 'File > Settings' menu"
         except FileNotFoundError:
             error = "Matlab engine could not be found, ensure it is installed properly"
         if error:

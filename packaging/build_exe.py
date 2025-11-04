@@ -100,9 +100,13 @@ def build_exe():
     shutil.rmtree(work_path)
 
     # Copy resources into installer directory
-    resources = ["static/images", "static/style.css"]
+    resources = ["static/images", "static/style.css", "../examples"]
     shutil.copy(PROJECT_PATH / "LICENSE", dist_path / "LICENSE")
     for resource in resources:
+        if resource == "../examples" and not IS_MAC:
+            # on macOS, examples have to go into resources
+            continue
+
         if IS_MAC:
             dest_path = dist_path / "rascal.app" / "Contents" / "Resources" / resource
         else:
@@ -122,9 +126,13 @@ def build_exe():
 
             ver_file.write(f'!define VERSION "{RASCAL2_VERSION}"')
 
-    arch_path = dist_path / "bin" / "_internal" / "matlab" / "engine" / "_arch.txt"
+    if IS_MAC:
+        arch_path = dist_path / "rascal.app" / "Contents" / "Resources" / "matlab" / "engine" / "_arch.txt"
+    else:
+        arch_path = dist_path / "bin" / "_internal" / "matlab" / "engine" / "_arch.txt"
+
     if arch_path.exists():
-        open(dist_path / "bin" / "_internal" / "matlab" / "engine" / "_arch.txt", "w").close()
+        open(arch_path, "w").close()
     else:
         warnings.warn(
             f"MATLAB engine arch file ({arch_path}) was not found. Ignore if you don't plan to use MATLAB",

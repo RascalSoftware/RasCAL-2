@@ -174,7 +174,7 @@ def test_menu_element_present(test_view, submenu_name):
         ),
         ("&Edit", ["&Undo", "&Redo", "Undo &History"]),
         ("&Windows", ["Tile Windows", "Reset to Default", "Save Current Window Positions"]),
-        ("&Tools", ["Clear Terminal", "", "Setup MATLAB"]),
+        ("&Tools", ["Clear Terminal"]),
         ("&Help", ["&About", "&Help"]),
     ],
 )
