@@ -177,6 +177,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
             content_layout.addWidget(no_label)
             self._sliders['No_properties_to_fit_label'] = no_label
         else:
+            content_layout.setSpacing(0)
             for prop in self._prop_to_change.values():
                 slider = LabeledSlider(prop)
 
@@ -300,7 +301,7 @@ class LabeledSlider(QtWidgets.QFrame):
 
 
     def _build_slider(self,initial_value: float) -> QtWidgets.QSlider:
-        """Construct slider widget with integer scales"""
+        """Construct slider widget with integer scales and ticks in integer positions """
 
         slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
         slider.setMinimum(0)
