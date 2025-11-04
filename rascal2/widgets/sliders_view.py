@@ -212,7 +212,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         for key,prop in self._prop_to_change.items():
             self._prop_to_revert[key].value = prop.value
 
-        # TODO: update project view:
+        # TODO: Re #149 update project view:
         self._parent.show_or_hide_sliders(False)
         return
 #=======================================================================================================================
@@ -222,15 +222,18 @@ class LabeledSlider(QtWidgets.QFrame):
         self._prop = param  # hold the property controlled by slider
         self.slider_name = param.name # name the slider as the property it refers to
 
+        # Defaults for property min/max. Will be overwritten
         self._value_min = 0       # default minimal value property may have
         self._value_range = 100   # default maximal value the property may have
-        # the change in property value per single step slider move
-        self._value_step = 1
+        self._value_step = 1      # the change in property value per single step slider move
+
         # Properties of slider widget:
-        self._slider_min_idx = 0
+        self._num_slider_ticks = 11
         self._slider_max_idx = 100  # defines accuracy of slider motion
         self._ticks_step = 10       # sliders ticks
         self._labels = []           # number of slider labels can not change too
+        self._value_label_format = "{:.3g}"  # format to display slider value
+        self._tick_label_format = "{:.2g}"  # format to display numbers under the sliders ticks
 
         self.update_slider_parameters(param,True)
 
@@ -239,16 +242,18 @@ class LabeledSlider(QtWidgets.QFrame):
 
         # name of given slider can not change. It will be different slider with different name
         name_label = QtWidgets.QLabel(self.slider_name, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
-        self._value_label = QtWidgets.QLabel(str(f"{param.value:.3g}"), alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+        self._value_label = QtWidgets.QLabel(self._value_label_format.format(param.value), alignment=QtCore.Qt.AlignmentFlag.AlignRight)
         lab_layout = QtWidgets.QHBoxLayout()
         lab_layout.addWidget(name_label)
         lab_layout.addWidget(self._value_label)
 
         # layout for numeric scale below
         scale_layout = QtWidgets.QHBoxLayout()
-        for idx in range(self._slider_min_idx, self._slider_max_idx+1, self._ticks_step):
-            tick_value = self._slider_pos_to_value(idx)
-            label = QtWidgets.QLabel(str(f"{tick_value:.2g}"))
+
+        tick_step = self._value_range / self._num_slider_ticks
+        for idx in range(0,self._num_slider_ticks + 1):
+            tick_value = self._value_min+idx*tick_step
+            label = QtWidgets.QLabel(self._tick_label_format.format(tick_value))
             label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
             scale_layout.addWidget(label)
             self._labels.append(label)
@@ -265,6 +270,7 @@ class LabeledSlider(QtWidgets.QFrame):
         self.setFrameShape(QtWidgets.QFrame.Shape.Box)
         self.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
 
+
     def update_slider_parameters(self, param: ratapi.models.Parameter, in_constructor = False):
         """Modifies slider values which may change for this slider from his parent property"""
 
@@ -276,7 +282,13 @@ class LabeledSlider(QtWidgets.QFrame):
 
         if in_constructor:
             return
-        # otherwise, update slider labels
+        # otherwise, update slider's labels
+        self._value_label.setText(self._value_label_format.format(param.value))
+        tick_step = self._value_range / self._num_slider_ticks
+        for idx in range(0,self._num_slider_ticks+1):
+            tick_value = self._value_min+idx*tick_step
+            self._labels[idx].setText(self._tick_label_format.format(tick_value))
+
 
     def _value_to_slider_pos(self, value: float) -> int:
         """Convert double property value into slider position"""
@@ -291,7 +303,7 @@ class LabeledSlider(QtWidgets.QFrame):
         """Construct slider widget with integer scales"""
 
         slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
-        slider.setMinimum(self._slider_min_idx)
+        slider.setMinimum(0)
         slider.setMaximum(self._slider_max_idx)
         slider.setTickInterval(self._ticks_step)
         slider.setSingleStep(self._slider_max_idx)
@@ -302,5 +314,5 @@ class LabeledSlider(QtWidgets.QFrame):
 
     def _update_value(self, idx: int)->None:
         val = self._slider_pos_to_value(idx)
-        self._value_label.setText(str(f"{val:.3g}"))
+        self._value_label.setText(self._value_label_format.format(val))
         self._prop.value = val
