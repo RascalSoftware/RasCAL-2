@@ -360,6 +360,8 @@ class ProjectWidget(QtWidgets.QWidget):
 
     def show_edit_view(self) -> None:
         """Show edit view"""
+
+        self.parent.show_or_hide_sliders(False)  # when you show it again it contents will be updated according to edit changes
         self.update_project_view(0)
         self.setWindowTitle("Edit Project")
         self.parent.controls_widget.run_button.setEnabled(False)

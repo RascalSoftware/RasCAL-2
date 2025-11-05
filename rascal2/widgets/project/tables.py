@@ -231,7 +231,7 @@ class ProjectFieldWidget(QtWidgets.QWidget):
 
         header.setStretchLastSection(True)
 
-    def update_model(self, classlist):
+    def update_model(self, classlist: ratapi.classlist.ClassList):
         """Update the table model to synchronise with the project field."""
         self.model = self.classlist_model(classlist, self)
 
@@ -360,7 +360,7 @@ class ParameterFieldWidget(ProjectFieldWidget):
                     i + 1, delegates.ValidatedInputDelegate(self.model.item_type.model_fields[header], self.table)
                 )
 
-    def update_model(self, classlist):
+    def update_model(self, classlist: ratapi.classlist.ClassList):
         super().update_model(classlist)
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(
@@ -390,17 +390,6 @@ class ParameterFieldWidget(ProjectFieldWidget):
         for i in range(0, self.model.rowCount()):
             if i in self.model.protected_indices:
                 self.table.setIndexWidget(self.model.index(i, 0), None)
-
-class ParameterSliderWidget(QtWidgets.QWidget):
-    """Subclass of field widgets for slider view"""
-    def __init__(self, field: str, parent):
-        super().__init__(parent)
-        self.field = field
-        layout = QtWidgets.QVBoxLayout()
-        contents = QtWidgets.QLabel(" slides for {} have not been implemented".format(field))
-        layout.addWidget(contents)
-        self.setLayout(layout)
-
 
 
 class LayersModel(ClassListTableModel):
