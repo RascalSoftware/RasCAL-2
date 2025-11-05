@@ -45,6 +45,10 @@ class SlidersViewWidget(QtWidgets.QWidget):
            widget list depending on previous state of the widget
         """
 
+        # avoid running init view more than once if sliders are visible anyway
+        if self.isVisible():
+           return
+
         self.init()
         if self.mdi_holder is None:
             self._view_geometry = None
@@ -63,6 +67,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         """Overload parent hide method to deal with mdi container
            hiding slider widgets window
         """
+
         if self.mdi_holder is None:
             super().hide()
         else:
@@ -229,10 +234,10 @@ class LabeledSlider(QtWidgets.QFrame):
         self._value_step = 1      # the change in property value per single step slider move
 
         # Properties of slider widget:
-        self._num_slider_ticks = 11
+        self._num_slider_ticks = 10
         self._slider_max_idx = 100  # defines accuracy of slider motion
         self._ticks_step = 10       # sliders ticks
-        self._labels = []           # number of slider labels can not change too
+        self._labels = []           # list of slider labels describing sliders axis
         self._value_label_format = "{:.3g}"  # format to display slider value
         self._tick_label_format = "{:.2g}"  # format to display numbers under the sliders ticks
 
@@ -252,10 +257,19 @@ class LabeledSlider(QtWidgets.QFrame):
         scale_layout = QtWidgets.QHBoxLayout()
 
         tick_step = self._value_range / self._num_slider_ticks
+        middle_val = self._value_min+0.5*self._value_range
+        middle_min = middle_val - 0.5*tick_step
+        middle_max = middle_val + 0.5*tick_step
         for idx in range(0,self._num_slider_ticks + 1):
             tick_value = self._value_min+idx*tick_step
             label = QtWidgets.QLabel(self._tick_label_format.format(tick_value))
-            label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
+            if tick_value < middle_min:
+                label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
+            elif tick_value > middle_max:
+                label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+            else:
+                label.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+
             scale_layout.addWidget(label)
             self._labels.append(label)
 
