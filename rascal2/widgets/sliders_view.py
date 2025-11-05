@@ -23,7 +23,8 @@ class SlidersViewWidget(QtWidgets.QWidget):
                 An instance of the MainWindowView
         """
         super().__init__()
-        self.mdi_holder = None   # the variable contains reference to mdi container holding this widget
+        self.mdi_holder = None  # the variable contains reference to mdi container holding this widget
+                                # Will be set up in the presenter, which arranges mdi windows for all MainWindow widgets
         self._view_geometry = None  # holder for slider view geometry, created to store slider view location
         # within the main window for subsequent calls to show sliders. Not yet restored from hdd properly
         # inherits project geometry on the first view.
@@ -135,7 +136,6 @@ class SlidersViewWidget(QtWidgets.QWidget):
         """
 
         main_layout = QtWidgets.QVBoxLayout()
-        #main_layout.setSpacing(20)
 
         accept_button = QtWidgets.QPushButton("Accept", self, objectName="AcceptButton")
         accept_button.clicked.connect(self._apply_changes_from_sliders)
@@ -225,23 +225,23 @@ class SlidersViewWidget(QtWidgets.QWidget):
 class LabeledSlider(QtWidgets.QFrame):
     def __init__(self, param: ratapi.models.Parameter, parent=None):
         super().__init__(parent)
+        # Defaults for property min/max. Will be overwritten
+        self._value_min : float   | None = 0     # minimal value property may have
+        self._value_range : float | None = 100   # value range (difference between maximal and minimal values of the property)
+        self._value_step : float  | None = 1     # the change in property value per single step slider move
+
         self._prop = param  # hold the property controlled by slider
         self.slider_name = param.name # name the slider as the property it refers to
 
-        # Defaults for property min/max. Will be overwritten
-        self._value_min = 0       # default minimal value property may have
-        self._value_range = 100   # default maximal value the property may have
-        self._value_step = 1      # the change in property value per single step slider move
+        # Internal properties of slider widget:
+        self._num_slider_ticks : int = 10
+        self._slider_max_idx : int   = 100  # defines accuracy of slider motion
+        self._ticks_step : int       = 10   # Number of sliders ticks
+        self._labels : list          = []   # list of slider labels describing sliders axis
+        self._value_label_format : str = "{:.3g}"  # format to display slider value
+        self._tick_label_format : str  = "{:.2g}"  # format to display numbers under the sliders ticks
 
-        # Properties of slider widget:
-        self._num_slider_ticks = 10
-        self._slider_max_idx = 100  # defines accuracy of slider motion
-        self._ticks_step = 10       # sliders ticks
-        self._labels = []           # list of slider labels describing sliders axis
-        self._value_label_format = "{:.3g}"  # format to display slider value
-        self._tick_label_format = "{:.2g}"  # format to display numbers under the sliders ticks
-
-        self.update_slider_parameters(param,True)
+        self.update_slider_parameters(param,in_constructor=True) # Retrieve slider's parameters from input property
 
         # Build all sliders widget and arrange them as expected
         self._slider = self._build_slider(param.value)
