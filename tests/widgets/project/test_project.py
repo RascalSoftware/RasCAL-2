@@ -187,21 +187,20 @@ def test_save_changes_to_model_project(mock_hide,setup_project_widget):
     """
     Tests that making changes to the project settings
     """
-    project_widget = setup_project_widget
 
-    project_widget.edit_project_button.click()
+    setup_project_widget.edit_project_button.click()
     assert mock_hide.call_count == 1
 
-    project_widget.calculation_combobox.setCurrentText(Calculations.Domains)
-    project_widget.geometry_combobox.setCurrentText(Geometries.SubstrateLiquid)
-    project_widget.model_combobox.setCurrentText(LayerModels.CustomXY)
+    setup_project_widget.calculation_combobox.setCurrentText(Calculations.Domains)
+    setup_project_widget.geometry_combobox.setCurrentText(Geometries.SubstrateLiquid)
+    setup_project_widget.model_combobox.setCurrentText(LayerModels.CustomXY)
 
-    assert project_widget.draft_project["geometry"] == Geometries.SubstrateLiquid
-    assert project_widget.draft_project["model"] == LayerModels.CustomXY
-    assert project_widget.draft_project["calculation"] == Calculations.Domains
+    assert setup_project_widget.draft_project["geometry"] == Geometries.SubstrateLiquid
+    assert setup_project_widget.draft_project["model"] == LayerModels.CustomXY
+    assert setup_project_widget.draft_project["calculation"] == Calculations.Domains
 
-    project_widget.save_changes()
-    assert project_widget.parent.presenter.edit_project.call_count == 1
+    setup_project_widget.save_changes()
+    assert setup_project_widget.parent.presenter.edit_project.call_count == 1
 
 
 def test_cancel_changes_to_model_project(setup_project_widget):
