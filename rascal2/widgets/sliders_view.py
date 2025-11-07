@@ -99,8 +99,8 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
     def _init_properties_for_sliders(self,project : ratapi.Project) -> bool:
         """Take project and copy all properties which have attribute "Fit" == True
-           into dictionary used to build sliders for them. Also set back-up properties
-           dictionary used to reset properties back to their default values if "Cancel"
+           into dictionary used to build sliders for them. Also set back-up
+           dictionary  to reset properties values back to their initial values if "Cancel"
            button is pressed.
 
            Input:
@@ -116,10 +116,13 @@ class SlidersViewWidget(QtWidgets.QWidget):
         if project is None:
             return False
 
-        proj1 = self._parent.project_widget
+        proj = self._parent.project_widget
+        if proj is None:
+            return False
+
         n_updated_properties = 0
         trial_properties = {}
-        for widget in proj1.view_tabs.values():
+        for widget in proj.view_tabs.values():
             for param in widget.tables.values():
                 vis_model = param.model
                 if isinstance(vis_model, ParametersModel):
@@ -131,10 +134,13 @@ class SlidersViewWidget(QtWidgets.QWidget):
                                 n_updated_properties += 1
                         row += 1
 
-        update_properties = n_updated_properties == len(trial_properties) # if all properties of trial dictionary
-        # are in existing dictionary and the number of properties are the same no new/deleted sliders have appeared.
+        # if all properties of trial dictionary are in existing dictionary and the number of properties are the same
+        # no new/deleted sliders have appeared.
         # We will update widgets parameters instead of deleting old and creating  the new one.
-        self._prop_to_change = trial_properties      # References to project properties
+        update_properties = n_updated_properties == len(trial_properties) and len(self._prop_to_change) == n_updated_properties
+
+        # store properties
+        self._prop_to_change = trial_properties
         # remember values for properties controlled by sliders in case if you may want to revert them later
         self._values_to_revert = {name: prop.value for name, prop in trial_properties.items()}
 
@@ -187,10 +193,9 @@ class SlidersViewWidget(QtWidgets.QWidget):
         self._sliders = {}
 
         if len(self._prop_to_change) == 0:
-            no_label = QtWidgets.QLabel("No properties to fit, Nothing to view here")
-            no_label.setObjectName("No_properties_to_fit")
+            no_label = EmptySlider()
             content_layout.addWidget(no_label)
-            self._sliders['No_properties_to_fit_label'] = no_label
+            self._sliders[no_label.slider_name] = no_label
         else:
             content_layout.setSpacing(0)
             for name,prop in self._prop_to_change.items():
@@ -203,8 +208,8 @@ class SlidersViewWidget(QtWidgets.QWidget):
         """Updates the sliders given the project properties to fit are the same
            but their values may be modified
         """
-        for name,slider in self._sliders.items():
-            self._sliders[name].update_slider_parameters(self._prop_to_change[name])
+        for name,prop in self._prop_to_change.items():
+            self._sliders[name].update_slider_parameters(prop)
 
     def show_sliders_view(self) -> None:
         """Show project view"""
@@ -279,14 +284,14 @@ class LabeledSlider(QtWidgets.QFrame):
     def __init__(self, param: SliderChangeHolder):
         """Construct LabeledSlider for a particular property
         Inputs:
-        ------
-        param          --   the property, which value will be modified by slider
-        table_modifier --   Lambda function which sets value obtained from slider into QTModel using overloaded model's
-                            setData method. This method, in turn, recalculates model and display resulting graphics
+        -------
+        param       --  instance of the SliderChangeHolder class, containing reference to the property to be modified by
+                        slider and the reference to visual model, which controls the position and the place of this
+                        property in the correspondent project table.
         """
         super().__init__()
+
         self._prop = param  # hold the property controlled by slider
-        self.slider_name = param.name # name the slider as the property it refers to
 
         # Defaults for property min/max. Will be overwritten
         self._value_min : float   | None = 0     # minimal value property may have
@@ -300,7 +305,10 @@ class LabeledSlider(QtWidgets.QFrame):
         self._labels : list          = []   # list of slider labels describing sliders axis
         self._value_label_format : str = "{:.3g}"  # format to display slider value
         self._tick_label_format : str  = "{:.2g}"  # format to display numbers under the sliders ticks
+        if param is None:
+            return
 
+        self.slider_name = param.name # name the slider as the property it refers to
         self.update_slider_parameters(param,in_constructor=True) # Retrieve slider's parameters from input property
 
         # Build all sliders widget and arrange them as expected
@@ -397,3 +405,33 @@ class LabeledSlider(QtWidgets.QFrame):
         val = self._slider_pos_to_value(idx)
         self._value_label.setText(self._value_label_format.format(val))
         self._prop.update_value_representation(val)
+
+class EmptySlider(LabeledSlider):
+    def __init__(self):
+        """Construct empty slider which have interface of LabeledSlider but no properties
+        associated with it
+        Inputs:
+        ------
+        ignored
+        """
+        super().__init__(None)
+        # Build all sliders widget and arrange them as expected
+        self._slider = self._build_slider(0)
+
+        name_label = QtWidgets.QLabel("No property to fit. No sliders here", alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(name_label)
+        self.slider_name = "Empty Slider"
+        self.setObjectName(self.slider_name)
+
+    def set_slider_position(self,value : float) -> None:
+        return
+
+    def update_slider_parameters(self, param: SliderChangeHolder, in_constructor = False):
+        return
+
+    def _build_slider(self,initial_value: float) -> QtWidgets.QSlider:
+        return None
+
+    def _update_value(self, idx: int)->None:
+        return
