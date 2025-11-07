@@ -254,7 +254,7 @@ class SliderChangeHolder:
         """ Class Initialization function:
         Inputs:
         ------
-        row_number: int - the number of the row in the project table which should be changed
+        row_number: int - the number of the row in the project table, which should be changed
         model: rascal2.widgets.project.tables.ParametersModel - parameters model participating in ParametersTableView
                and containing the parameter (below) to modify here.
         param: ratapi.models.Parameter - the parameter which value field may be changed by slider widget
@@ -262,6 +262,7 @@ class SliderChangeHolder:
         self.param = param
         self._vis_model   = model
         self._row_number = row_number
+        # auxiliary helper variable
         self._param_value = param.value
 
     @property
@@ -287,11 +288,34 @@ class SliderChangeHolder:
         # should be a better way of doing this.
         index = self._vis_model.index(self._row_number, 4)
         self._vis_model.setData(index, val, QtCore.Qt.ItemDataRole.EditRole,recalculate_project)
-        # this is probably unnecessary, as have been already set through the model. But it's fast.
+        # this is probably unnecessary, as have been already set through the model. But it's fast and much more
+        # convenient for testing
         self.param.value = val
 
 
 class LabeledSlider(QtWidgets.QFrame):
+    """ Class describes slider widget which
+        allows modifying rascal property value and its representation
+        in project table view
+    """
+    # Instance attributes generator
+    # Defaults for property min/max. Will be overwritten from actual input property
+    _value_min: float | None = 0  # minimal value property may have
+    _value_max: float | None = 100  # maximal value property may have
+    _value_range: float | None = 100  # value range (difference between maximal and minimal values of the property)
+    _value_step: float | None = 1  # the change in property value per single step slider move
+
+    _labels: list = []  # list of slider labels describing sliders axis
+
+    # Class attributes of slider widget which usually remain the same for all classes. Do not override unless in __init__
+    # method
+    _num_slider_ticks: int = 10
+    _slider_max_idx: int = 100  # defines accuracy of slider motion
+    _ticks_step: int = 10  # Number of sliders ticks
+    _value_label_format: str = "{:.4g}"  # format to display slider value. Should be not too accurate as slider is not very accurate.
+    _tick_label_format: str = "{:.2g}"  # format to display numbers under the sliders ticks
+
+
     def __init__(self, param: SliderChangeHolder):
         """Construct LabeledSlider for a particular property
         Inputs:
@@ -301,22 +325,7 @@ class LabeledSlider(QtWidgets.QFrame):
                         property in the correspondent project table.
         """
         super().__init__()
-
         self._prop = param  # hold the property controlled by slider
-
-        # Defaults for property min/max. Will be overwritten from actual input property
-        self._value_min : float   | None = 0     # minimal value property may have
-        self._value_max : float   | None = 100   # maximal value property may have
-        self._value_range : float | None = 100   # value range (difference between maximal and minimal values of the property)
-        self._value_step : float  | None = 1     # the change in property value per single step slider move
-
-        # Internal properties of slider widget:
-        self._num_slider_ticks : int = 10
-        self._slider_max_idx : int   = 100  # defines accuracy of slider motion
-        self._ticks_step : int       = 10   # Number of sliders ticks
-        self._labels : list          = []   # list of slider labels describing sliders axis
-        self._value_label_format : str = "{:.4g}"  # format to display slider value. Should be not too accurate as slider is not very accurate.
-        self._tick_label_format : str  = "{:.2g}"  # format to display numbers under the sliders ticks
         if param is None:
             return
 
@@ -366,15 +375,18 @@ class LabeledSlider(QtWidgets.QFrame):
         self.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
 
     def set_slider_position(self,value : float) -> None:
-        """Set specified slider position programmatically """
+        """Set specified slider GUI position programmatically """
         idx = self._value_to_slider_pos(value)
         self._slider.setValue(idx)
         self._value_label.setText(self._value_label_format.format(value))
 
     def update_slider_parameters(self, param: SliderChangeHolder, in_constructor = False):
         """Modifies slider values which may change for this slider from his parent property"""
-
         self._prop = param
+        # Changing RASCAL property this slider modifies is currently prohibited,
+        # as property connected through table model and project parameters:
+        if self._prop.name != self.slider_name:
+            raise RuntimeError("Existing slider may be responsible for only one property")
         # Characteristics of the property value to display
         self._value_min = self._prop.param.min
         self._value_max = self._prop.param.max
