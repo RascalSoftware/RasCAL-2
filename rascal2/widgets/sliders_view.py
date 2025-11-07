@@ -2,11 +2,9 @@
 
 from copy import deepcopy
 
-import ratapi
 import ratapi.models
 from PyQt6 import QtCore,QtWidgets
 
-import rascal2.widgets.project
 from rascal2.widgets.project.tables import (
     ParametersModel
 )
@@ -35,12 +33,11 @@ class SlidersViewWidget(QtWidgets.QWidget):
         # inherits project geometry on the first view.
         self._parent = parent  # reference to main view widget which holds sliders view
 
-        self._prop_to_revert ={}  # dictionary of original properties with fit parameter "true" but have to be restored
-        # back into original project if cancel button is pressed
-        self._prop_to_change = {}  # dictionary of references to properties with fit parameter "true" to build sliders
-        # for and allow changes when slider is moved. Their values are reflected in project and affect plots
-        self._gui_modifiers = {}   # dictionary containing lamda functions which modifies child of QTAbstractDataModel
-        # and causes
+        self._values_to_revert ={}  # dictionary of values of original properties with fit parameter "true"
+        # to be restored back into original project if cancel button is pressed.
+        self._prop_to_change = {}  # dictionary of references to SliderUpdateHoler classes containing properties
+        # with fit parameter "true" to build sliders for and allow changes when slider is moved.
+        # Their values are reflected in project and affect plots.
 
         self._sliders = {}   # dictionary of the sliders used to display fittable values
         # create initial slider view layout and everything else which depends on it
@@ -119,34 +116,27 @@ class SlidersViewWidget(QtWidgets.QWidget):
         if project is None:
             return False
 
-        trial_properties = {}
-        n_existing_properties = 0
-        for field_name in ratapi.Project.model_fields:
-            attr = getattr(project, field_name)
-            if isinstance(attr, ratapi.ClassList): # ClassList contains the parameters which may be fittable
-                param_list = attr.data
-                for prop in param_list:
-                    if isinstance(prop,ratapi.models.Parameter) and prop.fit:
-                        trial_properties[prop.name] = prop
-                        if prop.name in self._prop_to_change:
-                            n_existing_properties += 1
-
-        update_properties = n_existing_properties == len(trial_properties) # if all properties of trial dictionary
-        # are in existing dictionary, we will update widgets instead of adding the new one
-        self._prop_to_change = trial_properties               # References to project properties
-        self._prop_to_revert = deepcopy(self._prop_to_change) # Copy of initial values of project properties
-
         proj1 = self._parent.project_widget
+        n_updated_properties = 0
+        trial_properties = {}
         for widget in proj1.view_tabs.values():
             for param in widget.tables.values():
-                mod = param.model
-                if isinstance(mod, ParametersModel):
+                vis_model = param.model
+                if isinstance(vis_model, ParametersModel):
                     row = 0
-                    for model_param in mod.classlist:
+                    for model_param in vis_model.classlist:
                         if model_param.fit:
-                            # value is defined in column 4 so we do need to change it eventually
-                            self._gui_modifiers[model_param.name] = lambda val, model = mod, the_row = row: model.setData(model.index(the_row, 4),val,QtCore.Qt.ItemDataRole.EditRole)
+                            trial_properties[model_param.name] = SliderChangeHolder(row_number=row,model=vis_model,param=model_param)
+                            if model_param.name in self._prop_to_change:
+                                n_updated_properties += 1
                         row += 1
+
+        update_properties = n_updated_properties == len(trial_properties) # if all properties of trial dictionary
+        # are in existing dictionary and the number of properties are the same no new/deleted sliders have appeared.
+        # We will update widgets parameters instead of deleting old and creating  the new one.
+        self._prop_to_change = trial_properties      # References to project properties
+        # remember values for properties controlled by sliders in case if you may want to revert them later
+        self._values_to_revert = {name: prop.value for name, prop in trial_properties.items()}
 
         return update_properties
 
@@ -204,14 +194,14 @@ class SlidersViewWidget(QtWidgets.QWidget):
         else:
             content_layout.setSpacing(0)
             for name,prop in self._prop_to_change.items():
-                slider = LabeledSlider(prop,self._gui_modifiers[name])
+                slider = LabeledSlider(prop)
 
                 self._sliders[prop.name] = slider
                 content_layout.addWidget(slider)
 
     def _update_sliders_widgets(self) -> None:
         """Updates the sliders given the project properties to fit are the same
-           but their values may be upgraded
+           but their values may be modified
         """
         for name,slider in self._sliders.items():
             self._sliders[name].update_slider_parameters(self._prop_to_change[name])
@@ -222,12 +212,15 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
     def _cancel_changes_from_sliders(self):
         """Cancel changes to properties obtained from sliders
-        and hide sliders view.
+           and hide sliders view.
         """
-        # as here our properties to change refer directly to project properties
-        # we modify their values directly
-        for key,prop in self._prop_to_revert.items():
-            self._prop_to_change[key].value = prop.value
+        last_key = next(reversed(self._values_to_revert))
+        for key,val in self._values_to_revert.items():
+            self._sliders[key].set_slider_position(val)
+            if key == last_key:
+                self._prop_to_change[key].update_value_representation(val,recalculate_project=True)
+            else:
+                self._prop_to_change[key].update_value_representation(val,recalculate_project=False)
 
         self._parent.show_or_hide_sliders(do_show_sliders=False)
 
@@ -236,14 +229,54 @@ class SlidersViewWidget(QtWidgets.QWidget):
            and make them permanent
         """
         for key,prop in self._prop_to_change.items():
-            self._prop_to_revert[key].value = prop.value
+            self._values_to_revert[key] = prop.value
 
-        # TODO: Re #149 update project view:
         self._parent.show_or_hide_sliders(False)
         return
+
 #=======================================================================================================================
+class SliderChangeHolder:
+    """ Helper class containing information necessary for update
+       ratapi parameter and its representation in project table view
+       when slider position is changed
+    """
+    def __init__(self, row_number: int,model : ParametersModel, param : ratapi.models.Parameter) -> None:
+        """ Class Initialization function:
+        Inputs:
+        ------
+        row_number: int - the number of the row in the project table which should be changed
+        model: rascal2.widgets.project.tables.ParametersModel - parameters model participating in ParametersTableView
+              and containing the parameter (below) to modify here.
+        param: ratapi.models.Parameter - the parameter which value field may be changed by slider widget
+        """
+        self.param = param
+        self._vis_model   = model
+        self._row_number = row_number
+        self._param_value = param.value
+
+    @property
+    def name(self):
+        return self.param.name
+
+    @property
+    def value(self) -> float:
+        return self._param_value
+    @value.setter
+    def value(self, value: float) -> None:
+        self._param_value = value
+        setattr(self.param,"value",value)
+
+    def update_value_representation(self,val : float, recalculate_project = True) -> None:
+        # value for ratapi parameter is defined in column 4 and this number is hardwired here
+        # should be a better way of doing this.
+        index = self._vis_model.index(self._row_number, 4)
+        self._vis_model.setData(index, val, QtCore.Qt.ItemDataRole.EditRole,recalculate_project)
+        # this is probably unnecessary, as have been already set through the model
+        self.param.value = val
+
+
 class LabeledSlider(QtWidgets.QFrame):
-    def __init__(self, param: ratapi.models.Parameter, table_modifier=None):
+    def __init__(self, param: SliderChangeHolder):
         """Construct LabeledSlider for a particular property
         Inputs:
         ------
@@ -252,14 +285,13 @@ class LabeledSlider(QtWidgets.QFrame):
                             setData method. This method, in turn, recalculates model and display resulting graphics
         """
         super().__init__()
-        self._gui_modifier = table_modifier
+        self._prop = param  # hold the property controlled by slider
+        self.slider_name = param.name # name the slider as the property it refers to
+
         # Defaults for property min/max. Will be overwritten
         self._value_min : float   | None = 0     # minimal value property may have
         self._value_range : float | None = 100   # value range (difference between maximal and minimal values of the property)
         self._value_step : float  | None = 1     # the change in property value per single step slider move
-
-        self._prop = param  # hold the property controlled by slider
-        self.slider_name = param.name # name the slider as the property it refers to
 
         # Internal properties of slider widget:
         self._num_slider_ticks : int = 10
@@ -313,13 +345,20 @@ class LabeledSlider(QtWidgets.QFrame):
         self.setFrameShape(QtWidgets.QFrame.Shape.Box)
         self.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
 
+    def set_slider_position(self,value : float) -> None:
+        """Set specified slider position programmatically """
+        idx = self._value_to_slider_pos(value)
+        self._slider.setValue(idx)
+        self._value_label.setText(self._value_label_format.format(value))
 
-    def update_slider_parameters(self, param: ratapi.models.Parameter, in_constructor = False):
+
+    def update_slider_parameters(self, param: SliderChangeHolder, in_constructor = False):
         """Modifies slider values which may change for this slider from his parent property"""
 
+        self._prop = param
         # Characteristics of the property value to display
-        self._value_min = self._prop.min
-        self._value_range = (self._prop.max - self._value_min)
+        self._value_min = self._prop.param.min
+        self._value_range = (self._prop.param.max - self._value_min)
         # the change in property value per single step slider move
         self._value_step = self._value_range / self._slider_max_idx
 
@@ -341,7 +380,6 @@ class LabeledSlider(QtWidgets.QFrame):
         """convert double property value into slider position"""
         return self._value_min + index*self._value_step
 
-
     def _build_slider(self,initial_value: float) -> QtWidgets.QSlider:
         """Construct slider widget with integer scales and ticks in integer positions """
 
@@ -358,6 +396,4 @@ class LabeledSlider(QtWidgets.QFrame):
     def _update_value(self, idx: int)->None:
         val = self._slider_pos_to_value(idx)
         self._value_label.setText(self._value_label_format.format(val))
-        self._prop.value = val
-        if not self._gui_modifier is None:
-            self._gui_modifier(val)
+        self._prop.update_value_representation(val)

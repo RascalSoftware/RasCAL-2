@@ -75,7 +75,7 @@ class ClassListTableModel(QtCore.QAbstractTableModel):
         elif role == QtCore.Qt.ItemDataRole.CheckStateRole and self.index_header(index) == "fit":
             return QtCore.Qt.CheckState.Checked if data else QtCore.Qt.CheckState.Unchecked
 
-    def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole) -> bool:
+    def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole,recalculate_proj = True) -> bool:
         if role == QtCore.Qt.ItemDataRole.EditRole or role == QtCore.Qt.ItemDataRole.CheckStateRole:
             row = index.row()
             param = self.index_header(index)
@@ -93,7 +93,7 @@ class ClassListTableModel(QtCore.QAbstractTableModel):
                     return False
                 if not self.edit_mode:
                     # recalculate plots if value was changed
-                    recalculate = self.index_header(index) == "value"
+                    recalculate = self.index_header(index) == "value"  and recalculate_proj
                     self.parent.update_project(recalculate)
                 self.dataChanged.emit(index, index)
                 return True
