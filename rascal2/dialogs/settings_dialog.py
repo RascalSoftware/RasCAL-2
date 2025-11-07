@@ -165,7 +165,10 @@ class MatlabSetupTab(QtWidgets.QWidget):
 
     def open_folder_selector(self) -> None:
         """Open folder selector."""
-        folder_name = QtWidgets.QFileDialog.getExistingDirectory(self, "Select MATLAB Directory", ".")
+        if platform.system() == "Darwin":
+            folder_name = QtWidgets.QFileDialog.getOpenFileName(self, "Select MATLAB Application", filter="(*.app)")[0]
+        else:
+            folder_name = QtWidgets.QFileDialog.getExistingDirectory(self, "Select MATLAB Directory", ".")
         if folder_name:
             self.matlab_path.setText(folder_name)
             self.changed = True
@@ -186,7 +189,13 @@ class MatlabSetupTab(QtWidgets.QWidget):
 
             path_file.truncate(0)
 
-            arch = "win64" if platform.system() == "Windows" else "glnxa64"
+            if platform.system() == "Windows":
+                arch = "win64"
+            elif platform.system() == "Darwin":
+                arch = "maca64" if platform.mac_ver()[-1] == "arm64" else "maci64"
+            else:
+                arch = "glnxa64"
+
             path_file.writelines(
                 [
                     f"{arch}\n",
