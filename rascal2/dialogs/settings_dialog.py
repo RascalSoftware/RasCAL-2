@@ -1,5 +1,11 @@
+import pathlib
+import platform
+import sys
+from contextlib import suppress
+
 from PyQt6 import QtCore, QtWidgets
 
+from rascal2.config import MATLAB_ARCH_FILE, MatlabHelper
 from rascal2.settings import Settings, SettingsGroups, delete_local_settings
 from rascal2.widgets.inputs import get_validated_input
 
@@ -21,12 +27,17 @@ class SettingsDialog(QtWidgets.QDialog):
         self.setMinimumHeight(400)
 
         self.settings = parent.settings.copy()
+        self.matlab_tab = MatlabSetupTab()
         self.reset_dialog = None
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
 
-        tab_widget = QtWidgets.QTabWidget()
-        tab_widget.addTab(SettingsTab(self, SettingsGroups.General), SettingsGroups.General)
+        self.tab_widget = QtWidgets.QTabWidget()
+        self.tab_widget.addTab(SettingsTab(self, SettingsGroups.General), SettingsGroups.General)
+        self.tab_widget.addTab(SettingsTab(self, SettingsGroups.Plotting), SettingsGroups.Plotting)
+        self.tab_widget.addTab(self.matlab_tab, "Matlab")
+        self.tab_widget.setTabVisible(0, parent.presenter.model.save_path != "")
+        self.tab_widget.setTabVisible(1, parent.presenter.model.save_path != "")
 
         self.reset_button = QtWidgets.QPushButton("Reset to Defaults", self)
         self.reset_button.clicked.connect(self.reset_default_settings)
@@ -42,7 +53,7 @@ class SettingsDialog(QtWidgets.QDialog):
         button_layout.addWidget(self.cancel_button)
 
         main_layout = QtWidgets.QVBoxLayout()
-        main_layout.addWidget(tab_widget)
+        main_layout.addWidget(self.tab_widget)
         main_layout.addLayout(button_layout)
         self.setLayout(main_layout)
         self.setWindowTitle("Settings")
@@ -50,7 +61,9 @@ class SettingsDialog(QtWidgets.QDialog):
     def update_settings(self) -> None:
         """Accept the changed settings"""
         self.parent().settings = self.settings
-        self.parent().settings.save(self.parent().presenter.model.save_path)
+        if self.parent().presenter.model.save_path:
+            self.parent().settings.save(self.parent().presenter.model.save_path)
+        self.matlab_tab.set_matlab_paths()
         self.accept()
 
     def reset_default_settings(self) -> None:
@@ -108,3 +121,79 @@ class SettingsTab(QtWidgets.QWidget):
             The name of the setting to be modified by this slot
         """
         setattr(self.settings, setting, self.widgets[setting].get_data())
+
+
+class MatlabSetupTab(QtWidgets.QWidget):
+    def __init__(self):
+        """Dialog to adjust Matlab location settings."""
+        super().__init__()
+
+        form_layout = QtWidgets.QGridLayout()
+        form_layout.setVerticalSpacing(10)
+        form_layout.setHorizontalSpacing(0)
+
+        label_layout = QtWidgets.QHBoxLayout()
+        label_layout.addWidget(QtWidgets.QLabel("Current Matlab Directory:"))
+        label_layout.addStretch(1)
+        self.matlab_path = QtWidgets.QLineEdit(self)
+        self.matlab_path.setText(MatlabHelper().get_matlab_path())
+        self.matlab_path.setReadOnly(True)
+        self.matlab_path.setPlaceholderText("Select MATLAB directory")
+        self.matlab_path.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
+
+        browse_button = QtWidgets.QPushButton("Browse", objectName="BrowseButton")
+        browse_button.clicked.connect(self.open_folder_selector)
+        form_layout.addWidget(self.matlab_path, 0, 0, 1, 4)
+        form_layout.addWidget(browse_button, 0, 4, 1, 1)
+
+        main_layout = QtWidgets.QVBoxLayout()
+        if not getattr(sys, "frozen", False):
+            self.setEnabled(False)
+            main_layout.addWidget(
+                QtWidgets.QLabel(
+                    "<b>The current matlab path can only be changed when running in bundle.<br/>"
+                    "For non-bundle, You can change which Matlab to use by pip installing a <br/>"
+                    "different version of matlabengine."
+                )
+            )
+        main_layout.addLayout(label_layout)
+        main_layout.addLayout(form_layout)
+        main_layout.addStretch(1)
+
+        self.setLayout(main_layout)
+        self.changed = False
+
+    def open_folder_selector(self) -> None:
+        """Open folder selector."""
+        folder_name = QtWidgets.QFileDialog.getExistingDirectory(self, "Select MATLAB Directory", ".")
+        if folder_name:
+            self.matlab_path.setText(folder_name)
+            self.changed = True
+
+    def set_matlab_paths(self):
+        """Update MATLAB paths in arch file"""
+        if not self.changed:
+            return
+
+        should_init = False
+        with suppress(FileNotFoundError), open(MATLAB_ARCH_FILE, "r+") as path_file:
+            install_dir = pathlib.Path(self.matlab_path.text())
+            if not getattr(sys, "frozen", False):
+                return
+
+            if len(path_file.readlines()) == 0:
+                should_init = True
+
+            path_file.truncate(0)
+
+            arch = "win64" if platform.system() == "Windows" else "glnxa64"
+            path_file.writelines(
+                [
+                    f"{arch}\n",
+                    str(install_dir / f"bin/{arch}\n"),
+                    str(install_dir / f"extern/engines/python/dist/matlab/engine/{arch}\n"),
+                    str(install_dir / f"extern/bin/{arch}\n"),
+                ]
+            )
+        if should_init:
+            MatlabHelper().async_start()

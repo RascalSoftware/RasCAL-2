@@ -219,16 +219,35 @@ ProjectWidget QPushButton{
      PlotWidget Styles
 *****************************/
 
-PlotWidget #PlotSettingsButton:checked {
-    icon: url(@Path/hide-settings.png);
+#BayesResultSummary {
+    border: 2px solid #8f8f91;
+    border-radius: 3px;
+    padding: 8px;
+    margin-bottom: 10px;
+    background-color: #dadbde;
 }
 
-PlotWidget #PlotSettingsButton:unchecked {
-    icon: url(@Path/settings.png);
-    border: 1px solid #8f8f91;
-    border-radius: 3px;
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                      stop: 0 #f6f7fa, stop: 1 #dadbde);
+#InteractButton {
+    background-color: #dadbde;
+}
+
+#InteractButton:hover,
+#InteractButton:focus {
+    color: black;
+    border-color: #3874f2;
+}
+
+#InteractButton:hover{
+    background-color: #e0eef9;
+}
+
+#InteractButton:pressed {
+    background-color: @Highlight;
+}
+
+#InteractButton:checked {
+    background-color: @Highlight;
+    border-color: #3874f2;
 }
 
 /*****************************

@@ -5,7 +5,7 @@ from inspect import isclass
 
 import matplotlib
 import ratapi
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 from rascal2.config import path_for
@@ -22,20 +22,16 @@ class PlotWidget(QtWidgets.QWidget):
         self.parent.presenter.model.results_updated.connect(self.update_plots)
 
         layout = QtWidgets.QVBoxLayout()
-
-        button_layout = QtWidgets.QHBoxLayout()
-        self.bayes_plots_button = QtWidgets.QPushButton("View Bayes plots")
-        self.bayes_plots_button.setVisible(False)
-        self.bayes_plots_button.pressed.connect(self.show_bayes_plots)
-
-        button_layout.addWidget(self.bayes_plots_button)
-        button_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.reflectivity_plot = RefSLDWidget(self)
-        layout.addLayout(button_layout)
         layout.addWidget(self.reflectivity_plot)
         layout.setSpacing(0)
-        layout.setContentsMargins(0, 5, 0, 20)
+        layout.setContentsMargins(0, 5, 0, 5)
         self.setLayout(layout)
+
+        self.bayes_plots_button = QtWidgets.QPushButton("View Bayes plots", objectName="InteractButton")
+        self.bayes_plots_button.setVisible(False)
+        self.bayes_plots_button.pressed.connect(self.show_bayes_plots)
+        self.reflectivity_plot.interaction_layout.addWidget(self.bayes_plots_button)
 
     def update_plots(self):
         """Update the plot widget to match the parent model."""
@@ -67,16 +63,13 @@ class BayesPlotsDialog(QtWidgets.QDialog):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.parent_model = parent.presenter.model
+        self.parent = parent
         self.resize_timer = 0
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowFlag(QtCore.Qt.WindowType.WindowMaximizeButtonHint, True)
 
         layout = QtWidgets.QVBoxLayout()
-        self.result_summary = QtWidgets.QLabel()
-        self.result_summary.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-
         self.plot_tabs = QtWidgets.QTabWidget()
 
         plots = {
@@ -90,7 +83,6 @@ class BayesPlotsDialog(QtWidgets.QDialog):
             self.add_tab(plot_type, plot_widget)
 
         self.sync_and_update_model()
-        layout.addWidget(self.result_summary)
         layout.addWidget(self.plot_tabs)
         self.setLayout(layout)
         self.setModal(True)
@@ -117,12 +109,13 @@ class BayesPlotsDialog(QtWidgets.QDialog):
 
         self.plot_tabs.addTab(plot_widget, plot_type)
 
-        if self.parent_model.results is not None:
-            plot_widget.plot(self.parent_model.project, self.parent_model.results)
+        if self.parent.presenter.model.results is not None:
+            plot_widget.plot(self.parent.presenter.model.project, self.parent.presenter.model.results)
+            plot_widget.show_result_summary(self.parent.presenter.model.results)
 
     def sync_and_update_model(self):
         """Set panel plot parameter comboboxes to the same model so changing parameters in one updates the others."""
-        if self.parent_model.results is None:
+        if self.parent.presenter.model.results is None:
             return
 
         model = QtGui.QStandardItemModel()
@@ -131,14 +124,8 @@ class BayesPlotsDialog(QtWidgets.QDialog):
             widget = self.plot_tabs.widget(i)
             widget.param_combobox.setModel(model)
             widget.redraw_plot = i != 3
-        widget.param_combobox.addItems(self.parent_model.results.fitNames)
-        widget.param_combobox.select_items(self.parent_model.results.fitNames)
-        samples = self.parent_model.results.nestedSamplerOutput.nestSamples
-        if samples.shape != (1, 2):
-            self.result_summary.setText(
-                f"log (Z) = {self.parent_model.results.nestedSamplerOutput.logZ:.5f}\n"
-                f"log (Z) error = {self.parent_model.results.nestedSamplerOutput.logZErr:.5f}"
-            )
+        widget.param_combobox.addItems(self.parent.presenter.model.results.fitNames)
+        widget.param_combobox.select_items(self.parent.presenter.model.results.fitNames)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -185,6 +172,8 @@ class AbstractPlotWidget(QtWidgets.QWidget):
 
         main_layout = QtWidgets.QHBoxLayout()
 
+        self.result_summary = QtWidgets.QLabel(objectName="BayesResultSummary")
+        self.result_summary.hide()
         plot_settings = self.make_control_layout()
 
         export_button = QtWidgets.QPushButton("Export plot...")
@@ -223,7 +212,7 @@ class AbstractPlotWidget(QtWidgets.QWidget):
 
         self.blit_plot = None
         self.figure = self.make_figure()
-        self.canvas = FigureCanvas(
+        self.canvas = FigureCanvasQTAgg(
             self.figure,
         )
         self.figure.set_facecolor("none")
@@ -236,9 +225,61 @@ class AbstractPlotWidget(QtWidgets.QWidget):
         scroll_area.setWidget(self.canvas)
         scroll_area.setWidgetResizable(True)
 
+        central_layout = QtWidgets.QVBoxLayout()
+        central_layout.setContentsMargins(0, 0, 0, 0)
+        self.interaction_layout = self.make_interaction_layout()
+        if self.interaction_layout is not None:
+            central_layout.addLayout(self.interaction_layout)
+        central_layout.addWidget(scroll_area)
+
         main_layout.addLayout(sidebar, 0)
-        main_layout.addWidget(scroll_area, 4)
+        main_layout.addLayout(central_layout, 4)
         self.setLayout(main_layout)
+
+    def update_figure_size(self):
+        """Update figure size to match canvas size."""
+        sx = self.canvas.width() * self.canvas._device_pixel_ratio / self.figure.dpi
+        sy = self.canvas.height() * self.canvas._device_pixel_ratio / self.figure.dpi
+        self.figure.set_size_inches(sx, sy)
+
+    def show_result_summary(self, results):
+        """Show log z and log z error in summary label"""
+        if isinstance(results, ratapi.outputs.BayesResults):
+            samples = results.nestedSamplerOutput.nestSamples
+            if samples.shape != (1, 2):
+                self.result_summary.setText(
+                    f"log (Z) = {results.nestedSamplerOutput.logZ:.5f}\n"
+                    f"log (Z) error = {results.nestedSamplerOutput.logZErr:.5f}"
+                )
+                self.result_summary.setVisible(True)
+
+    def make_interaction_layout(self):
+        """Make layout with pan, zoom, and reset button.
+
+        Returns
+        -------
+        QtWidgets.QLayout
+            The control panel layout for the plot.
+
+        """
+        self.toolbar = NavigationToolbar2QT(self.canvas)
+        self.toolbar.hide()
+        reset_button = QtWidgets.QToolButton(objectName="InteractButton")
+        reset_button.setToolTip("Reset plot")
+        reset_button.setIcon(QtGui.QIcon(path_for("refresh.png")))
+        reset_button.clicked.connect(lambda: self.toolbar.home())
+        pan_button = QtWidgets.QToolButton(objectName="InteractButton")
+        pan_button.setDefaultAction(self.toolbar._actions["pan"])
+        zoom_button = QtWidgets.QToolButton(objectName="InteractButton")
+        zoom_button.setDefaultAction(self.toolbar._actions["zoom"])
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        button_layout.addWidget(reset_button)
+        button_layout.addWidget(pan_button)
+        button_layout.addWidget(zoom_button)
+        button_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+
+        return button_layout
 
     def toggle_settings(self, toggled_on: bool):
         """Toggles the visibility of the plot controls"""
@@ -297,7 +338,10 @@ class AbstractPlotWidget(QtWidgets.QWidget):
         """Save the figure to a file."""
         filepath, accepted = QtWidgets.QFileDialog.getSaveFileName(self, "Export Plot", filter="Image File (*.png)")
         if accepted:
-            self.figure.savefig(filepath)
+            settings = self.parent.parent.settings
+            sx = self.figure.get_figwidth() * self.figure.dpi
+            dpi = self.figure.dpi if sx > 1920 else 1920 // self.figure.get_figwidth()
+            self.figure.savefig(filepath, facecolor=settings.export_background_colour, dpi=dpi)
 
 
 class RefSLDWidget(AbstractPlotWidget):
@@ -414,6 +458,8 @@ class RefSLDWidget(AbstractPlotWidget):
             return
 
         show_legend = self.show_legend.isChecked() if self.current_plot_data.contrastNames else False
+        self.update_figure_size()
+        self.figure.tight_layout()
         ratapi.plotting.plot_ref_sld_helper(
             self.current_plot_data,
             self.figure,
@@ -425,7 +471,6 @@ class RefSLDWidget(AbstractPlotWidget):
             show_legend=show_legend,
             shift_value=self.slider.value(),
         )
-        self.figure.tight_layout(pad=1)
         self.canvas.draw()
 
     def plot_with_blit(self, data: ratapi.events.PlotEventData | None = None):
@@ -449,6 +494,7 @@ class RefSLDWidget(AbstractPlotWidget):
         show_legend = self.show_legend.isChecked() if self.current_plot_data.contrastNames else False
         shift_value = self.slider.value()
         if self.blit_plot is None:
+            self.update_figure_size()
             self.blit_plot = ratapi.plotting.BlittingSupport(
                 self.current_plot_data,
                 self.figure,
@@ -480,6 +526,7 @@ class ShadedPlotWidget(AbstractPlotWidget):
         self.ci_param_box.addItems(["65%", "95%"])
         self.ci_param_box.currentTextChanged.connect(lambda: self.draw_plot())
 
+        control_layout.addWidget(self.result_summary)
         control_layout.addWidget(QtWidgets.QLabel("Confidence Interval"))
         control_layout.addWidget(self.ci_param_box)
 
@@ -539,6 +586,7 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
         select_deselect_row.addWidget(deselect_button)
 
         self.update_label = QtWidgets.QLabel()
+        layout.addWidget(self.result_summary)
         layout.addWidget(self.update_label)
         param_layout.addWidget(QtWidgets.QLabel("Parameters"))
         param_layout.addWidget(self.param_combobox)
@@ -548,6 +596,9 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
         layout.addLayout(param_layout)
 
         return layout
+
+    def make_interaction_layout(self):
+        """Make layout with pan, zoom, and reset button."""
 
     def plot(self, _, results):
         self.results = results
@@ -565,9 +616,7 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
 
     def resize_canvas(self):
         self.canvas.setMinimumSize(900, 600)
-        sx = self.canvas.width() * self.canvas._device_pixel_ratio / self.figure.dpi
-        sy = self.canvas.height() * self.canvas._device_pixel_ratio / self.figure.dpi
-        self.figure.set_size_inches(sx, sy)
+        self.update_figure_size()
 
     def clear(self):
         self.canvas.figure.clear()
