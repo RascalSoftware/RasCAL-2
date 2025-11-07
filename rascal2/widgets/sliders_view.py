@@ -136,10 +136,10 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
         # if all properties of trial dictionary are in existing dictionary and the number of properties are the same
         # no new/deleted sliders have appeared.
-        # We will update widgets parameters instead of deleting old and creating  the new one.
+        # We will update widgets parameters instead of deleting old and creating the new one.
         update_properties = n_updated_properties == len(trial_properties) and len(self._prop_to_change) == n_updated_properties
 
-        # store properties
+        # store information about sliders
         self._prop_to_change = trial_properties
         # remember values for properties controlled by sliders in case if you may want to revert them later
         self._values_to_revert = {name: prop.value for name, prop in trial_properties.items()}
@@ -187,7 +187,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
             content = scroll.findChild(QtWidgets.QWidget, "Scroll_content")
             content_layout = content.layout()
 
-        # We are adding new sliders, so delete all previous ones
+        # We are adding new sliders, so delete all previous ones. Update is done in another branch.
         for slider in self._sliders.values():
             slider.deleteLater()
         self._sliders = {}
@@ -219,7 +219,12 @@ class SlidersViewWidget(QtWidgets.QWidget):
         """Cancel changes to properties obtained from sliders
            and hide sliders view.
         """
-        last_key = next(reversed(self._values_to_revert))
+        if len(self._values_to_revert) == 0:
+            last_key = None
+        else:      # does not work with empty dictionary
+            last_key = next(reversed(self._values_to_revert))
+
+
         for key,val in self._values_to_revert.items():
             self._sliders[key].set_slider_position(val)
             if key == last_key:
@@ -251,7 +256,7 @@ class SliderChangeHolder:
         ------
         row_number: int - the number of the row in the project table which should be changed
         model: rascal2.widgets.project.tables.ParametersModel - parameters model participating in ParametersTableView
-              and containing the parameter (below) to modify here.
+               and containing the parameter (below) to modify here.
         param: ratapi.models.Parameter - the parameter which value field may be changed by slider widget
         """
         self.param = param
@@ -272,11 +277,17 @@ class SliderChangeHolder:
         setattr(self.param,"value",value)
 
     def update_value_representation(self,val : float, recalculate_project = True) -> None:
+        """ given new value, update project table and property representations
+            No check are necessary as value comes from slider or back-up cache
+
+            recalculate_project -- if True, run ratapi calculations and updates
+            results representation.
+         """
         # value for ratapi parameter is defined in column 4 and this number is hardwired here
         # should be a better way of doing this.
         index = self._vis_model.index(self._row_number, 4)
         self._vis_model.setData(index, val, QtCore.Qt.ItemDataRole.EditRole,recalculate_project)
-        # this is probably unnecessary, as have been already set through the model
+        # this is probably unnecessary, as have been already set through the model. But it's fast.
         self.param.value = val
 
 
@@ -293,8 +304,9 @@ class LabeledSlider(QtWidgets.QFrame):
 
         self._prop = param  # hold the property controlled by slider
 
-        # Defaults for property min/max. Will be overwritten
+        # Defaults for property min/max. Will be overwritten from actual input property
         self._value_min : float   | None = 0     # minimal value property may have
+        self._value_max : float   | None = 100   # maximal value property may have
         self._value_range : float | None = 100   # value range (difference between maximal and minimal values of the property)
         self._value_step : float  | None = 1     # the change in property value per single step slider move
 
@@ -303,7 +315,7 @@ class LabeledSlider(QtWidgets.QFrame):
         self._slider_max_idx : int   = 100  # defines accuracy of slider motion
         self._ticks_step : int       = 10   # Number of sliders ticks
         self._labels : list          = []   # list of slider labels describing sliders axis
-        self._value_label_format : str = "{:.3g}"  # format to display slider value
+        self._value_label_format : str = "{:.4g}"  # format to display slider value. Should be not too accurate as slider is not very accurate.
         self._tick_label_format : str  = "{:.2g}"  # format to display numbers under the sliders ticks
         if param is None:
             return
@@ -359,14 +371,14 @@ class LabeledSlider(QtWidgets.QFrame):
         self._slider.setValue(idx)
         self._value_label.setText(self._value_label_format.format(value))
 
-
     def update_slider_parameters(self, param: SliderChangeHolder, in_constructor = False):
         """Modifies slider values which may change for this slider from his parent property"""
 
         self._prop = param
         # Characteristics of the property value to display
         self._value_min = self._prop.param.min
-        self._value_range = (self._prop.param.max - self._value_min)
+        self._value_max = self._prop.param.max
+        self._value_range = (self._value_max - self._value_min)
         # the change in property value per single step slider move
         self._value_step = self._value_range / self._slider_max_idx
 
@@ -379,14 +391,16 @@ class LabeledSlider(QtWidgets.QFrame):
             tick_value = self._value_min+idx*tick_step
             self._labels[idx].setText(self._tick_label_format.format(tick_value))
 
-
     def _value_to_slider_pos(self, value: float) -> int:
         """Convert double property value into slider position"""
         return int(round(self._slider_max_idx*(value-self._value_min)/self._value_range,0))
 
     def _slider_pos_to_value(self,index: int) -> float:
         """convert double property value into slider position"""
-        return self._value_min + index*self._value_step
+        value = self._value_min + index*self._value_step
+        if value > self._value_max: # This should not happen but may due to round-off errors
+            value = self._value_max
+        return value
 
     def _build_slider(self,initial_value: float) -> QtWidgets.QSlider:
         """Construct slider widget with integer scales and ticks in integer positions """
@@ -406,6 +420,7 @@ class LabeledSlider(QtWidgets.QFrame):
         self._value_label.setText(self._value_label_format.format(val))
         self._prop.update_value_representation(val)
 
+
 class EmptySlider(LabeledSlider):
     def __init__(self):
         """Construct empty slider which have interface of LabeledSlider but no properties
@@ -418,7 +433,7 @@ class EmptySlider(LabeledSlider):
         # Build all sliders widget and arrange them as expected
         self._slider = self._build_slider(0)
 
-        name_label = QtWidgets.QLabel("No property to fit. No sliders here", alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
+        name_label = QtWidgets.QLabel("No property to fit within the project. No sliders constructed", alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(name_label)
         self.slider_name = "Empty Slider"
