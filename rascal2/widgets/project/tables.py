@@ -75,7 +75,11 @@ class ClassListTableModel(QtCore.QAbstractTableModel):
         elif role == QtCore.Qt.ItemDataRole.CheckStateRole and self.index_header(index) == "fit":
             return QtCore.Qt.CheckState.Checked if data else QtCore.Qt.CheckState.Unchecked
 
-    def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole,recalculate_proj = True) -> bool:
+    def setData(self, index : QtCore.QModelIndex, value : float, role=QtCore.Qt.ItemDataRole.EditRole,recalculate_proj = True) -> bool:
+        """ Implement abstract setData method of QAbstractTableModel with additional variable
+            recalculate_proj -- Set it to False when modifying a bunch of properties in a loop, setting
+            it to True for the last value to recalculate project and update all table dependent widgets.
+        """
         if role == QtCore.Qt.ItemDataRole.EditRole or role == QtCore.Qt.ItemDataRole.CheckStateRole:
             row = index.row()
             param = self.index_header(index)
