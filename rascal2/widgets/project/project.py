@@ -542,6 +542,7 @@ class ProjectTabWidget(QtWidgets.QWidget):
                 self.tables[field] = DataWidget(field, self)
             else:
                 self.tables[field] = ProjectFieldWidget(field, self)
+            self.tables[field].setObjectName(field)
             layout.addWidget(self.tables[field])
 
         scroll_area = QtWidgets.QScrollArea()
