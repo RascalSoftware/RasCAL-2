@@ -135,7 +135,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
                             slider_info = SliderChangeHolder(row_number=row,model=vis_model,param=model_param)
                             trial_properties[model_param.name] = slider_info
                             this_prop_change_delegates = ProjectFieldWidget.tables_changed_delegate_for_sliders[param.objectName()]
-                            # connect delegates which propagate parameters changed in tables to correspondant sliders
+                            # connect delegates which propagate parameters changed in tables to correspondent sliders
                             for key,delegate_list in this_prop_change_delegates.items():
                                 for delegate in delegate_list:
                                     delegate.editingFinished_InformSliders.connect(
@@ -252,7 +252,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
 
         for key,val in self._values_to_revert.items():
-            self._sliders[key].set_slider_position(val)
+            self._sliders[key].set_slider_gui_position(val)
             if key == last_key:
                 self._prop_to_change[key].update_value_representation(val,recalculate_project=True)
             else:
@@ -315,7 +315,9 @@ class SliderChangeHolder:
 class LabeledSlider(QtWidgets.QFrame):
     """ Class describes slider widget which
         allows modifying rascal property value and its representation
-        in project table view
+        in project table view. 
+        It also connects with table view and accepts changes in min/max/value
+        obtained from  property.
     """
     # Instance attributes generator
     # Defaults for property min/max. Will be overwritten from actual input property
@@ -330,8 +332,8 @@ class LabeledSlider(QtWidgets.QFrame):
     _num_slider_ticks: int = 10
     _slider_max_idx: int = 100  # defines accuracy of slider motion
     _ticks_step: int = 10  # Number of sliders ticks
-    _value_label_format: str = "{:.4g}"  # format to display slider value. Should be not too accurate as slider is not very accurate.
-    _tick_label_format: str = "{:.2g}"  # format to display numbers under the sliders ticks
+    _value_label_format: str = "{:.4g}"  # format to display slider value. Should be not too accurate as slider accuracy is 1/100
+    _tick_label_format: str = "{:.2g}"   # format to display numbers under the sliders ticks
 
 
     def __init__(self, param: SliderChangeHolder):
@@ -393,7 +395,7 @@ class LabeledSlider(QtWidgets.QFrame):
         self.setFrameShape(QtWidgets.QFrame.Shape.Box)
         self.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
 
-    def set_slider_position(self,value : float) -> None:
+    def set_slider_gui_position(self,value : float) -> None:
         """Set specified slider GUI position programmatically """
         idx = self._value_to_slider_pos(value)
         self._slider.setValue(idx)
@@ -411,8 +413,10 @@ class LabeledSlider(QtWidgets.QFrame):
 
     def update_slider_display_from_property(self,in_constructor: bool) -> None:
         """Change internal sliders parameters and their representation in GUI
-           if internal sliders parameters have changed
+           if property, underlying sliders parameters have changed.
         """
+        # note the order of methods in comparison. Should be as here, as may break
+        # property updates in constructor otherwise.
         if not (self._updated_from_rascal_property() or in_constructor):
             return
 
@@ -423,7 +427,7 @@ class LabeledSlider(QtWidgets.QFrame):
         if in_constructor:
             return
         # otherwise, update slider's labels
-        self.set_slider_position(self._value)
+        self.set_slider_gui_position(self._value)
         tick_step = self._value_range / self._num_slider_ticks
         for idx in range(0,self._num_slider_ticks+1):
             tick_value = self._value_min+idx*tick_step
@@ -471,8 +475,11 @@ class LabeledSlider(QtWidgets.QFrame):
 
     def _update_value(self, idx: int)->None:
         val = self._slider_pos_to_value(idx)
+        self._value = val
         self._value_label.setText(self._value_label_format.format(val))
         self._prop.update_value_representation(val)
+        # This should not be necessary as already done through setters above
+        self._prop.param.value = val # but fast and nice for tests
 
 
 class EmptySlider(LabeledSlider):
@@ -493,7 +500,7 @@ class EmptySlider(LabeledSlider):
         self.slider_name = "Empty Slider"
         self.setObjectName(self.slider_name)
 
-    def set_slider_position(self,value : float) -> None:
+    def set_slider_gui_position(self,value : float) -> None:
         return
 
     def update_slider_parameters(self, param: SliderChangeHolder, in_constructor = False):
