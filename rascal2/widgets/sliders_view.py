@@ -325,8 +325,6 @@ class LabeledSlider(QtWidgets.QFrame):
     _value_range: float | None = 100  # value range (difference between maximal and minimal values of the property)
     _value_step: float | None = 1  # the change in property value per single step slider move
 
-    _labels: list = []  # list of slider labels describing sliders axis
-
     # Class attributes of slider widget which usually remain the same for all classes. Do not override unless in __init__
     # method
     _num_slider_ticks: int = 10
@@ -348,6 +346,7 @@ class LabeledSlider(QtWidgets.QFrame):
         self._prop = param  # hold the property controlled by slider
         if param is None:
             return
+        self._labels = []  # list of slider labels describing sliders axis
 
         self.slider_name = param.name # name the slider as the property it refers to. Sets up once here.
         self.update_slider_parameters(param,in_constructor=True) # Retrieve slider's parameters from input property
@@ -357,7 +356,7 @@ class LabeledSlider(QtWidgets.QFrame):
 
         # name of given slider can not change. It will be different slider with different name
         name_label = QtWidgets.QLabel(self.slider_name, alignment=QtCore.Qt.AlignmentFlag.AlignLeft)
-        self._value_label = QtWidgets.QLabel(self._value_label_format.format(param.value), alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+        self._value_label = QtWidgets.QLabel(self._value_label_format.format(self._value), alignment=QtCore.Qt.AlignmentFlag.AlignRight)
         lab_layout = QtWidgets.QHBoxLayout()
         lab_layout.addWidget(name_label)
         lab_layout.addWidget(self._value_label)
@@ -370,7 +369,7 @@ class LabeledSlider(QtWidgets.QFrame):
         middle_min = middle_val - 0.5*tick_step
         middle_max = middle_val + 0.5*tick_step
         for idx in range(0,self._num_slider_ticks + 1):
-            tick_value = self._value_min+idx*tick_step
+            tick_value = self._value_min+idx*tick_step  # it is not _slider_idx_to_value as tick step there is different
             label = QtWidgets.QLabel(self._tick_label_format.format(tick_value))
             if tick_value < middle_min:
                 label.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
@@ -406,12 +405,14 @@ class LabeledSlider(QtWidgets.QFrame):
         # Changing RASCAL property this slider modifies is currently prohibited,
         # as property connected through table model and project parameters:
         if self._prop.name != self.slider_name:
-            # This should not happen but if it is, ensure failure
+            # This should not happen but if it is, ensure failure. Something wrong with logic.
             raise RuntimeError("Existing slider may be responsible for only one property")
         self.update_slider_display_from_property(in_constructor)
 
     def update_slider_display_from_property(self,in_constructor: bool) -> None:
-        # Characteristics of the property value to display
+        """Change internal sliders parameters and their representation in GUI
+           if internal sliders parameters have changed
+        """
         if not (self._updated_from_rascal_property() or in_constructor):
             return
 
@@ -422,7 +423,7 @@ class LabeledSlider(QtWidgets.QFrame):
         if in_constructor:
             return
         # otherwise, update slider's labels
-        self._value_label.setText(self._value_label_format.format(self._value))
+        self.set_slider_position(self._value)
         tick_step = self._value_range / self._num_slider_ticks
         for idx in range(0,self._num_slider_ticks+1):
             tick_value = self._value_min+idx*tick_step
@@ -440,7 +441,7 @@ class LabeledSlider(QtWidgets.QFrame):
             self._value_max = self._prop.param.max
             updated = True
         if self._value     != self._prop.param.value:
-            self._value = self._prop.param.values
+            self._value = self._prop.param.value
             updated = True
         return updated
 
