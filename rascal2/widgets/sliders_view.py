@@ -124,6 +124,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
         n_updated_properties = 0
         trial_properties = {}
+
         for widget in proj.view_tabs.values():
             for param in widget.tables.values():
                 vis_model = param.model
@@ -133,14 +134,16 @@ class SlidersViewWidget(QtWidgets.QWidget):
                         if hasattr(model_param,"fit") and model_param.fit: # Parameters model should probably always have fit attribute, but let's be on the safe side.
                             slider_info = SliderChangeHolder(row_number=row,model=vis_model,param=model_param)
                             trial_properties[model_param.name] = slider_info
-                            this_prop_change_delegates = ProjectFieldWidget.tables_changed_delegate_for_sliders[param.objectName()]
+                            this_prop_change_delegates = param.get_item_delegates(["min","max","value"])
                             # connect delegates which propagate parameters changed in tables to correspondent sliders
-                            for key,delegates_set in this_prop_change_delegates.items():
-                                for delegate in delegates_set:
-                                    delegate.editingFinished_InformSliders.connect(
-                                        lambda index,field, slider_name = model_param.name:
-                                        self._table_edit_finished_change_slider(index,field,slider_name)
-                                    )
+                            # Can be improved by using item index as these delegates emit "edited" signal for the whole
+                            # column, but the signal contains the row index
+                            for delegate in this_prop_change_delegates:
+                                delegate.editingFinished_InformSliders.connect(
+                                    lambda index,field, slider_name = model_param.name:
+                                    self._table_edit_finished_change_slider(index,field,slider_name)
+                                )
+
                             if model_param.name in self._prop_to_change:
                                 n_updated_properties += 1
                         row += 1

@@ -167,34 +167,10 @@ class ProjectFieldWidget(QtWidgets.QWidget):
     """
 
     classlist_model = ClassListTableModel
-    # Expose delegates which react on changes in a table to sliders which depend on these change
-    tables_changed_delegate_for_sliders = {}  # set it in the set_delegates method
 
     # the model can change and disconnect, so we re-connect it
     # to a signal here on each change
     edited = QtCore.pyqtSignal()
-
-
-    @classmethod
-    def add_sliders_delegate(cls,table_name: str, var_name: str, delegate) -> None:
-        """Add the delegate responsible for editing the fields which are reflected by sliders to
-           the dictionary of delegates exposed to sliders widget
-           Inputs:
-           table_name : str -- the name of the table the delegate is for
-           var_name : str   -- the name of variable exposed to sliders (min,max, value)
-           delegate : ValueSpinBox or ValidatedInputDelegate
-                            -- the reference to the appropriate delegate itself
-        """
-        if table_name not in cls.tables_changed_delegate_for_sliders.keys():
-            slider_params = {}
-        else:
-            slider_params = cls.tables_changed_delegate_for_sliders[table_name]
-        # why do we need to talk to all delegates and can not emit proper signals from a global class method?
-        if var_name not in slider_params.keys():
-            slider_params[var_name] = {delegate}
-        else:
-            slider_params[var_name].add(delegate)
-        cls.tables_changed_delegate_for_sliders[table_name] = slider_params
 
     def __init__(self, field: str, parent):
         super().__init__(parent)
@@ -282,9 +258,18 @@ class ProjectFieldWidget(QtWidgets.QWidget):
                 i + self.model.col_offset,
                 delegate
             )
-            if header in ["min", "value", "max"]:
-                ProjectFieldWidget.add_sliders_delegate(self.field, header, delegate)
 
+    def get_item_delegates(self,fields_list : list):
+        """ Return list of delegates attached to the fields
+            with the names provided as input
+        """
+        dlgts = []
+        for i, header in enumerate(self.model.headers):
+            if header in fields_list:
+                dlgts.append(
+                    self.table.itemDelegateForColumn(i+self.model.col_offset)
+                )
+        return dlgts
 
     def append_item(self):
         """Append an item to the model if the model exists."""
@@ -390,8 +375,6 @@ class ParameterFieldWidget(ProjectFieldWidget):
             if header in ["min", "value", "max"]:
                 delegate = delegates.ValueSpinBoxDelegate(header, self.table)
                 self.table.setItemDelegateForColumn(i + 1, delegate)
-
-                ProjectFieldWidget.add_sliders_delegate(self.field, header, delegate)
             else:
                 self.table.setItemDelegateForColumn(
                     i + 1, delegates.ValidatedInputDelegate(self.model.item_type.model_fields[header], self.table)
