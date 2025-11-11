@@ -46,7 +46,6 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
         self.init()
 
-
     def show(self):
         """Overload parent show method to deal with mdi container
            showing sliders widget window. Also sets up or updates sliders
@@ -136,8 +135,8 @@ class SlidersViewWidget(QtWidgets.QWidget):
                             trial_properties[model_param.name] = slider_info
                             this_prop_change_delegates = ProjectFieldWidget.tables_changed_delegate_for_sliders[param.objectName()]
                             # connect delegates which propagate parameters changed in tables to correspondent sliders
-                            for key,delegate_list in this_prop_change_delegates.items():
-                                for delegate in delegate_list:
+                            for key,delegates_set in this_prop_change_delegates.items():
+                                for delegate in delegates_set:
                                     delegate.editingFinished_InformSliders.connect(
                                         lambda index,field, slider_name = model_param.name:
                                         self._table_edit_finished_change_slider(index,field,slider_name)
@@ -264,11 +263,10 @@ class SlidersViewWidget(QtWidgets.QWidget):
         """Apply changes obtained from sliders to the project
            and make them permanent
         """
-        for key,prop in self._prop_to_change.items():
-            self._values_to_revert[key] = prop.value
-
+        # Changes have already been applied so just hide sliders widget
         self._parent.show_or_hide_sliders(False)
         return
+
 
 #=======================================================================================================================
 class SliderChangeHolder:
@@ -311,6 +309,7 @@ class SliderChangeHolder:
         # should be a better way of doing this.
         index = self._vis_model.index(self._row_number, 4)
         self._vis_model.setData(index, val, QtCore.Qt.ItemDataRole.EditRole,recalculate_project)
+
 
 class LabeledSlider(QtWidgets.QFrame):
     """ Class describes slider widget which
@@ -396,7 +395,8 @@ class LabeledSlider(QtWidgets.QFrame):
         self.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
 
     def set_slider_gui_position(self,value : float) -> None:
-        """Set specified slider GUI position programmatically """
+        """Set specified slider GUI position programmatically
+        """
         idx = self._value_to_slider_pos(value)
         self._slider.setValue(idx)
         self._value_label.setText(self._value_label_format.format(value))
@@ -414,6 +414,8 @@ class LabeledSlider(QtWidgets.QFrame):
     def update_slider_display_from_property(self,in_constructor: bool) -> None:
         """Change internal sliders parameters and their representation in GUI
            if property, underlying sliders parameters have changed.
+
+           Bound to event received from delegate when table values are changed.
         """
         # note the order of methods in comparison. Should be as here, as may break
         # property updates in constructor otherwise.
@@ -450,18 +452,20 @@ class LabeledSlider(QtWidgets.QFrame):
         return updated
 
     def _value_to_slider_pos(self, value: float) -> int:
-        """Convert double property value into slider position"""
+        """Convert double value into slider position"""
         return int(round(self._slider_max_idx*(value-self._value_min)/self._value_range,0))
 
     def _slider_pos_to_value(self,index: int) -> float:
-        """convert double property value into slider position"""
+        """Convert slider GUI position (index) into double value"""
         value = self._value_min + index*self._value_step
-        if value > self._value_max: # This should not happen but may due to round-off errors
+        if value > self._value_max: # This should not happen but do occur due to round-off errors
             value = self._value_max
         return value
 
     def _build_slider(self,initial_value: float) -> QtWidgets.QSlider:
-        """Construct slider widget with integer scales and ticks in integer positions """
+        """Construct slider widget with integer scales and ticks in integer positions
+           Part of slider constructor
+         """
 
         slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
         slider.setMinimum(0)
@@ -474,6 +478,7 @@ class LabeledSlider(QtWidgets.QFrame):
         return slider
 
     def _update_value(self, idx: int)->None:
+        """ Bound in constructor to GUI slider position changed event"""
         val = self._slider_pos_to_value(idx)
         self._value = val
         self._value_label.setText(self._value_label_format.format(val))
@@ -506,8 +511,5 @@ class EmptySlider(LabeledSlider):
     def update_slider_parameters(self, param: SliderChangeHolder, in_constructor = False):
         return
 
-    def _build_slider(self,initial_value: float) -> QtWidgets.QSlider:
-        return None
-
-    def _update_value(self, idx: int)->None:
+    def update_slider_display_from_property(self,in_constructor: bool) -> None:
         return

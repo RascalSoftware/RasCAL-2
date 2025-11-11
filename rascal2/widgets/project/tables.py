@@ -191,9 +191,9 @@ class ProjectFieldWidget(QtWidgets.QWidget):
             slider_params = cls.tables_changed_delegate_for_sliders[table_name]
         # why do we need to talk to all delegates and can not emit proper signals from a global class method?
         if var_name not in slider_params.keys():
-            slider_params[var_name] = [delegate]
+            slider_params[var_name] = {delegate}
         else:
-            slider_params[var_name].append(delegate)
+            slider_params[var_name].add(delegate)
         cls.tables_changed_delegate_for_sliders[table_name] = slider_params
 
     def __init__(self, field: str, parent):
