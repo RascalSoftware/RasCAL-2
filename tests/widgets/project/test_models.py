@@ -254,18 +254,71 @@ def test_parameter_flags(param_model, prior_type, protected):
                         assert item_flags & QtCore.Qt.ItemFlag.ItemIsEditable
 
 
-def test_param_item_delegates(param_classlist):
-    """Test that parameter models have the expected item delegates."""
+@pytest.fixture
+def widget_with_delegates():
     widget = ParameterFieldWidget("Test", parent)
     widget.parent = MagicMock()
-    widget.update_model(param_classlist([]))
 
-    for column, header in enumerate(widget.model.headers, start=1):
+    param =   [ ratapi.models.Parameter() for i in [0, 1, 2] ]
+    class_list = ratapi.ClassList(param)
+    widget.update_model(class_list)
+
+    return widget
+
+def test_param_item_delegates(widget_with_delegates):
+    """Test that parameter models have the expected item delegates."""
+
+    for column, header in enumerate(widget_with_delegates.model.headers, start=1):
         if header in ["min", "value", "max"]:
-            assert isinstance(widget.table.itemDelegateForColumn(column), delegates.ValueSpinBoxDelegate)
+            assert isinstance(widget_with_delegates.table.itemDelegateForColumn(column), delegates.ValueSpinBoxDelegate)
         else:
-            assert isinstance(widget.table.itemDelegateForColumn(column), delegates.ValidatedInputDelegate)
+            assert isinstance(widget_with_delegates.table.itemDelegateForColumn(column), delegates.ValidatedInputDelegate)
 
+def test_param_item_delegates_exposed_to_sliders(widget_with_delegates):
+    """Test that parameter models provides the item delegates related to slides """
+
+    assert len(widget_with_delegates.tables_changed_delegate_for_sliders) == 1
+    assert list(widget_with_delegates.tables_changed_delegate_for_sliders.keys()) == ["Test"]
+    delegates_set = widget_with_delegates.tables_changed_delegate_for_sliders["Test"]
+    assert isinstance(delegates_set,dict)
+    assert list(delegates_set.keys()) == ["min","value","max"]
+    for delegate in delegates_set.values():
+        assert isinstance(list(delegate)[0],delegates.ValueSpinBoxDelegate)
+
+
+class fake_editor(object):
+    """A class with have only one method providing value. Used in test below"""
+    def value(self):
+        return 42
+
+class MockReceiver(object):
+    """Test object which receives signals sent to slider   """
+    def __init__(self):
+        self.cache_state = []
+        self.call_count = 0
+
+    def receive_signal(self,index,value):
+        self.call_count += 1
+        self.cache_state = (index,value)
+
+def test_param_item_delegates_emit_to_slider_subscribers(widget_with_delegates):
+    """Test if edit_finished signals emitted to subscribing sliders """
+    sr = MockReceiver()
+
+    delegates_set = widget_with_delegates.tables_changed_delegate_for_sliders["Test"]
+    for delegate in delegates_set.values():
+        the_delegate = list(delegate)[0]
+        the_delegate.editingFinished_InformSliders.connect(lambda idx,tab_name : sr.receive_signal(idx,tab_name))
+
+    index = widget_with_delegates.model.index(1,1)
+    fed = fake_editor()
+    n_calls = 0
+    for col_name,delegate in delegates_set.items():
+        the_delegate = list(delegate)[0]
+        the_delegate.setModelData(fed,widget_with_delegates.model, index)
+        n_calls += 1
+        assert sr.call_count == n_calls
+        assert sr.cache_state == (index,col_name)
 
 def test_hidden_bayesian_columns(param_classlist):
     """Test that Bayes columns are hidden when procedure is not Bayesian."""
