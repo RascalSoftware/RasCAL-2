@@ -244,3 +244,37 @@ def test_export_results(presenter):
 
     presenter.export_results()
     presenter.view.get_save_file.assert_not_called()
+
+
+@patch("rascal2.ui.presenter.write_result_to_zipped_csvs")
+def test_export_fits(mock_write_result, presenter):
+    """Test that results can be exported ."""
+    test_zip_file = "test.zip"
+    presenter.view.get_save_file = MagicMock(return_value=test_zip_file)
+
+    presenter.export_fits()
+    mock_write_result.assert_called_once_with(test_zip_file, presenter.model.results)
+
+    # If we do not return a save file, don't export
+    mock_write_result.reset_mock()
+    presenter.view.get_save_file = MagicMock(return_value=None)
+
+    presenter.export_fits()
+    mock_write_result.assert_not_called()
+
+    # If there is an OSError, log the error
+    error = OSError("Test Error")
+    mock_write_result.side_effect = error
+    presenter.view.get_save_file = MagicMock(return_value=test_zip_file)
+    presenter.view.logging.error = MagicMock()
+
+    presenter.export_fits()
+    mock_write_result.assert_called_once_with(test_zip_file, presenter.model.results)
+    presenter.view.logging.error.assert_called_once_with("Failed to save fits to test.zip.\n", exc_info=error)
+
+    # If we do not have any results, don't ask for a file
+    presenter.view.get_save_file.reset_mock()
+    presenter.model.results = None
+
+    presenter.export_results()
+    presenter.view.get_save_file.assert_not_called()

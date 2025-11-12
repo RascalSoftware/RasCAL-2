@@ -2,9 +2,7 @@ import re
 import warnings
 from pathlib import Path
 from typing import Any
-import zipfile
 
-import numpy as np
 import ratapi as rat
 import ratapi.wrappers
 
@@ -12,6 +10,7 @@ from rascal2.config import EXAMPLES_PATH, MatlabHelper, get_matlab_engine
 from rascal2.core import commands
 from rascal2.core.enums import UnsavedReply
 from rascal2.core.runner import LogData, RATRunner
+from rascal2.core.writer import write_result_to_zipped_csvs
 from rascal2.settings import update_recent_projects
 
 from .model import MainWindowModel
@@ -164,7 +163,8 @@ class MainWindowPresenter:
             except OSError as err:
                 self.view.logging.error(f"Failed to save project at path {save_file}.\n", exc_info=err)
 
-    def export_result_as_zip(self):
+    def export_fits(self):
+        """"""
         if self.model.results is None:
             return
 
@@ -173,63 +173,11 @@ class MainWindowPresenter:
         save_file = self.view.get_save_file("Export Results as ZIP Archive", filename, "*.zip")
         if not save_file:
             return
-        # zipped_file = io.BytesIO()
-        # with zipfile.ZipFile(zipped_file, 'w') as f:
-        #     for i, file in enumerate(files):
-        #         f.writestr("{}.csv".format(i), file.getvalue())
-        #
-        # zipped_file.seek(0)
-        from io import StringIO
-        with zipfile.ZipFile(save_file, 'w') as f:
-            for list_field in rat.outputs.results_fields["list_fields"]:
-                for i, array in enumerate(getattr(results, list_field)):
-                    text_buffer = StringIO()
-                    np.savetxt(text_buffer, array, fmt='%.8f', delimiter=', ')
-                    f.writestr(f"{list_field}(contrast{i}).csv", text_buffer.getvalue())
 
-            for list_field in rat.outputs.results_fields["double_list_fields"]:
-                actual_list = getattr(results, list_field)
-                for i in range(len(actual_list)):
-                    for j, array in enumerate(actual_list[i]):
-                        domain = "" if len(actual_list[i]) == 1 else f"domain{j}"
-                        text_buffer = StringIO()
-                        np.savetxt(text_buffer, array, fmt='%.8f', delimiter=', ')
-                        f.writestr(f"{list_field}(contrast{i}{domain}).csv", text_buffer.getvalue())
-
-            contrast_param_fields = [
-                "scalefactors",
-                "bulkIn",
-                "bulkOut",
-                "subRoughs",
-                "resample",
-            ]
-            for field in contrast_param_fields:
-                text_buffer = StringIO()
-                np.savetxt(text_buffer, getattr(results.contrastParams, field), fmt='%.8f', delimiter=', ')
-                f.writestr(f"{field}.csv", text_buffer.getvalue())
-
-            if not isinstance(results, rat.outputs.BayesResults):
-                return
-
-            for inner_class in ["predictionIntervals", "confidenceIntervals"]:
-                subclass = getattr(results, inner_class)
-
-                for field in ratapi.outputs.bayes_results_fields["list_fields"][inner_class]:
-                    for i, array in enumerate(getattr(subclass, field)):
-                        text_buffer = StringIO()
-                        np.savetxt(text_buffer, array, fmt='%.8f', delimiter=', ')
-                        print(text_buffer.getvalue())
-                        f.writestr(f"bayes_{field}(contrast{i}).csv", text_buffer.getvalue())
-
-                for field in ratapi.outputs.bayes_results_fields["double_list_fields"][inner_class]:
-                    actual_list = getattr(subclass, field)
-                    for i in range(len(actual_list)):
-                        for j, array in enumerate(actual_list[i]):
-                            domain = "" if len(actual_list[i]) == 1 else f"domain{j}"
-                            text_buffer = StringIO()
-                            np.savetxt(text_buffer, array, fmt='%.8f', delimiter=', ')
-                            print(text_buffer.getvalue())
-                            f.writestr(f"bayes_{field}(contrast{i}{domain}).csv", text_buffer.getvalue())
+        try:
+            write_result_to_zipped_csvs(save_file, results)
+        except OSError as err:
+            self.view.logging.error(f"Failed to save fits to {save_file}.\n", exc_info=err)
 
     def interrupt_terminal(self):
         """Sends an interrupt signal to the RAT runner."""
