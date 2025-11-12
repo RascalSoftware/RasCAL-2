@@ -150,21 +150,8 @@ class MainWindowPresenter:
 
         return proceed
 
-    def export_results(self):
-        """Export the results object."""
-        if self.model.results:
-            filename = self.model.project.name.replace(" ", "_")
-            save_file = self.view.get_save_file("Export Results", filename, "*.json")
-            if not save_file:
-                return
-
-            try:
-                self.model.results.save(save_file)
-            except OSError as err:
-                self.view.logging.error(f"Failed to save project at path {save_file}.\n", exc_info=err)
-
     def export_fits(self):
-        """"""
+        """Export results into multiple csv files in a zip file"""
         if self.model.results is None:
             return
 

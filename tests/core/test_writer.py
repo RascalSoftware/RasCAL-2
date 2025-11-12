@@ -23,7 +23,7 @@ DATA_PATH = Path(__file__, "../../data/").resolve()
     ),
 )
 def test_write_zipped_csv(result_file):
-    """Test the plaintext reader successfully reads in data."""
+    """Test the data is written to zipped csvs successfully."""
 
     result = ratapi.Results.load(DATA_PATH / result_file)
     with tempfile.TemporaryDirectory() as tmp:
