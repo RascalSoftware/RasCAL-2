@@ -297,6 +297,7 @@ class MockReceiver(object):
         self.call_count = 0
 
     def receive_signal(self,index,value):
+        """To bind to delegate signal"""
         self.call_count += 1
         self.cache_state = (index,value)
 

@@ -41,7 +41,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         # with fit parameter "true" to build sliders for and allow changes when slider is moved.
         # Their values are reflected in project and affect plots.
 
-        self._sliders = {}   # dictionary of the sliders used to display fittable values
+        self._sliders = {}   # dictionary of the sliders used to display fitable values
         # create initial slider view layout and everything else which depends on it
 
         self.init()
@@ -49,10 +49,10 @@ class SlidersViewWidget(QtWidgets.QWidget):
     def show(self):
         """Overload parent show method to deal with mdi container
            showing sliders widget window. Also sets up or updates sliders
-           widget list depending on previous state of the widget
+           widget list depending on previous state of the widget.
         """
 
-        # avoid running init view more than once if sliders are visible anyway
+        # avoid running init view more than once if sliders are visible.
         if self.isVisible():
            return
 
@@ -93,30 +93,38 @@ class SlidersViewWidget(QtWidgets.QWidget):
             self._create_slider_view_layout()
 
         proj = self._parent.presenter.model.project
-        update_sliders = self._init_properties_for_sliders(proj)
+        if proj is None: 
+            return # Project may be not initialized at all
+
+        update_sliders = self._init_properties_for_sliders()
         if update_sliders:
             self._update_sliders_widgets()
         else:
             self._add_sliders_widgets()
 
-    def _init_properties_for_sliders(self,project : ratapi.Project) -> bool:
-        """Take project and copy all properties which have attribute "Fit" == True
+    def _init_properties_for_sliders(self) -> bool:
+        """Loop through project's widget view tabs and morels associated with them.
+           Select all ParametersModel and copy all their properties which have attribute
+            "Fit" == True
            into dictionary used to build sliders for them. Also set back-up
            dictionary  to reset properties values back to their initial values if "Cancel"
            button is pressed.
 
            Input:
            ------
-           project: ratapi.Project  -- project to get properties to change
+           Picks up project: self._parent.project_widget  -- project to get properties to change
 
            Returns:
            --------
            update_properties -- true if all properties in the project have already
            had sliders, generated for them so we may update existing widgets instead of generating
            new ones.
+
+           Sets up dictionary of slider parameters used to define sliders and sets up connections
+           necessary to interact with table view, namely:
+           1) slider to table and update graphics -> in the dictionary of slider parameters
+           2) change from Table view delegates -> routine which modifies sliders view.
          """
-        if project is None:
-            return False
 
         proj = self._parent.project_widget
         if proj is None:
@@ -126,53 +134,62 @@ class SlidersViewWidget(QtWidgets.QWidget):
         trial_properties = {}
 
         for widget in proj.view_tabs.values():
-            for param in widget.tables.values():
-                vis_model = param.model
-                if isinstance(vis_model, ParametersModel):
-                    row = 0
-                    for model_param in vis_model.classlist:
-                        if hasattr(model_param,"fit") and model_param.fit: # Parameters model should probably always have fit attribute, but let's be on the safe side.
-                            slider_info = SliderChangeHolder(row_number=row,model=vis_model,param=model_param)
-                            trial_properties[model_param.name] = slider_info
-                            this_prop_change_delegates = param.get_item_delegates(["min","max","value"])
-                            # connect delegates which propagate parameters changed in tables to correspondent sliders
-                            # Can be improved by using item index as these delegates emit "edited" signal for the whole
-                            # column, but the signal contains the row index
-                            for delegate in this_prop_change_delegates:
-                                delegate.editingFinished_InformSliders.connect(
-                                    lambda index,field, slider_name = model_param.name:
-                                    self._table_edit_finished_change_slider(index,field,slider_name)
-                                )
+            for table_view in widget.tables.values():
+                if not hasattr(table_view, 'model'):
+                    continue # usually in tests when table view model is not properly established for all tabs
+                data_model = table_view.model
+                if not isinstance(data_model, ParametersModel):
+                    continue   # data may be empty
+                row = 0
+                for model_param in data_model.classlist:
+                    if hasattr(model_param,"fit") and model_param.fit: # Parameters model should always
+                        #                                      have fit attribute, but let's be on the safe side.
+                        # Store information about necessary property and the model, which contains the property.
+                        # The model is the source of methods which modify dependent table and force project
+                        # recalculation.
+                        slider_info = SliderChangeHolder(row_number=row,model=data_model,param=model_param)
+                        trial_properties[model_param.name] = slider_info
+                        # Connect delegates which propagate parameters changed in tables to correspondent sliders.
+                        # Can be improved by using item index as these delegates emit "edited" signal for the whole
+                        # column, but row index is presented in signal itself.
+                        this_prop_change_delegates = table_view.get_item_delegates(["min","max","value"])
+                        for delegate in this_prop_change_delegates:
+                           delegate.editingFinished_InformSliders.connect(
+                               lambda index,field, slider_name = model_param.name:
+                               self._table_edit_finished_change_slider(index,field,slider_name)
+                           )
 
-                            if model_param.name in self._prop_to_change:
-                                n_updated_properties += 1
-                        row += 1
+                        if model_param.name in self._prop_to_change:
+                           n_updated_properties += 1
+                row += 1
 
         # if all properties of trial dictionary are in existing dictionary and the number of properties are the same
         # no new/deleted sliders have appeared.
         # We will update widgets parameters instead of deleting old and creating the new one.
         update_properties = n_updated_properties == len(trial_properties) and len(self._prop_to_change) == n_updated_properties
 
-        # store information about sliders
+        # store information about sliders properties
         self._prop_to_change = trial_properties
-        # remember values for properties controlled by sliders in case if you may want to revert them later
+        # remember current values of properties controlled by sliders in case you want to revert them back later
         self._values_to_revert = {name: prop.value for name, prop in trial_properties.items()}
 
         return update_properties
 
     def _table_edit_finished_change_slider(self, index , field_name : str,slider_name : str) -> None:
-        # Method to bind with tables delegates and change slider appearance accordingly.
+        """ Method to bind with tables delegates and change slider appearance accordingly to changes in tables.
         #
         # Signal about slider parameters changed is sent to sliders widget last after all other signals on
         # table parameters have been processed.
         # At this stage, rascal properties have already been modified, so we just modify appropriate slider appearance
-        # index -- QtCore.Table index of appropriate rascal property in correspondent GUI table. Duplicates slider name here.
+        # index -- QtCore.QtTable index of appropriate rascal property in correspondent GUI table.
+        #          Duplicates slider name here so is not currently used.
         # field_name
         #       -- string indicating changed min/max/value fields of property. May be used later to optimize changes
         #          but benefit of that  is minuscules.
         # slider_name
         #       -- name of the property, slider describes and key, which defines slider position in the dictionary
         #          of sliders
+        """
         if self.isVisible(): # Do not bother otherwise, as slider appearance will be modified when made visible and
             # slider itself may have even been deleted
             self._sliders[slider_name].update_slider_display_from_property(in_constructor=False)
