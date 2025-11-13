@@ -8,7 +8,7 @@ from rascal2.dialogs.about_dialog import AboutDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog
 from rascal2.dialogs.startup_dialog import PROJECT_FILES, LoadDialog, LoadR1Dialog, NewProjectDialog, StartupDialog
 from rascal2.settings import MDIGeometries, Settings, get_global_settings
-from rascal2.widgets import ControlsWidget, PlotWidget, TerminalWidget, SlidersViewWidget
+from rascal2.widgets import ControlsWidget, PlotWidget, SlidersViewWidget, TerminalWidget
 from rascal2.widgets.project import ProjectWidget
 from rascal2.widgets.startup import StartUpWidget
 
@@ -22,9 +22,9 @@ class MainWindowView(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
-        #Public interface
+        # Public interface
         self.disabled_elements = []
-        self.show_sliders = False # no one displays sliders initially
+        self.show_sliders = False  # no one displays sliders initially
 
         self.setWindowTitle(MAIN_WINDOW_TITLE)
 
@@ -49,8 +49,9 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         # define menu controlling switch between table and slider views
         self._sliders_menu_control_text = {
-            "ShowSliders":"&Show Sliders", # if state is show sliders, click will show them
-            "HideSliders":"&Hide Sliders"} # if state is show table, click will show sliders
+            "ShowSliders": "&Show Sliders",  # if state is show sliders, click will show them
+            "HideSliders": "&Hide Sliders",
+        }  # if state is show table, click will show sliders
 
         self.create_actions()
 
@@ -76,7 +77,7 @@ class MainWindowView(QtWidgets.QMainWindow):
             "Plots": self.plot_widget,
             "Project": self.project_widget,
             "Terminal": self.terminal_widget,
-            "Fitting Controls": self.controls_widget
+            "Fitting Controls": self.controls_widget,
         }
 
     def closeEvent(self, event):
@@ -286,7 +287,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         help_menu.addAction(self.open_about_action)
         help_menu.addAction(self.open_help_action)
 
-    def show_or_hide_sliders(self,do_show_sliders = None):
+    def show_or_hide_sliders(self, do_show_sliders=None):
         """Depending on current state, show or hide sliders for
         table properties within Project class view.
 
@@ -362,7 +363,8 @@ class MainWindowView(QtWidgets.QMainWindow):
         #  Add sliders view widget separately, as it will behave and is controlled differently from other
         # mdi windows
         self.mdi.addSubWindow(
-             self.sliders_view_widget, QtCore.Qt.WindowType.WindowMinMaxButtonsHint | QtCore.Qt.WindowType.WindowTitleHint
+            self.sliders_view_widget,
+            QtCore.Qt.WindowType.WindowMinMaxButtonsHint | QtCore.Qt.WindowType.WindowTitleHint,
         )
         self.sliders_view_widget.setWindowTitle("Sliders View")
 
@@ -417,7 +419,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         geoms = {}
         for window in self.mdi.subWindowList():
             # get corresponding MDIGeometries entry for the widget
-            widget_name = window.windowTitle().replace(" ","")
+            widget_name = window.windowTitle().replace(" ", "")
             geom = window.geometry()
             geoms[widget_name] = (geom.x(), geom.y(), geom.width(), geom.height(), window.isMinimized())
 

@@ -39,8 +39,10 @@ def test_view():
 @pytest.mark.parametrize(
     "geometry",
     [
-        ((1, 2, 196, 24, True), (1, 2, 196, 24, True), (1, 2, 196, 24, True), (1, 2, 196, 24, True), (1, 2, 196, 24, True)),
-        ((1, 2, 196, 24, True), (3, 78, 196, 24, True), (1, 2, 204, 66, False), (12, 342, 196, 24, True), (5, 6, 200, 28, True)),
+        ((1, 2, 196, 24, True), (1, 2, 196, 24, True),
+         (1, 2, 196, 24, True), (1, 2, 196, 24, True), (1, 2, 196, 24, True)),
+        ((1, 2, 196, 24, True), (3, 78, 196, 24, True),
+         (1, 2, 204, 66, False), (12, 342, 196, 24, True), (5, 6, 200, 28, True)),
     ],
 )
 @patch("rascal2.ui.view.ProjectWidget.show_project_view")
@@ -52,7 +54,11 @@ class TestMDISettings:
         test_view.settings = Settings()
         test_view.setup_mdi()
         test_view.settings.mdi_defaults = MDIGeometries(
-            Plots=geometry[0], Project=geometry[1], Terminal=geometry[2], FittingControls=geometry[3], SlidersView=geometry[4]
+            Plots=geometry[0],
+            Project=geometry[1],
+            Terminal=geometry[2],
+            FittingControls=geometry[3],
+            SlidersView=geometry[4]
         )
         test_view.reset_mdi_layout()
         for window in test_view.mdi.subWindowList():
@@ -206,7 +212,7 @@ def test_click_on_select_sliders_works_as_expected(mock_hide,mock_show,test_view
 
     # check initial state -- defined now but needs to be refactored when
     # this may be included in configuration
-    assert test_view_with_mdi.show_sliders == False
+    assert not test_view_with_mdi.show_sliders
 
     main_menu = test_view_with_mdi.menuBar()
     submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
@@ -215,7 +221,7 @@ def test_click_on_select_sliders_works_as_expected(mock_hide,mock_show,test_view
     # Trigger the action
     all_actions[0].trigger()
     assert all_actions[0].text() == "&Hide Sliders"
-    assert test_view_with_mdi.show_sliders == True
+    assert test_view_with_mdi.show_sliders
     assert mock_show.call_count == 1
 
 @patch("rascal2.ui.view.SlidersViewWidget.show")
@@ -227,7 +233,7 @@ def test_click_on_select_tabs_works_as_expected(mock_hide,mock_show,test_view_wi
 
     # check initial state -- defined now but needs to be refactored when
     # this may be included in configuration
-    assert test_view_with_mdi.show_sliders == False
+    assert not test_view_with_mdi.show_sliders
 
     main_menu = test_view_with_mdi.menuBar()
     submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
@@ -235,11 +241,11 @@ def test_click_on_select_tabs_works_as_expected(mock_hide,mock_show,test_view_wi
 
     # Trigger the action
     all_actions[0].trigger()
-    assert test_view_with_mdi.show_sliders == True
+    assert test_view_with_mdi.show_sliders
     assert mock_show.call_count == 1 # this would show sliders widget
     # check if next click returns to initial state
     all_actions[0].trigger()
 
     assert all_actions[0].text() == "&Show Sliders"
-    assert test_view_with_mdi.show_sliders == False
+    assert not test_view_with_mdi.show_sliders
     assert mock_hide.call_count == 1 # this would hide sliders widget

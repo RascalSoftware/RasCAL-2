@@ -1,18 +1,10 @@
-from unittest.mock import MagicMock, patch
-
 import pydantic
 import pytest
 import ratapi
+from PyQt6 import QtCore, QtWidgets
 
-from PyQt6 import QtWidgets, QtCore
-
-from rascal2.widgets.sliders_view import (
-    SliderChangeHolder,
-    LabeledSlider
-)
-from rascal2.widgets.project.tables import (
-    ParametersModel
-)
+from rascal2.widgets.project.tables import ParametersModel
+from rascal2.widgets.sliders_view import LabeledSlider, SliderChangeHolder
 
 
 class ParametersModelMock(ParametersModel):
@@ -27,7 +19,9 @@ class ParametersModelMock(ParametersModel):
         super().__init__(class_list, parent)
         self.call_count  = 0
 
-    def setData(self,index : QtCore.QModelIndex, val : float, qt_role = QtCore.Qt.ItemDataRole.EditRole,recalculate_project = True) -> bool:
+    def setData(self,index : QtCore.QModelIndex, val : float,
+                qt_role = QtCore.Qt.ItemDataRole.EditRole,
+                recalculate_project = True) -> bool:
         self._index = index
         self._value = val
         self._role = qt_role

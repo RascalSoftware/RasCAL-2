@@ -2,16 +2,13 @@ from unittest.mock import patch
 
 import pytest
 import ratapi
+from PyQt6 import QtWidgets
 
 from rascal2.ui.view import MainWindowView
-
-from PyQt6 import QtWidgets, QtCore,QtGui
-
 from rascal2.widgets.project.project import create_draft_project
+from rascal2.widgets.project.tables import ParameterFieldWidget
 
-from rascal2.widgets.project.tables import (
-    ParameterFieldWidget
-)
+
 class MockFigureCanvas(QtWidgets.QWidget):
     """A mock figure canvas."""
 
@@ -53,7 +50,7 @@ def view_with_proj():
 def test_extract_properties_for_sliders(view_with_proj):
 
         update_sliders = view_with_proj.sliders_view_widget._init_properties_for_sliders()
-        assert update_sliders == False # its false as at first call sliders should be regenerated
+        assert not update_sliders # its false as at first call sliders should be regenerated
         assert len(view_with_proj.sliders_view_widget._prop_to_change) == 2
         assert list(view_with_proj.sliders_view_widget._prop_to_change.keys()) == ["Param 1", "Param 3"]
         assert list(view_with_proj.sliders_view_widget._values_to_revert.values()) == [2.1, 209.]
@@ -108,7 +105,7 @@ def test_cancel_button_called(view_with_proj):
     assert fake_update.num_calls  == 2
     # project update should be true for last property change
     assert fake_update.project_updated  == [False, True]
-    assert view_with_proj.show_sliders == False
+    assert not view_with_proj.show_sliders
     assert view_with_proj.presenter.model.project.parameters["Param 1"].value == 4
     assert view_with_proj.presenter.model.project.parameters["Param 2"].value == 20
     assert view_with_proj.presenter.model.project.parameters["Param 3"].value == 400
@@ -146,11 +143,11 @@ def test_apply_cancel_changes_called_hide_sliders(view_with_proj):
 
     view_with_proj.sliders_view_widget._cancel_changes_from_sliders()
     assert fake_show_or_hide_sliders.num_calls == 1
-    assert fake_show_or_hide_sliders.call_param == False
+    assert not fake_show_or_hide_sliders.call_param
 
     fake_show_or_hide_sliders.num_calls = 0
     fake_show_or_hide_sliders.call_param = []
 
     view_with_proj.sliders_view_widget._apply_changes_from_sliders()
     assert fake_show_or_hide_sliders.num_calls == 1
-    assert fake_show_or_hide_sliders.call_param == False
+    assert not fake_show_or_hide_sliders.call_param

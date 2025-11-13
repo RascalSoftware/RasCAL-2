@@ -271,9 +271,11 @@ def test_param_item_delegates(widget_with_delegates):
 
     for column, header in enumerate(widget_with_delegates.model.headers, start=1):
         if header in ["min", "value", "max"]:
-            assert isinstance(widget_with_delegates.table.itemDelegateForColumn(column), delegates.ValueSpinBoxDelegate)
+            assert isinstance(widget_with_delegates.table.itemDelegateForColumn(column),
+                              delegates.ValueSpinBoxDelegate)
         else:
-            assert isinstance(widget_with_delegates.table.itemDelegateForColumn(column), delegates.ValidatedInputDelegate)
+            assert isinstance(widget_with_delegates.table.itemDelegateForColumn(column),
+                              delegates.ValidatedInputDelegate)
 
 def test_param_item_delegates_exposed_to_sliders(widget_with_delegates):
     """Test that parameter models provides the item delegates related to slides """
@@ -285,12 +287,12 @@ def test_param_item_delegates_exposed_to_sliders(widget_with_delegates):
         assert isinstance(delegate,delegates.ValueSpinBoxDelegate)
 
 
-class fake_editor(object):
+class MockEditor:
     """A class with have only one method providing value. Used in test below"""
     def value(self):
         return 42
 
-class MockReceiver(object):
+class MockReceiver:
     """Test object which receives signals sent to slider   """
     def __init__(self):
         self.cache_state = []
@@ -309,14 +311,13 @@ def test_param_item_delegates_emit_to_slider_subscribers(widget_with_delegates):
     # Expected order of delegates in the property should be is as in the list.
     delegates_list = widget_with_delegates.get_item_delegates(selected_fields)
     for delegate in delegates_list:
-        delegate.editingFinished_InformSliders.connect(lambda idx,tab_name : sr.receive_signal(idx,tab_name))
+        delegate.edit_finished_inform_sliders.connect(lambda idx,tab_name : sr.receive_signal(idx,tab_name))
 
     index = widget_with_delegates.model.index(1,1)
-    fed = fake_editor()
+    fed = MockEditor()
     n_calls = 0
-    for delegate,field_name in zip(delegates_list,selected_fields):
+    for n_calls,(delegate,field_name) in enumerate(zip(delegates_list,selected_fields)):
         delegate.setModelData(fed,widget_with_delegates.model, index)
-        n_calls += 1
         assert sr.call_count == n_calls
         assert sr.cache_state == (index,field_name)
 
