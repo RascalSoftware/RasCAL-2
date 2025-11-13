@@ -37,6 +37,7 @@ class MockMainWindow(QtWidgets.QMainWindow):
         super().__init__()
         self.presenter = MockPresenter()
         self.controls_widget = MagicMock()
+        self.project_widget = None
         self.sliders_view_widget = SlidersViewWidget(self)
 
     def show_or_hide_sliders(self, do_show_sliders=True):
