@@ -58,7 +58,7 @@ def slider():
         ]
     )
     model = ParametersModelMock(class_view, parent)
-    # note 3 elements in ratapi.ClassList for row_number == 2 to work
+    # note 3 elements in ratapi.ClassList needed for row_number == 2 to work
     inputs = SliderChangeHolder(row_number=2,model=model, param=param)
     return LabeledSlider(inputs)
 

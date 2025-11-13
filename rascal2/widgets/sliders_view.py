@@ -1,14 +1,11 @@
 """Widget for the Sliders View window."""
 
-from copy import deepcopy
 
 import ratapi.models
 from PyQt6 import QtCore,QtWidgets
 
 from rascal2.widgets.project.tables import (
-    ParametersModel,
-    ProjectFieldWidget,
-    ParameterFieldWidget
+    ParametersModel
 )
 
 
@@ -420,13 +417,12 @@ class LabeledSlider(QtWidgets.QFrame):
            for change, associated with slider position change in GUI
         """
         self._value = value
+        self._value_label.setText(self._value_label_format.format(value))
 
         idx = self._value_to_slider_pos(value)
         self.__block_slider_value_changed_signal = True
         self._slider.setValue(idx)
         self.__block_slider_value_changed_signal = False
-
-        self._value_label.setText(self._value_label_format.format(value))
 
     def update_slider_parameters(self, param: SliderChangeHolder, in_constructor = False):
         """Modifies slider values which may change for this slider from his parent property"""
@@ -511,8 +507,9 @@ class LabeledSlider(QtWidgets.QFrame):
         val = self._slider_pos_to_value(idx)
         self._value = val
         self._value_label.setText(self._value_label_format.format(val))
+
         self._prop.update_value_representation(val)
-        # This should not be necessary as already done through setters above
+        # This should not be necessary as already done through setter above
         self._prop.param.value = val # but fast and nice for tests
 
 
