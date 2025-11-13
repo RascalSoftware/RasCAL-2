@@ -260,7 +260,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
     def _cancel_changes_from_sliders(self):
         """Cancel changes to properties obtained from sliders
-        and hide sliders view.
+           and hide sliders view.
         """
         last_call = len(self._values_to_revert) - 1
 
