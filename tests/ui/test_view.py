@@ -203,13 +203,13 @@ def test_view_with_mdi():
     """An instance of MainWindowView with mdi property defined to some rubbish
     for mimicking operations performed in MainWindowView.reset_mdi_layout
     """
-    with patch("rascal2.widgets.plot.FigureCanvas", return_value=MockFigureCanvas()):
-        mw = MainWindowView()
-        mw.mdi.addSubWindow(mw.sliders_view_widget)
-        mdi_windows = mw.mdi.subWindowList()
-        mw.sliders_view_widget.mdi_holder = mdi_windows[0]
-        mw.enable_elements()
-        yield mw
+
+    mw = MainWindowView()
+    mw.mdi.addSubWindow(mw.sliders_view_widget)
+    mdi_windows = mw.mdi.subWindowList()
+    mw.sliders_view_widget.mdi_holder = mdi_windows[0]
+    mw.enable_elements()
+    return mw
 
 
 @patch("rascal2.ui.view.SlidersViewWidget.show")
