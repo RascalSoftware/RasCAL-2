@@ -320,8 +320,8 @@ def test_param_item_delegates_emit_to_slider_subscribers(widget_with_delegates):
 
     index = widget_with_delegates.model.index(1, 1)
     fed = MockEditor()
-    n_calls = 0
-    for n_calls, (delegate, field_name) in enumerate(zip(delegates_list, selected_fields, strict=True)):
+
+    for n_calls, (delegate, field_name) in enumerate(zip(delegates_list, selected_fields, strict=True),start=1):
         delegate.setModelData(fed, widget_with_delegates.model, index)
         assert sr.call_count == n_calls
         assert sr.cache_state == (index, field_name)
