@@ -53,9 +53,12 @@ def slider():
     class_view = ratapi.ClassList(
         [
             DataModel(name="Slider_A", min = 0,value=1,max=100,fit=True,show_priors = False),
+            DataModel(name="Slider_B", min = 0, value=1, max=100, fit=True, show_priors=False),
+            DataModel(name="Slider_C", min = 0, value=1, max=100, fit=True, show_priors=False),
         ]
     )
     model = ParametersModelMock(class_view, parent)
+    # note 3 elements in ratapi.ClassList for row_number == 2 to work
     inputs = SliderChangeHolder(row_number=2,model=model, param=param)
     return LabeledSlider(inputs)
 

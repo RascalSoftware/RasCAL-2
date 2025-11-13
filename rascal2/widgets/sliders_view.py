@@ -92,9 +92,8 @@ class SlidersViewWidget(QtWidgets.QWidget):
         if self.findChild(QtWidgets.QWidget,'AcceptButton') is None:
             self._create_slider_view_layout()
 
-        proj = self._parent.presenter.model.project
-        if proj is None: 
-            return # Project may be not initialized at all
+        if self._parent.presenter.model.project is None: 
+            return # Project may be not initialized at all so project gui is not initialized
 
         update_sliders = self._init_properties_for_sliders()
         if update_sliders:
@@ -161,7 +160,9 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
                         if model_param.name in self._prop_to_change:
                            n_updated_properties += 1
-                row += 1
+
+                    row += 1 # Calculate table rows regardless model has fit== True or not
+
 
         # if all properties of trial dictionary are in existing dictionary and the number of properties are the same
         # no new/deleted sliders have appeared.
@@ -264,18 +265,16 @@ class SlidersViewWidget(QtWidgets.QWidget):
         """Cancel changes to properties obtained from sliders
            and hide sliders view.
         """
-        if len(self._values_to_revert) == 0:
-            last_key = None
-        else:      # does not work with empty dictionary
-            last_key = next(reversed(self._values_to_revert))
-
-
+        last_call = len(self._values_to_revert)-1
+        call_cnt = 0
         for key,val in self._values_to_revert.items():
-            self._sliders[key].set_slider_gui_position(val)
-            if key == last_key:
+            if call_cnt == last_call: # its important to update project at last call
                 self._prop_to_change[key].update_value_representation(val,recalculate_project=True)
             else:
                 self._prop_to_change[key].update_value_representation(val,recalculate_project=False)
+            self._sliders[key].set_slider_gui_position(val)
+
+            call_cnt += 1
 
         self._parent.show_or_hide_sliders(do_show_sliders=False)
 
@@ -368,6 +367,7 @@ class LabeledSlider(QtWidgets.QFrame):
         if param is None:
             return
         self._labels = []  # list of slider labels describing sliders axis
+        self.__block_slider_value_changed_signal = False
 
         self.slider_name = param.name # name the slider as the property it refers to. Sets up once here.
         self.update_slider_parameters(param,in_constructor=True) # Retrieve slider's parameters from input property
@@ -416,9 +416,16 @@ class LabeledSlider(QtWidgets.QFrame):
 
     def set_slider_gui_position(self,value : float) -> None:
         """Set specified slider GUI position programmatically
+           As value assumed to be already correct, block signal
+           for change, associated with slider position change in GUI
         """
+        self._value = value
+
         idx = self._value_to_slider_pos(value)
+        self.__block_slider_value_changed_signal = True
         self._slider.setValue(idx)
+        self.__block_slider_value_changed_signal = False
+
         self._value_label.setText(self._value_label_format.format(value))
 
     def update_slider_parameters(self, param: SliderChangeHolder, in_constructor = False):
@@ -499,6 +506,8 @@ class LabeledSlider(QtWidgets.QFrame):
 
     def _update_value(self, idx: int)->None:
         """ Bound in constructor to GUI slider position changed event"""
+        if self.__block_slider_value_changed_signal:
+            return
         val = self._slider_pos_to_value(idx)
         self._value = val
         self._value_label.setText(self._value_label_format.format(val))
