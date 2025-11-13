@@ -39,7 +39,7 @@ class MockMainWindow(QtWidgets.QMainWindow):
         self.controls_widget = MagicMock()
         self.sliders_view_widget = SlidersViewWidget(self)
 
-    def show_or_hide_sliders(self,do_show_sliders = True):
+    def show_or_hide_sliders(self, do_show_sliders=True):
         if do_show_sliders:
             self.sliders_view_widget.show()
         else:
@@ -159,8 +159,9 @@ def test_project_widget_initial_state(setup_project_widget):
     assert project_widget.project_tab.currentIndex() == 0
     assert project_widget.edit_project_tab.currentIndex() == 0
 
+
 @patch("rascal2.ui.view.SlidersViewWidget.hide")
-def test_edit_cancel_button_toggle(mock_hide,setup_project_widget):
+def test_edit_cancel_button_toggle(mock_hide, setup_project_widget):
     """
     Tests clicking the edit button causes the stacked widget to change state.
     """
@@ -182,8 +183,9 @@ def test_edit_cancel_button_toggle(mock_hide,setup_project_widget):
     assert project_widget.model_type.text() == LayerModels.StandardLayers
     assert project_widget.calculation_type.text() == Calculations.Normal
 
+
 @patch("rascal2.ui.view.SlidersViewWidget.hide")
-def test_save_changes_to_model_project(mock_hide,setup_project_widget):
+def test_save_changes_to_model_project(mock_hide, setup_project_widget):
     """
     Tests that making changes to the project settings
     """

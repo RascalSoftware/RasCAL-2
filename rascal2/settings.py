@@ -96,11 +96,12 @@ WindowGeometry: TypeAlias = tuple[int, int, int, int, bool]
 
 class MDIGeometries(BaseModel):
     """Model for storing window positions and sizes."""
+
     Plots: WindowGeometry = Field(max_length=5, min_length=5)
     Project: WindowGeometry = Field(max_length=5, min_length=5)
     Terminal: WindowGeometry = Field(max_length=5, min_length=5)
     FittingControls: WindowGeometry = Field(max_length=5, min_length=5)
-    SlidersView:  WindowGeometry = Field(max_length=5, min_length=5)
+    SlidersView: WindowGeometry = Field(max_length=5, min_length=5)
 
 
 class Settings(BaseModel, validate_assignment=True, arbitrary_types_allowed=True):

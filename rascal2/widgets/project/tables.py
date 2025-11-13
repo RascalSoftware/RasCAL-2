@@ -75,11 +75,12 @@ class ClassListTableModel(QtCore.QAbstractTableModel):
         elif role == QtCore.Qt.ItemDataRole.CheckStateRole and self.index_header(index) == "fit":
             return QtCore.Qt.CheckState.Checked if data else QtCore.Qt.CheckState.Unchecked
 
-    def setData(self, index : QtCore.QModelIndex, value : float,
-                role=QtCore.Qt.ItemDataRole.EditRole,recalculate_proj = True) -> bool:
-        """ Implement abstract setData method of QAbstractTableModel with additional variable
-            recalculate_proj -- Set it to False when modifying a bunch of properties in a loop, setting
-            it to True for the last value to recalculate project and update all table dependent widgets.
+    def setData(
+        self, index: QtCore.QModelIndex, value: float, role=QtCore.Qt.ItemDataRole.EditRole, recalculate_proj=True
+    ) -> bool:
+        """Implement abstract setData method of QAbstractTableModel with additional variable
+        recalculate_proj -- Set it to False when modifying a bunch of properties in a loop, setting
+        it to True for the last value to recalculate project and update all table dependent widgets.
         """
         if role == QtCore.Qt.ItemDataRole.EditRole or role == QtCore.Qt.ItemDataRole.CheckStateRole:
             row = index.row()
@@ -98,7 +99,7 @@ class ClassListTableModel(QtCore.QAbstractTableModel):
                     return False
                 if not self.edit_mode:
                     # recalculate plots if value was changed
-                    recalculate = self.index_header(index) == "value"  and recalculate_proj
+                    recalculate = self.index_header(index) == "value" and recalculate_proj
                     self.parent.update_project(recalculate)
                 self.dataChanged.emit(index, index)
                 return True
@@ -254,22 +255,17 @@ class ProjectFieldWidget(QtWidgets.QWidget):
     def set_item_delegates(self):
         """Set item delegates and open persistent editors for the table."""
         for i, header in enumerate(self.model.headers):
-            delegate =delegates.ValidatedInputDelegate(self.model.item_type.model_fields[header], self.table)
-            self.table.setItemDelegateForColumn(
-                i + self.model.col_offset,
-                delegate
-            )
+            delegate = delegates.ValidatedInputDelegate(self.model.item_type.model_fields[header], self.table)
+            self.table.setItemDelegateForColumn(i + self.model.col_offset, delegate)
 
-    def get_item_delegates(self,fields_list : list):
-        """ Return list of delegates attached to the fields
-            with the names provided as input
+    def get_item_delegates(self, fields_list: list):
+        """Return list of delegates attached to the fields
+        with the names provided as input
         """
         dlgts = []
         for i, header in enumerate(self.model.headers):
             if header in fields_list:
-                dlgts.append(
-                    self.table.itemDelegateForColumn(i+self.model.col_offset)
-                )
+                dlgts.append(self.table.itemDelegateForColumn(i + self.model.col_offset))
         return dlgts
 
     def append_item(self):
@@ -371,7 +367,6 @@ class ParameterFieldWidget(ProjectFieldWidget):
     classlist_model = ParametersModel
 
     def set_item_delegates(self):
-
         for i, header in enumerate(self.model.headers):
             if header in ["min", "value", "max"]:
                 delegate = delegates.ValueSpinBoxDelegate(header, self.table)

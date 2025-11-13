@@ -256,71 +256,76 @@ def test_parameter_flags(param_model, prior_type, protected):
 
 @pytest.fixture
 def widget_with_delegates():
-
     widget = ParameterFieldWidget("Test", parent)
     widget.parent = MagicMock()
 
-    param =   [ ratapi.models.Parameter() for i in [0, 1, 2] ]
+    param = [ratapi.models.Parameter() for i in [0, 1, 2]]
     class_list = ratapi.ClassList(param)
     widget.update_model(class_list)
 
     return widget
+
 
 def test_param_item_delegates(widget_with_delegates):
     """Test that parameter models have the expected item delegates."""
 
     for column, header in enumerate(widget_with_delegates.model.headers, start=1):
         if header in ["min", "value", "max"]:
-            assert isinstance(widget_with_delegates.table.itemDelegateForColumn(column),
-                              delegates.ValueSpinBoxDelegate)
+            assert isinstance(widget_with_delegates.table.itemDelegateForColumn(column), delegates.ValueSpinBoxDelegate)
         else:
-            assert isinstance(widget_with_delegates.table.itemDelegateForColumn(column),
-                              delegates.ValidatedInputDelegate)
+            assert isinstance(
+                widget_with_delegates.table.itemDelegateForColumn(column), delegates.ValidatedInputDelegate
+            )
+
 
 def test_param_item_delegates_exposed_to_sliders(widget_with_delegates):
-    """Test that parameter models provides the item delegates related to slides """
+    """Test that parameter models provides the item delegates related to slides"""
 
-    delegates_list = widget_with_delegates.get_item_delegates(["min","max","value"])
+    delegates_list = widget_with_delegates.get_item_delegates(["min", "max", "value"])
     assert len(delegates_list) == 3
 
     for delegate in delegates_list:
-        assert isinstance(delegate,delegates.ValueSpinBoxDelegate)
+        assert isinstance(delegate, delegates.ValueSpinBoxDelegate)
 
 
 class MockEditor:
     """A class with have only one method providing value. Used in test below"""
+
     def value(self):
         return 42
 
+
 class MockReceiver:
-    """Test object which receives signals sent to slider   """
+    """Test object which receives signals sent to slider"""
+
     def __init__(self):
         self.cache_state = []
         self.call_count = 0
 
-    def receive_signal(self,index,value):
+    def receive_signal(self, index, value):
         """To bind to delegate signal"""
         self.call_count += 1
-        self.cache_state = (index,value)
+        self.cache_state = (index, value)
+
 
 def test_param_item_delegates_emit_to_slider_subscribers(widget_with_delegates):
     """Test if edit_finished signals emitted to subscribed clients"""
     sr = MockReceiver()
-    selected_fields = ["min","value","max"]
+    selected_fields = ["min", "value", "max"]
 
     # Expected order of delegates in the property should be is as in the list.
     delegates_list = widget_with_delegates.get_item_delegates(selected_fields)
     for delegate in delegates_list:
-        delegate.edit_finished_inform_sliders.connect(lambda idx,tab_name : sr.receive_signal(idx,tab_name))
+        delegate.edit_finished_inform_sliders.connect(lambda idx, tab_name: sr.receive_signal(idx, tab_name))
 
-    index = widget_with_delegates.model.index(1,1)
+    index = widget_with_delegates.model.index(1, 1)
     fed = MockEditor()
     n_calls = 0
-    for n_calls,(delegate,field_name) in enumerate(
-            zip(delegates_list,selected_fields,strict=True)):
-        delegate.setModelData(fed,widget_with_delegates.model, index)
+    for n_calls, (delegate, field_name) in enumerate(zip(delegates_list, selected_fields, strict=True)):
+        delegate.setModelData(fed, widget_with_delegates.model, index)
         assert sr.call_count == n_calls
-        assert sr.cache_state == (index,field_name)
+        assert sr.cache_state == (index, field_name)
+
 
 def test_hidden_bayesian_columns(widget_with_delegates):
     """Test that Bayes columns are hidden when procedure is not Bayesian."""

@@ -134,7 +134,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
                 if not isinstance(data_model, ParametersModel):
                     continue  # data may be empty
 
-                for row,model_param in enumerate(data_model.classlist):
+                for row, model_param in enumerate(data_model.classlist):
                     if hasattr(model_param, "fit") and model_param.fit:  # Parameters model should always
                         #                                      have fit attribute, but let's be on the safe side.
                         # Store information about necessary property and the model, which contains the property.
@@ -157,7 +157,6 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
                         if model_param.name in self._prop_to_change:
                             n_updated_properties += 1
-
 
         # if all properties of trial dictionary are in existing dictionary and the number of properties are the same
         # no new/deleted sliders have appeared.
@@ -260,14 +259,14 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
     def _cancel_changes_from_sliders(self):
         """Cancel changes to properties obtained from sliders
-           and hide sliders view.
+        and hide sliders view.
         """
         last_call = len(self._values_to_revert) - 1
 
-        for call_cnt,(key, val) in enumerate(self._values_to_revert.items()):
+        for call_cnt, (key, val) in enumerate(self._values_to_revert.items()):
             self._prop_to_change[key].update_value_representation(
                 val,
-                recalculate_project=(call_cnt == last_call) # it is important to update project at last call only
+                recalculate_project=(call_cnt == last_call),  # it is important to update project at last call only
             )
 
         self._parent.show_or_hide_sliders(do_show_sliders=False)
@@ -311,7 +310,7 @@ class SliderChangeHolder:
 
     @value.setter
     def value(self, value: float) -> None:
-        self.param.value =  value
+        self.param.value = value
 
     def update_value_representation(self, val: float, recalculate_project=True) -> None:
         """given new value, update project table and property representations

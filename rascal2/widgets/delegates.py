@@ -101,6 +101,7 @@ class ValueSpinBoxDelegate(QtWidgets.QStyledItemDelegate):
         The field of the parameter
 
     """
+
     # create custom signal to send to labelled sliders when contents of a cell in
     # a table cell attached to sliders have been changed
     edit_finished_inform_sliders = QtCore.pyqtSignal(QtCore.QModelIndex, object)

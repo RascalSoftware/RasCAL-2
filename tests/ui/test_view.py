@@ -39,10 +39,20 @@ def test_view():
 @pytest.mark.parametrize(
     "geometry",
     [
-        ((1, 2, 196, 24, True), (1, 2, 196, 24, True),
-         (1, 2, 196, 24, True), (1, 2, 196, 24, True), (1, 2, 196, 24, True)),
-        ((1, 2, 196, 24, True), (3, 78, 196, 24, True),
-         (1, 2, 204, 66, False), (12, 342, 196, 24, True), (5, 6, 200, 28, True)),
+        (
+            (1, 2, 196, 24, True),
+            (1, 2, 196, 24, True),
+            (1, 2, 196, 24, True),
+            (1, 2, 196, 24, True),
+            (1, 2, 196, 24, True),
+        ),
+        (
+            (1, 2, 196, 24, True),
+            (3, 78, 196, 24, True),
+            (1, 2, 204, 66, False),
+            (12, 342, 196, 24, True),
+            (5, 6, 200, 28, True),
+        ),
     ],
 )
 @patch("rascal2.ui.view.ProjectWidget.show_project_view")
@@ -58,7 +68,7 @@ class TestMDISettings:
             Project=geometry[1],
             Terminal=geometry[2],
             FittingControls=geometry[3],
-            SlidersView=geometry[4]
+            SlidersView=geometry[4],
         )
         test_view.reset_mdi_layout()
         for window in test_view.mdi.subWindowList():
@@ -140,7 +150,6 @@ def test_get_project_folder(mock_get_dir: MagicMock):
     mock_overwrite.assert_called_once()
 
 
-
 @pytest.mark.parametrize("submenu_name", ["&File", "&Edit", "&Windows", "&Tools", "&Help"])
 def test_menu_element_present(test_view, submenu_name):
     """Test requested menu items are present"""
@@ -174,7 +183,7 @@ def test_menu_element_present(test_view, submenu_name):
         ),
         ("&Edit", ["&Undo", "&Redo", "Undo &History"]),
         ("&Windows", ["Tile Windows", "Reset to Default", "Save Current Window Positions"]),
-        ("&Tools", ["&Show Sliders","","Clear Terminal", "", "Setup MATLAB"]),
+        ("&Tools", ["&Show Sliders", "", "Clear Terminal", "", "Setup MATLAB"]),
         ("&Help", ["&About", "&Help"]),
     ],
 )
@@ -191,8 +200,8 @@ def test_help_menu_actions_present(test_view, submenu_name, action_names_and_lay
 
 @pytest.fixture
 def test_view_with_mdi():
-    """An instance of MainWindowView with mdi property defined to some rubbish 
-       for mimicking operations performed in MainWindowView.reset_mdi_layout
+    """An instance of MainWindowView with mdi property defined to some rubbish
+    for mimicking operations performed in MainWindowView.reset_mdi_layout
     """
     with patch("rascal2.widgets.plot.FigureCanvas", return_value=MockFigureCanvas()):
         mw = MainWindowView()
@@ -205,7 +214,7 @@ def test_view_with_mdi():
 
 @patch("rascal2.ui.view.SlidersViewWidget.show")
 @patch("rascal2.ui.view.SlidersViewWidget.hide")
-def test_click_on_select_sliders_works_as_expected(mock_hide,mock_show,test_view_with_mdi):
+def test_click_on_select_sliders_works_as_expected(mock_hide, mock_show, test_view_with_mdi):
     """Test if click on menu in the state "Show Slider" changes text appropriately
     and initiates correct callback
     """
@@ -224,11 +233,12 @@ def test_click_on_select_sliders_works_as_expected(mock_hide,mock_show,test_view
     assert test_view_with_mdi.show_sliders
     assert mock_show.call_count == 1
 
+
 @patch("rascal2.ui.view.SlidersViewWidget.show")
 @patch("rascal2.ui.view.SlidersViewWidget.hide")
-def test_click_on_select_tabs_works_as_expected(mock_hide,mock_show,test_view_with_mdi):
+def test_click_on_select_tabs_works_as_expected(mock_hide, mock_show, test_view_with_mdi):
     """Test if click on menu in the state "Show Sliders" changes text appropriately
-        and initiates correct callback
+    and initiates correct callback
     """
 
     # check initial state -- defined now but needs to be refactored when
@@ -242,10 +252,10 @@ def test_click_on_select_tabs_works_as_expected(mock_hide,mock_show,test_view_wi
     # Trigger the action
     all_actions[0].trigger()
     assert test_view_with_mdi.show_sliders
-    assert mock_show.call_count == 1 # this would show sliders widget
+    assert mock_show.call_count == 1  # this would show sliders widget
     # check if next click returns to initial state
     all_actions[0].trigger()
 
     assert all_actions[0].text() == "&Show Sliders"
     assert not test_view_with_mdi.show_sliders
-    assert mock_hide.call_count == 1 # this would hide sliders widget
+    assert mock_hide.call_count == 1  # this would hide sliders widget

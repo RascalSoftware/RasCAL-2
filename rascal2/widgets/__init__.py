@@ -12,5 +12,5 @@ __all__ = [
     "MultiSelectList",
     "PlotWidget",
     "TerminalWidget",
-    "SlidersViewWidget"
+    "SlidersViewWidget",
 ]
