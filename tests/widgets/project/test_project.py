@@ -47,15 +47,12 @@ class MockMainWindow(QtWidgets.QMainWindow):
             self.sliders_view_widget.hide()
 
     def sliders_view_enabled(self, is_enabled: bool, prev_call_vis_sliders_state: bool = False):
-
         self.sliders_view_widget.setEnabled(is_enabled)
         # hide sliders when disabled or else
         if is_enabled:
             self.show_or_hide_sliders(do_show_sliders=prev_call_vis_sliders_state)
         else:
             self.show_or_hide_sliders(do_show_sliders=False)
-
-
 
 
 class DataModel(pydantic.BaseModel, validate_assignment=True):
