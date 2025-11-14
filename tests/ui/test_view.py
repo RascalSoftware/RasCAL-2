@@ -165,7 +165,7 @@ def test_menu_element_present(test_view, submenu_name):
                 "&Save",
                 "Save To &Folder...",
                 "",
-                "Export Results",
+                "Export Fits",
                 "",
                 "Settings",
                 "",

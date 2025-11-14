@@ -10,6 +10,7 @@ from rascal2.config import EXAMPLES_PATH, MatlabHelper, get_matlab_engine
 from rascal2.core import commands
 from rascal2.core.enums import UnsavedReply
 from rascal2.core.runner import LogData, RATRunner
+from rascal2.core.writer import write_result_to_zipped_csvs
 from rascal2.settings import update_recent_projects
 
 from .model import MainWindowModel
@@ -149,18 +150,21 @@ class MainWindowPresenter:
 
         return proceed
 
-    def export_results(self):
-        """Export the results object."""
-        if self.model.results:
-            filename = self.model.project.name.replace(" ", "_")
-            save_file = self.view.get_save_file("Export Results", filename, "*.json")
-            if not save_file:
-                return
+    def export_fits(self):
+        """Export results into multiple csv files in a zip file"""
+        if self.model.results is None:
+            return
 
-            try:
-                self.model.results.save(save_file)
-            except OSError as err:
-                self.view.logging.error(f"Failed to save project at path {save_file}.\n", exc_info=err)
+        results = self.model.results
+        filename = self.model.project.name.replace(" ", "_")
+        save_file = self.view.get_save_file("Export Results as ZIP Archive", filename, "*.zip")
+        if not save_file:
+            return
+
+        try:
+            write_result_to_zipped_csvs(save_file, results)
+        except OSError as err:
+            self.view.logging.error(f"Failed to save fits to {save_file}.\n", exc_info=err)
 
     def interrupt_terminal(self):
         """Sends an interrupt signal to the RAT runner."""
