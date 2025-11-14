@@ -77,6 +77,9 @@ class ProjectWidget(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.stacked_widget)
         self.setLayout(layout)
+        # function holder to store/restore state of slider_view when edit project
+        # button is pressed
+        self.__slider_view_state_holder_function = None
 
     def create_project_view(self) -> QtWidgets.QWidget:
         """Creates the project (non-edit) view"""
@@ -361,13 +364,18 @@ class ProjectWidget(QtWidgets.QWidget):
         self.setWindowTitle("Project")
         self.parent.controls_widget.run_button.setEnabled(True)
         self.stacked_widget.setCurrentIndex(0)
-        self.parent.sliders_view_enabled(is_enabled=True)
+        if self.__slider_view_state_holder_function is not None:
+            # restore previous sliders view
+            self.__slider_view_state_holder_function()
+            self.__slider_view_state_holder_function = None
 
     def show_edit_view(self) -> None:
         """Show edit view"""
 
-        self.parent.sliders_view_enabled(
-            is_enabled=False, prev_call_vis_sliders_state=self.parent.sliders_view_widget.isVisible()
+        sliders_visible = self.parent.sliders_view_widget.isVisible()
+        self.parent.sliders_view_enabled(False, sliders_visible)
+        self.__slider_view_state_holder_function = (
+            lambda enbl=True, vis=sliders_visible: self.parent.sliders_view_enabled(enbl, vis)
         )
         # will be updated according to edit changes
         self.update_project_view(0)
@@ -392,7 +400,10 @@ class ProjectWidget(QtWidgets.QWidget):
                 self.parent.terminal_widget.write_error(f"Could not save draft project:\n  {custom_errors}")
             else:
                 self.show_project_view()
-        self.parent.sliders_view_enabled(is_enabled=True)
+        if self.__slider_view_state_holder_function is not None:
+            # restore previous sliders view state
+            self.__slider_view_state_holder_function()
+            self.__slider_view_state_holder_function = None
 
     def validate_draft_project(self) -> Generator[str, None, None]:
         """Get all errors with the draft project."""

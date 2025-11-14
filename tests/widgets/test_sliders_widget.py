@@ -226,7 +226,7 @@ def test_hide_sliders_when_edited_restore_when_accepted(mock_hide, mock_show, mo
     assert mock_hide.call_count == 1
     assert mock_update.call_count == 1
     # show state stored
-    assert view_with_proj._MainWindowView__prev_call_vis_sliders_state
+    assert callable(view_with_proj.project_widget._ProjectWidget__slider_view_state_holder_function)
 
     save_button = view_with_proj.project_widget.save_project_button
     save_button.click()
@@ -234,7 +234,7 @@ def test_hide_sliders_when_edited_restore_when_accepted(mock_hide, mock_show, mo
     assert mock_show.call_count == 1
     assert mock_update.call_count == 1  # we patched save with error so should not update
     # call state persistent and return does not recover anything
-    assert view_with_proj._MainWindowView__prev_call_vis_sliders_state
+    assert view_with_proj.project_widget._ProjectWidget__slider_view_state_holder_function is None
 
 
 @patch.object(SlidersViewWidget, "isVisible", lambda self: True)
@@ -249,7 +249,7 @@ def test_hide_sliders_when_edited_restore_when_canceled(mock_hide, mock_show, mo
     assert mock_hide.call_count == 1
     assert mock_update.call_count == 1
     # show state stored
-    assert view_with_proj._MainWindowView__prev_call_vis_sliders_state
+    assert callable(view_with_proj.project_widget._ProjectWidget__slider_view_state_holder_function)
 
     cancel_button = view_with_proj.project_widget.cancel_button
     cancel_button.click()
@@ -257,4 +257,4 @@ def test_hide_sliders_when_edited_restore_when_canceled(mock_hide, mock_show, mo
     assert mock_show.call_count == 1
     assert mock_update.call_count == 2
     # call state persistent and return does not recover anything
-    assert view_with_proj._MainWindowView__prev_call_vis_sliders_state
+    assert view_with_proj.project_widget._ProjectWidget__slider_view_state_holder_function is None

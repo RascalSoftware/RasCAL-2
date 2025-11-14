@@ -195,8 +195,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         else:
             # if display_sliders state is False, action will be show
             show_or_hide_slider_action = QtGui.QAction(self._sliders_menu_control_text["ShowSliders"], self)
-        self.__prev_call_vis_sliders_state = False  # Always initially false, used by Project when editing
-        #                    through sliders_view_enabled method below to remember sliders state
         show_or_hide_slider_action.setStatusTip("Show or Hide Sliders")
         show_or_hide_slider_action.triggered.connect(lambda: self.show_or_hide_sliders(None))
         self._show_or_hide_slider_action = show_or_hide_slider_action
@@ -314,7 +312,7 @@ class MainWindowView(QtWidgets.QMainWindow):
             self._show_or_hide_slider_action.setText(self._sliders_menu_control_text["ShowSliders"])
             self.sliders_view_widget.hide()
 
-    def sliders_view_enabled(self, is_enabled: bool, prev_call_vis_sliders_state: bool = None):
+    def sliders_view_enabled(self, is_enabled: bool, prev_call_vis_sliders_state: bool = False):
         """Makes sliders view button in menu enabled or disabled depending
            on the state of the input parameters.
 
@@ -326,15 +324,9 @@ class MainWindowView(QtWidgets.QMainWindow):
             prev_call_vis_sliders_state --
                           logical stating what sliders view widget
                           view state was when this method was called
+                          when slider state was disabled
         """
         self._show_or_hide_slider_action.setEnabled(is_enabled)
-
-        # Store previous slider view state in the internal variable to
-        # restore the state if requested
-        if prev_call_vis_sliders_state is None:
-            prev_call_vis_sliders_state = self.__prev_call_vis_sliders_state
-        else:
-            self.__prev_call_vis_sliders_state = prev_call_vis_sliders_state
 
         # hide sliders when disabled or else
         if is_enabled:
