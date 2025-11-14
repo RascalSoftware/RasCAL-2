@@ -259,3 +259,51 @@ def test_click_on_select_tabs_works_as_expected(mock_hide, mock_show, test_view_
     assert all_actions[0].text() == "&Show Sliders"
     assert not test_view_with_mdi.show_sliders
     assert mock_hide.call_count == 1  # this would hide sliders widget
+
+@patch("rascal2.ui.view.SlidersViewWidget.hide")
+def test_enable_disable_sliders_menu_without_params(mock_hide, test_view_with_mdi):
+    """Test if click on menu in the state "Show Sliders" changes text appropriately
+    and initiates correct callback
+    """
+    assert not test_view_with_mdi._MainWindowView__prev_call_vis_sliders_state
+    assert not test_view_with_mdi.sliders_view_widget.isVisible()
+
+    main_menu = test_view_with_mdi.menuBar()
+    submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
+    all_actions = submenu.actions()
+    assert all_actions[0].isEnabled() # enabled in patch
+
+    test_view_with_mdi.sliders_view_enabled(False)
+    assert not all_actions[0].isEnabled() # disabled now
+    assert mock_hide.call_count == 1  # this would hide sliders widget if it was visible
+
+    test_view_with_mdi.sliders_view_enabled(True)
+    assert all_actions[0].isEnabled() # enabled now
+    assert mock_hide.call_count == 2  # still call hide as this was the previous state
+    assert not test_view_with_mdi._MainWindowView__prev_call_vis_sliders_state # nothing have changed
+    # here as it remembers the call state
+
+@patch("rascal2.ui.view.SlidersViewWidget.show")
+@patch("rascal2.ui.view.SlidersViewWidget.hide")
+def test_enable_disable_sliders_menu_with_params(mock_hide,mock_show, test_view_with_mdi):
+    """Test if click on menu in the state "Show Sliders" changes text appropriately
+    and initiates correct callback
+    """
+    assert not test_view_with_mdi._MainWindowView__prev_call_vis_sliders_state
+    assert not test_view_with_mdi.sliders_view_widget.isVisible()
+
+    main_menu = test_view_with_mdi.menuBar()
+    submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
+    all_actions = submenu.actions()
+    assert all_actions[0].isEnabled() # enabled in patch
+
+    test_view_with_mdi.sliders_view_enabled(False,True)
+    assert test_view_with_mdi._MainWindowView__prev_call_vis_sliders_state # state remembered
+    assert not all_actions[0].isEnabled()
+    assert mock_hide.call_count == 1  # this would hide sliders widget if it was visible
+
+    test_view_with_mdi.sliders_view_enabled(True)
+    assert all_actions[0].isEnabled() # enabled now
+    assert mock_show.call_count == 1  #  call show as this was the previous prev_call_vis_sliders_state state
+    assert test_view_with_mdi._MainWindowView__prev_call_vis_sliders_state # state remains persistent
+
