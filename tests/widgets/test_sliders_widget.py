@@ -7,6 +7,7 @@ from PyQt6 import QtWidgets
 from rascal2.ui.view import MainWindowView
 from rascal2.widgets.project.project import create_draft_project
 from rascal2.widgets.project.tables import ParameterFieldWidget
+from rascal2.widgets.sliders_view import EmptySlider, LabeledSlider
 
 
 class MockFigureCanvas(QtWidgets.QWidget):
@@ -156,3 +157,55 @@ def test_apply_cancel_changes_called_hide_sliders(view_with_proj):
     view_with_proj.sliders_view_widget._apply_changes_from_sliders()
     assert fake_show_or_hide_sliders.num_calls == 1
     assert not fake_show_or_hide_sliders.call_param
+
+
+def set_proj_properties_fit_to_requested(proj, true_list: list):
+    """set up all projects properties "fit" parameter to False except provided
+    within the true_list, which to be set to True"""
+
+    project = proj.presenter.model.project
+    for field in ratapi.Project.model_fields:
+        attr = getattr(project, field)
+        if isinstance(attr, ratapi.ClassList):
+            for item in attr:
+                if hasattr(item, "fit"):
+                    if item.name in true_list:
+                        item.fit = True
+                    else:
+                        item.fit = False
+
+
+def test_empty_slider_generated(view_with_proj):
+    set_proj_properties_fit_to_requested(view_with_proj, [])
+
+    view_with_proj.sliders_view_widget.init()
+    assert len(view_with_proj.sliders_view_widget._sliders) == 1
+    slider1 = view_with_proj.sliders_view_widget._sliders["Empty Slider"]
+    assert isinstance(slider1, EmptySlider)
+
+
+def test_empty_slider_updated(view_with_proj):
+    set_proj_properties_fit_to_requested(view_with_proj, [])
+
+    view_with_proj.sliders_view_widget.init()
+    assert len(view_with_proj.sliders_view_widget._sliders) == 1
+    slider1 = view_with_proj.sliders_view_widget._sliders["Empty Slider"]
+    assert isinstance(slider1, EmptySlider)
+    view_with_proj.sliders_view_widget.init()
+    assert isinstance(slider1, EmptySlider)
+
+
+def test_empty_slider_removed(view_with_proj):
+    set_proj_properties_fit_to_requested(view_with_proj, [])
+
+    view_with_proj.sliders_view_widget.init()
+    assert len(view_with_proj.sliders_view_widget._sliders) == 1
+    slider1 = view_with_proj.sliders_view_widget._sliders["Empty Slider"]
+    assert isinstance(slider1, EmptySlider)
+
+    set_proj_properties_fit_to_requested(view_with_proj, ["Param 2"])
+
+    view_with_proj.sliders_view_widget.init()
+    assert len(view_with_proj.sliders_view_widget._sliders) == 1
+    slider1 = view_with_proj.sliders_view_widget._sliders["Param 2"]
+    assert isinstance(slider1, LabeledSlider)

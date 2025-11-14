@@ -162,7 +162,9 @@ class SlidersViewWidget(QtWidgets.QWidget):
         # no new/deleted sliders have appeared.
         # We will update widgets parameters instead of deleting old and creating the new one.
         update_properties = (
-            n_updated_properties == len(trial_properties) and len(self._prop_to_change) == n_updated_properties
+            n_updated_properties == len(trial_properties)
+            and len(self._prop_to_change) == n_updated_properties
+            and n_updated_properties != 0
         )
 
         # store information about sliders properties
