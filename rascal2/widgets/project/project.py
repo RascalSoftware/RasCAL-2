@@ -372,6 +372,9 @@ class ProjectWidget(QtWidgets.QWidget):
     def show_edit_view(self) -> None:
         """Show edit view"""
 
+        # disable possibility to enable sliders view until project is edited
+        # and store current state of sliders view to restore it when editing
+        # finishes.
         sliders_visible = self.parent.sliders_view_widget.isVisible()
         self.parent.sliders_view_enabled(False, sliders_visible)
         self.__slider_view_state_holder_function = (
