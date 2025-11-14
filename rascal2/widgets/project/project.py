@@ -84,8 +84,8 @@ class ProjectWidget(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(20)
 
-        show_sliders_button = QtWidgets.QPushButton("Show sliders", self,objectName="ShowSliders")
-        show_sliders_button.clicked.connect(lambda : self.parent.show_or_hide_sliders(True))
+        show_sliders_button = QtWidgets.QPushButton("Show sliders", self, objectName="ShowSliders")
+        show_sliders_button.clicked.connect(lambda: self.parent.show_or_hide_sliders(True))
 
         self.edit_project_button = QtWidgets.QPushButton("Edit Project", self, icon=QtGui.QIcon(path_for("edit.png")))
         self.edit_project_button.clicked.connect(self.show_edit_view)
@@ -93,7 +93,6 @@ class ProjectWidget(QtWidgets.QWidget):
         button_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         button_layout.addWidget(show_sliders_button)
         button_layout.addWidget(self.edit_project_button)
-
 
         main_layout.addLayout(button_layout)
 
@@ -364,13 +363,11 @@ class ProjectWidget(QtWidgets.QWidget):
         self.stacked_widget.setCurrentIndex(0)
         self.parent.sliders_view_enabled(is_enabled=True)
 
-
     def show_edit_view(self) -> None:
         """Show edit view"""
 
         self.parent.sliders_view_enabled(
-            is_enabled=False,
-            prev_call_vis_sliders_state=self.parent.sliders_view_widget.isVisible()
+            is_enabled=False, prev_call_vis_sliders_state=self.parent.sliders_view_widget.isVisible()
         )
         # will be updated according to edit changes
         self.update_project_view(0)
@@ -396,7 +393,6 @@ class ProjectWidget(QtWidgets.QWidget):
             else:
                 self.show_project_view()
         self.parent.sliders_view_enabled(is_enabled=True)
-
 
     def validate_draft_project(self) -> Generator[str, None, None]:
         """Get all errors with the draft project."""
