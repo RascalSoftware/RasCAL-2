@@ -78,7 +78,7 @@ class ProjectWidget(QtWidgets.QWidget):
         layout.addWidget(self.stacked_widget)
         self.setLayout(layout)
 
-    def create_project_view(self) -> None:
+    def create_project_view(self) -> QtWidgets.QWidget:
         """Creates the project (non-edit) view"""
         project_widget = QtWidgets.QWidget()
         main_layout = QtWidgets.QVBoxLayout()
@@ -142,7 +142,7 @@ class ProjectWidget(QtWidgets.QWidget):
 
         return project_widget
 
-    def create_edit_view(self) -> None:
+    def create_edit_view(self) -> QtWidgets.QWidget:
         """Creates the project edit view"""
 
         edit_project_widget = QtWidgets.QWidget()
@@ -360,6 +360,9 @@ class ProjectWidget(QtWidgets.QWidget):
 
     def show_edit_view(self) -> None:
         """Show edit view"""
+
+        self.parent.show_or_hide_sliders(do_show_sliders=False)  # when you show it again it contents
+        # will be updated according to edit changes
         self.update_project_view(0)
         self.setWindowTitle("Edit Project")
         self.parent.controls_widget.run_button.setEnabled(False)
@@ -540,6 +543,7 @@ class ProjectTabWidget(QtWidgets.QWidget):
                 self.tables[field] = DataWidget(field, self)
             else:
                 self.tables[field] = ProjectFieldWidget(field, self)
+            self.tables[field].setObjectName(field)
             layout.addWidget(self.tables[field])
 
         scroll_area = QtWidgets.QScrollArea()

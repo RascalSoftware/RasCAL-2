@@ -39,8 +39,20 @@ def test_view():
 @pytest.mark.parametrize(
     "geometry",
     [
-        ((1, 2, 196, 24, True), (1, 2, 196, 24, True), (1, 2, 196, 24, True), (1, 2, 196, 24, True)),
-        ((1, 2, 196, 24, True), (3, 78, 196, 24, True), (1, 2, 204, 66, False), (12, 342, 196, 24, True)),
+        (
+            (1, 2, 196, 24, True),
+            (1, 2, 196, 24, True),
+            (1, 2, 196, 24, True),
+            (1, 2, 196, 24, True),
+            (1, 2, 196, 24, True),
+        ),
+        (
+            (1, 2, 196, 24, True),
+            (3, 78, 196, 24, True),
+            (1, 2, 204, 66, False),
+            (12, 342, 196, 24, True),
+            (5, 6, 200, 28, True),
+        ),
     ],
 )
 @patch("rascal2.ui.view.ProjectWidget.show_project_view")
@@ -52,12 +64,16 @@ class TestMDISettings:
         test_view.settings = Settings()
         test_view.setup_mdi()
         test_view.settings.mdi_defaults = MDIGeometries(
-            plots=geometry[0], project=geometry[1], terminal=geometry[2], controls=geometry[3]
+            Plots=geometry[0],
+            Project=geometry[1],
+            Terminal=geometry[2],
+            FittingControls=geometry[3],
+            SlidersView=geometry[4],
         )
         test_view.reset_mdi_layout()
         for window in test_view.mdi.subWindowList():
             # get corresponding MDIGeometries entry for the widget
-            widget_name = window.windowTitle().lower().split(" ")[-1]
+            widget_name = window.windowTitle().replace(" ", "")
             w_geom = window.geometry()
             assert getattr(test_view.settings.mdi_defaults, widget_name) == (
                 w_geom.x(),
@@ -74,7 +90,7 @@ class TestMDISettings:
         widgets_in_order = []
 
         for i, window in enumerate(test_view.mdi.subWindowList()):
-            widgets_in_order.append(window.windowTitle().lower().split(" ")[-1])
+            widgets_in_order.append(window.windowTitle().replace(" ", ""))
             window.setGeometry(*geometry[i][0:4])
             if geometry[i][4] is True:
                 window.showMinimized()
@@ -134,18 +150,11 @@ def test_get_project_folder(mock_get_dir: MagicMock):
     mock_overwrite.assert_called_once()
 
 
-def test_menu_bar_present(test_view):
-    """Test menu bar is present"""
-
-    assert hasattr(test_view, "main_menu")
-    assert isinstance(test_view.main_menu, QtWidgets.QMenuBar)
-
-
 @pytest.mark.parametrize("submenu_name", ["&File", "&Edit", "&Windows", "&Tools", "&Help"])
 def test_menu_element_present(test_view, submenu_name):
     """Test requested menu items are present"""
 
-    main_menu = test_view.main_menu
+    main_menu = test_view.menuBar()
 
     elements = main_menu.children()
     assert any(hasattr(submenu, "title") and submenu.title() == submenu_name for submenu in elements)
@@ -174,16 +183,79 @@ def test_menu_element_present(test_view, submenu_name):
         ),
         ("&Edit", ["&Undo", "&Redo", "Undo &History"]),
         ("&Windows", ["Tile Windows", "Reset to Default", "Save Current Window Positions"]),
-        ("&Tools", ["Clear Terminal", "", "Setup MATLAB"]),
+        ("&Tools", ["&Show Sliders", "", "Clear Terminal", "", "Setup MATLAB"]),
         ("&Help", ["&About", "&Help"]),
     ],
 )
 def test_help_menu_actions_present(test_view, submenu_name, action_names_and_layout):
     """Test if menu actions are available and their layouts are as specified in parameterize"""
 
-    main_menu = test_view.main_menu
+    main_menu = test_view.menuBar()
     submenu = main_menu.findChild(QtWidgets.QMenu, submenu_name)
     actions = submenu.actions()
     assert len(actions) == len(action_names_and_layout)
     for action, name in zip(actions, action_names_and_layout, strict=True):
         assert action.text() == name
+
+
+@pytest.fixture
+def test_view_with_mdi():
+    """An instance of MainWindowView with mdi property defined to some rubbish
+    for mimicking operations performed in MainWindowView.reset_mdi_layout
+    """
+
+    mw = MainWindowView()
+    mw.mdi.addSubWindow(mw.sliders_view_widget)
+    mdi_windows = mw.mdi.subWindowList()
+    mw.sliders_view_widget.mdi_holder = mdi_windows[0]
+    mw.enable_elements()
+    return mw
+
+
+@patch("rascal2.ui.view.SlidersViewWidget.show")
+@patch("rascal2.ui.view.SlidersViewWidget.hide")
+def test_click_on_select_sliders_works_as_expected(mock_hide, mock_show, test_view_with_mdi):
+    """Test if click on menu in the state "Show Slider" changes text appropriately
+    and initiates correct callback
+    """
+
+    # check initial state -- defined now but needs to be refactored when
+    # this may be included in configuration
+    assert not test_view_with_mdi.show_sliders
+
+    main_menu = test_view_with_mdi.menuBar()
+    submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
+    all_actions = submenu.actions()
+
+    # Trigger the action
+    all_actions[0].trigger()
+    assert all_actions[0].text() == "&Hide Sliders"
+    assert test_view_with_mdi.show_sliders
+    assert mock_show.call_count == 1
+
+
+@patch("rascal2.ui.view.SlidersViewWidget.show")
+@patch("rascal2.ui.view.SlidersViewWidget.hide")
+def test_click_on_select_tabs_works_as_expected(mock_hide, mock_show, test_view_with_mdi):
+    """Test if click on menu in the state "Show Sliders" changes text appropriately
+    and initiates correct callback
+    """
+
+    # check initial state -- defined now but needs to be refactored when
+    # this may be included in configuration
+    assert not test_view_with_mdi.show_sliders
+
+    main_menu = test_view_with_mdi.menuBar()
+    submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
+    all_actions = submenu.actions()
+
+    # Trigger the action
+    all_actions[0].trigger()
+    assert test_view_with_mdi.show_sliders
+    assert mock_show.call_count == 1  # this would show sliders widget
+    # check if next click returns to initial state
+    all_actions[0].trigger()
+
+    assert all_actions[0].text() == "&Show Sliders"
+    assert not test_view_with_mdi.show_sliders
+    assert mock_hide.call_count == 1  # this would hide sliders widget
