@@ -289,20 +289,20 @@ def test_param_item_delegates_exposed_to_sliders(widget_with_delegates):
 
 
 class MockReceiver:
-    """Test object which receives signals sent to slider"""
+    """Test object which receives signals sent to slider."""
 
     def __init__(self):
         self.cache_state = []
         self.call_count = 0
 
     def receive_signal(self, index, value):
-        """To bind to delegate signal"""
+        """To bind to delegate signal."""
         self.call_count += 1
         self.cache_state = (index, value)
 
 
 def test_param_item_delegates_emit_to_slider_subscribers(widget_with_delegates):
-    """Test if edit_finished signals emitted to subscribed clients"""
+    """Test if edit_finished signals emitted to subscribed clients."""
     sr = MockReceiver()
     selected_fields = ["min", "value", "max"]
 

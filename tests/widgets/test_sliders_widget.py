@@ -275,5 +275,5 @@ def test_hide_sliders_when_edited_restore_when_canceled(mock_hide, mock_show, mo
 
     assert mock_show.call_count == 1
     assert mock_update.call_count == 2
-    # call state persistent and return does not recover anything
+    # call state persistent and return does not recover anything.
     assert view_with_proj.project_widget._ProjectWidget__slider_view_state_holder_function is None

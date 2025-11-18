@@ -35,7 +35,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         # with fit parameter "true" to build sliders for and allow changes when slider is moved.
         # Their values are reflected in project and affect plots.
 
-        self._sliders = {}  # dictionary of the sliders used to display fittable values
+        self._sliders = {}  # dictionary of the sliders used to display fittable values.
 
         # create initial slider view layout and everything else which depends on it
         self.init()
