@@ -273,15 +273,36 @@ class SlidersViewWidget(QtWidgets.QWidget):
         """
         Cancel changes to properties obtained from sliders and hide sliders view.
         """
-        last_call = len(self._values_to_revert) - 1
 
-        for call_cnt, (key, val) in enumerate(self._values_to_revert.items()):
-            self._prop_to_change[key].update_value_representation(
+        last_changed_name = self._identify_last_changed_property()
+        if last_changed_name is None: # all properties value remain the same so no point
+            return                    # in reverting to them
+
+        for name, val in self._values_to_revert.items():
+            self._prop_to_change[name].update_value_representation(
                 val,
-                recalculate_project=(call_cnt == last_call),  # it is important to update project at last call only
+                recalculate_project=(name == last_changed_name),  # it is important to update project for
+                # last changed property only not to recalculate project multiple times
             )
 
         self._parent.show_or_hide_sliders(do_show_sliders=False)
+
+    def _identify_last_changed_property(self) -> str:
+        """Identify last changed property in the list of properties to revert.
+
+        To update project once, loop through the list of properties to revert
+        and indentify the name of last changed property to ensure the project
+        will be updated.
+
+        Relies on the assumption that the same loop will maintain the same
+        order in this procedure and _cancel_changes_from_sliders procedure
+        """
+
+        last_changed = None
+        for prop_name, value in self._values_to_revert.items():
+            if value != self._prop_to_change[prop_name].value:
+                last_changed = prop_name
+        return last_changed
 
     def _apply_changes_from_sliders(self) -> None:
         """
