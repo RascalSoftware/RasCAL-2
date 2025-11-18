@@ -30,6 +30,7 @@ def view_with_proj():
             ratapi.models.Parameter(name="Param 1", min=1, max=10, value=2.1, fit=True),
             ratapi.models.Parameter(name="Param 2", min=10, max=100, value=20, fit=False),
             ratapi.models.Parameter(name="Param 3", min=100, max=1000, value=209, fit=True),
+            ratapi.models.Parameter(name="Param 4", min=200, max=2000, value=409, fit=True),
         ]
     )
     draft["background_parameters"] = ratapi.ClassList(
@@ -46,17 +47,15 @@ def view_with_proj():
     mw.project_widget.view_tabs["Parameters"].update_model(draft)
     mw.presenter.model.project = project
 
-    # project = self._parent.presenter.model.project
-    # prop_dictionary = create_draft_project(project)
     yield mw
 
 
 def test_extract_properties_for_sliders(view_with_proj):
     update_sliders = view_with_proj.sliders_view_widget._init_properties_for_sliders()
     assert not update_sliders  # its false as at first call sliders should be regenerated
-    assert len(view_with_proj.sliders_view_widget._prop_to_change) == 2
-    assert list(view_with_proj.sliders_view_widget._prop_to_change.keys()) == ["Param 1", "Param 3"]
-    assert list(view_with_proj.sliders_view_widget._values_to_revert.values()) == [2.1, 209.0]
+    assert len(view_with_proj.sliders_view_widget._prop_to_change) == 3
+    assert list(view_with_proj.sliders_view_widget._prop_to_change.keys()) == ["Param 1", "Param 3", "Param 4"]
+    assert list(view_with_proj.sliders_view_widget._values_to_revert.values()) == [2.1, 209.0, 409]
     assert view_with_proj.sliders_view_widget._init_properties_for_sliders()  # now its true as sliders should be
     # available for update on second call
 
@@ -74,13 +73,16 @@ def test_create_update_called(add_sliders, update_sliders, view_with_proj):
 
 def test_init_slider_widget_builds_sliders(view_with_proj):
     view_with_proj.sliders_view_widget.init()
-    assert len(view_with_proj.sliders_view_widget._sliders) == 2
+    assert len(view_with_proj.sliders_view_widget._sliders) == 3
     assert "Param 1" in view_with_proj.sliders_view_widget._sliders
     assert "Param 3" in view_with_proj.sliders_view_widget._sliders
+    assert "Param 4" in view_with_proj.sliders_view_widget._sliders
     slider1 = view_with_proj.sliders_view_widget._sliders["Param 1"]
     slider2 = view_with_proj.sliders_view_widget._sliders["Param 3"]
+    slider3 = view_with_proj.sliders_view_widget._sliders["Param 4"]
     assert slider1._prop._vis_model == view_with_proj.project_widget.view_tabs["Parameters"].tables["parameters"].model
     assert slider2._prop._vis_model == view_with_proj.project_widget.view_tabs["Parameters"].tables["parameters"].model
+    assert slider3._prop._vis_model == view_with_proj.project_widget.view_tabs["Parameters"].tables["parameters"].model
 
 
 def fake_update(self, recalculate_project):
@@ -114,6 +116,7 @@ def test_cancel_button_called(view_with_proj):
     """
 
     view_with_proj.sliders_view_widget.init()
+
     view_with_proj.sliders_view_widget._values_to_revert["Param 1"] = 4
     view_with_proj.sliders_view_widget._values_to_revert["Param 3"] = 400
     cancel_button = view_with_proj.sliders_view_widget.findChild(QtWidgets.QPushButton, "CancelButton")
@@ -127,6 +130,7 @@ def test_cancel_button_called(view_with_proj):
     assert view_with_proj.presenter.model.project.parameters["Param 1"].value == 4
     assert view_with_proj.presenter.model.project.parameters["Param 2"].value == 20
     assert view_with_proj.presenter.model.project.parameters["Param 3"].value == 400
+    assert view_with_proj.presenter.model.project.parameters["Param 4"].value == 409
 
 
 @patch("rascal2.ui.view.SlidersViewWidget._apply_changes_from_sliders")

@@ -275,15 +275,14 @@ class SlidersViewWidget(QtWidgets.QWidget):
         """
 
         last_changed_name = self._identify_last_changed_property()
-        if last_changed_name is None: # all properties value remain the same so no point
-            return                    # in reverting to them
-
-        for name, val in self._values_to_revert.items():
-            self._prop_to_change[name].update_value_representation(
-                val,
-                recalculate_project=(name == last_changed_name),  # it is important to update project for
-                # last changed property only not to recalculate project multiple times
-            )
+        if last_changed_name is not None:
+            for name, val in self._values_to_revert.items():
+                self._prop_to_change[name].update_value_representation(
+                    val,
+                    recalculate_project=(name == last_changed_name),  # it is important to update project for
+                    # last changed property only not to recalculate project multiple times
+                )
+        # else: all properties value remain the same so no point in reverting to them
 
         self._parent.show_or_hide_sliders(do_show_sliders=False)
 
