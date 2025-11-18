@@ -288,13 +288,6 @@ def test_param_item_delegates_exposed_to_sliders(widget_with_delegates):
         assert isinstance(delegate, delegates.ValueSpinBoxDelegate)
 
 
-class MockEditor:
-    """A class with have only one method providing value. Used in test below"""
-
-    def value(self):
-        return 42
-
-
 class MockReceiver:
     """Test object which receives signals sent to slider"""
 
@@ -318,11 +311,11 @@ def test_param_item_delegates_emit_to_slider_subscribers(widget_with_delegates):
     for delegate in delegates_list:
         delegate.edit_finished_inform_sliders.connect(lambda idx, tab_name: sr.receive_signal(idx, tab_name))
 
-    index = widget_with_delegates.model.index(1, 1)
-    fed = MockEditor()
+    index = widget_with_delegates.model.index(1,1)
+    mc_editor = MagicMock()
 
     for n_calls, (delegate, field_name) in enumerate(zip(delegates_list, selected_fields, strict=True), start=1):
-        delegate.setModelData(fed, widget_with_delegates.model, index)
+        delegate.setModelData(mc_editor, widget_with_delegates.model, index)
         assert sr.call_count == n_calls
         assert sr.cache_state == (index, field_name)
 

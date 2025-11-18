@@ -292,9 +292,12 @@ class MainWindowView(QtWidgets.QMainWindow):
         """Depending on current state, show or hide sliders for
         table properties within Project class view.
 
-        do_show_sliders -- if provided, sets self.show_sliders logical variable
-                              into the requested state (True/False), forcing sliders
-                              widget to appear/disappear
+        Parameters:
+        -----------
+
+        do_show_sliders: bool,default None
+            if provided, sets self.show_sliders logical variable into the requested state
+            (True/False), forcing sliders widget to appear/disappear. if None, applies not to current state.
         """
         if do_show_sliders is None:
             self.show_sliders = not self.show_sliders
@@ -314,17 +317,17 @@ class MainWindowView(QtWidgets.QMainWindow):
 
     def sliders_view_enabled(self, is_enabled: bool, prev_call_vis_sliders_state: bool = False):
         """Makes sliders view button in menu enabled or disabled depending
-           on the state of the input parameters.
+        on the state of the input parameters.
 
         Used by: project widget to control menu when project editing is enabled.
 
-            Inputs:
-            ------
-            is_enabled -- if True, slider state should be enabled, if False - disabled.
-            prev_call_vis_sliders_state --
-                          logical stating what sliders view widget
-                          view state was when this method was called
-                          when slider state was disabled
+        Parameters:
+        -----------
+        is_enabled: bool,
+                if True, slider state should be enabled, if False - disabled.
+        prev_call_vis_sliders_state : bool,default False
+                logical stating what sliders view widget  view state was when this method was called
+                when slider state was disabled
         """
         self._show_or_hide_slider_action.setEnabled(is_enabled)
 

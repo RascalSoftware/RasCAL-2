@@ -76,11 +76,25 @@ class ClassListTableModel(QtCore.QAbstractTableModel):
             return QtCore.Qt.CheckState.Checked if data else QtCore.Qt.CheckState.Unchecked
 
     def setData(
-        self, index: QtCore.QModelIndex, value: float, role=QtCore.Qt.ItemDataRole.EditRole, recalculate_proj=True
+        self, index: QtCore.QModelIndex, value, role=QtCore.Qt.ItemDataRole.EditRole, recalculate_proj=True
     ) -> bool:
-        """Implement abstract setData method of QAbstractTableModel with additional variable
-        recalculate_proj -- Set it to False when modifying a bunch of properties in a loop, setting
-        it to True for the last value to recalculate project and update all table dependent widgets.
+        """Implement abstract setData method of QAbstractTableModel.
+
+        Parameters:
+        ----------
+
+        index: QtCore.QModelIndex
+            QModelIndex representing the row and column indices of edited cell wrt. the edited table
+        value:
+            new value of appropriate cell of the table.
+        role: QtCore.Qt.ItemDataRole
+            not sure what it is but apparently controls table behaviour amd needs to be Edit.
+            it nof Edit, method does nothing.
+
+        recalculate_proj: bool,default True
+            Additional control for RAT project recalculation. Set it to False when modifying
+            a bunch of properties in a loop changing it to True for the last value to recalculate
+            project and update all table's dependent widgets.
         """
         if role == QtCore.Qt.ItemDataRole.EditRole or role == QtCore.Qt.ItemDataRole.CheckStateRole:
             row = index.row()

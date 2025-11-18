@@ -31,13 +31,13 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
         self._values_to_revert = {}  # dictionary of values of original properties with fit parameter "true"
         # to be restored back into original project if cancel button is pressed.
-        self._prop_to_change = {}  # dictionary of references to SliderUpdateHoler classes containing properties
+        self._prop_to_change = {}  # dictionary of references to SliderChangeHolder classes containing properties
         # with fit parameter "true" to build sliders for and allow changes when slider is moved.
         # Their values are reflected in project and affect plots.
 
-        self._sliders = {}  # dictionary of the sliders used to display fitable values
-        # create initial slider view layout and everything else which depends on it
+        self._sliders = {}  # dictionary of the sliders used to display fittable values
 
+        # create initial slider view layout and everything else which depends on it
         self.init()
 
     def show(self):
@@ -60,6 +60,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
                 for window in self._parent.mdi.subWindowList():
                     if window.windowTitle() == "Project":
                         self._view_geometry = window.geometry()
+                        break
 
             self.mdi_holder.setGeometry(self._view_geometry)
             self.mdi_holder.show()
@@ -77,11 +78,10 @@ class SlidersViewWidget(QtWidgets.QWidget):
             self.mdi_holder.hide()
 
     def init(self) -> None:
-        """The main Widget window is ready so this method initializes
-        general contents (buttons) of the sliders widget.
-        If project is defined it extracts properties, used to build
-        sliders and generates list of sliders widgets to
-        control the properties.
+        """Initializes general contents (buttons) of the sliders widget if they have not been initialized.
+
+        If project is defined extracts properties, used to build sliders and generate list of sliders
+         widgets to control the properties.
         """
         if self.findChild(QtWidgets.QWidget, "AcceptButton") is None:
             self._create_slider_view_layout()
@@ -96,27 +96,31 @@ class SlidersViewWidget(QtWidgets.QWidget):
             self._add_sliders_widgets()
 
     def _init_properties_for_sliders(self) -> bool:
-        """Loop through project's widget view tabs and morels associated with them.
-        Select all ParametersModel and copy all their properties which have attribute
-         "Fit" == True
-        into dictionary used to build sliders for them. Also set back-up
+        """Loop through project's widget view tabs and models associated with them and extract
+        properties used by sliders widgets.
+
+        Select all ParametersModel-s and copy all their properties which have attribute
+         "Fit" == True into dictionary used to build sliders for them. Also set back-up
         dictionary  to reset properties values back to their initial values if "Cancel"
         button is pressed.
 
         Input:
         ------
-        Picks up project: self._parent.project_widget  -- project to get properties to change
+
+        SlidersViewWidget with initialized Project.
 
         Returns:
         --------
-        update_properties -- true if all properties in the project have already
-        had sliders, generated for them so we may update existing widgets instead of generating
-        new ones.
+
+        bool
+            true if all properties in the project have already had sliders, generated for them
+            earlier so we may update existing widgets instead of generating new ones.
 
         Sets up dictionary of slider parameters used to define sliders and sets up connections
-        necessary to interact with table view, namely:
-        1) slider to table and update graphics -> in the dictionary of slider parameters
-        2) change from Table view delegates -> routine which modifies sliders view.
+            necessary to interact with table view, namely:
+
+            1) slider to table and update graphics -> in the dictionary of slider parameters
+            2) change from Table view delegates -> routine which modifies sliders view.
         """
 
         proj = self._parent.project_widget
@@ -135,8 +139,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
                     continue  # data may be empty
 
                 for row, model_param in enumerate(data_model.classlist):
-                    if hasattr(model_param, "fit") and model_param.fit:  # Parameters model should always
-                        #                                      have fit attribute, but let's be on the safe side.
+                    if model_param.fit:
                         # Store information about necessary property and the model, which contains the property.
                         # The model is the source of methods which modify dependent table and force project
                         # recalculation.
@@ -176,19 +179,25 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
     def _table_edit_finished_change_slider(self, index, field_name: str, slider_name: str) -> None:
         """Method to bind with tables delegates and change slider appearance accordingly to changes in tables.
-        #
-        # Signal about slider parameters changed is sent to sliders widget last after all other signals on
-        # table parameters have been processed.
-        # At this stage, rascal properties have already been modified, so we just modify appropriate slider appearance
-        # index -- QtCore.QtTable index of appropriate rascal property in correspondent GUI table.
-        #          Duplicates slider name here so is not currently used.
-        # field_name
-        #       -- string indicating changed min/max/value fields of property. May be used later to optimize changes
-        #          but benefit of that  is minuscules.
-        # slider_name
-        #       -- name of the property, slider describes and key, which defines slider position in the dictionary
-        #          of sliders
+
+        Signal about slider parameters changed is sent to sliders widget last after all other signals on
+        table parameters have been processed.
+        At this stage, rascal properties have already been modified, so we just modify appropriate slider appearance
+
+        Parameters:
+        ------------
+
+        index: QtCore.QtTableIndex
+            Index of appropriate rascal property in correspondent GUI table.
+            Duplicates slider name is already in dictionary here so is not currently used.
+        field_name: str
+            string indicating changed min/max/value fields of property. May be used later to optimize changes
+            but benefit of that  is minuscules.
+        slider_name: str
+            name of the property, slider describes used as a key, which defines slider position in the dictionary
+            of sliders.
         """
+
         if self.isVisible():  # Do not bother otherwise, as slider appearance will be modified when made visible and
             # slider itself may have even been deleted
             self._sliders[slider_name].update_slider_display_from_property(in_constructor=False)
@@ -235,7 +244,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
             content = scroll.findChild(QtWidgets.QWidget, "Scroll_content")
             content_layout = content.layout()
 
-        # We are adding new sliders, so delete all previous ones. Update is done in another branch.
+        # We are adding new sliders, so delete all previous ones. Update is done in another routine.
         for slider in self._sliders.values():
             slider.deleteLater()
         self._sliders = {}
@@ -248,20 +257,21 @@ class SlidersViewWidget(QtWidgets.QWidget):
             content_layout.setSpacing(0)
             for name, prop in self._prop_to_change.items():
                 slider = LabeledSlider(prop)
+                slider.setMaximumHeight(100)
 
                 self._sliders[name] = slider
-                content_layout.addWidget(slider)
+                content_layout.addWidget(slider,alignment=QtCore.Qt.AlignmentFlag.AlignTop)
 
     def _update_sliders_widgets(self) -> None:
-        """Updates the sliders given the project properties to fit are the same
-        but their values may be modified
+        """
+        Updates the sliders given the project properties to fit are the same but their values may be modified
         """
         for name, prop in self._prop_to_change.items():
             self._sliders[name].update_slider_parameters(prop)
 
     def _cancel_changes_from_sliders(self):
-        """Cancel changes to properties obtained from sliders
-        and hide sliders view.
+        """
+        Cancel changes to properties obtained from sliders and hide sliders view.
         """
         last_call = len(self._values_to_revert) - 1
 
@@ -274,29 +284,32 @@ class SlidersViewWidget(QtWidgets.QWidget):
         self._parent.show_or_hide_sliders(do_show_sliders=False)
 
     def _apply_changes_from_sliders(self) -> None:
-        """Apply changes obtained from sliders to the project
-        and make them permanent
+        """
+        Apply changes obtained from sliders to the project  and make them permanent
         """
         # Changes have already been applied so just hide sliders widget
         self._parent.show_or_hide_sliders(False)
         return
 
 
-# =====================================================================================================================
 class SliderChangeHolder:
-    """Helper class containing information necessary for update
-    ratapi parameter and its representation in project table view
-    when slider position is changed
+    """Helper class containing information necessary for update ratapi parameter and its representation
+    in project table view  when slider position is changed
     """
 
     def __init__(self, row_number: int, model: ParametersModel, param: ratapi.models.Parameter) -> None:
         """Class Initialization function:
-        Inputs:
-        ------
-        row_number: int - the number of the row in the project table, which should be changed
-        model: rascal2.widgets.project.tables.ParametersModel - parameters model participating in ParametersTableView
-               and containing the parameter (below) to modify here.
-        param: ratapi.models.Parameter - the parameter which value field may be changed by slider widget
+
+        Parameters:
+        ----------
+
+        row_number: int
+         the number of the row in the project table, which should be changed
+        model: rascal2.widgets.project.tables.ParametersModel
+          parameters model (in QT sense) participating in ParametersTableView
+          and containing the parameter (below) to modify here.
+        param: ratapi.models.Parameter
+         the parameter which value field may be changed by slider widget
         """
         self.param = param
         self._vis_model = model
@@ -315,11 +328,18 @@ class SliderChangeHolder:
         self.param.value = value
 
     def update_value_representation(self, val: float, recalculate_project=True) -> None:
-        """given new value, update project table and property representations
-        No check are necessary as value comes from slider or back-up cache
+        """given new value, updates project table and property representations in the tables
 
-        recalculate_project -- if True, run ratapi calculations and updates
-        results representation.
+        No checks are necessary as value comes from slider or undo cache
+
+        Parameters:
+        -----------
+        val: float
+            new value to set up slider position according to the slider's numerical scale
+            (recalculated into actual integer position)
+        recalculate_project: bool
+            if True, run ratapi calculations and update representation of results in all dependent widgets.
+            if False, just update tables and properties
         """
         # value for ratapi parameter is defined in column 4 and this number is hardwired here
         # should be a better way of doing this.
@@ -328,9 +348,9 @@ class SliderChangeHolder:
 
 
 class LabeledSlider(QtWidgets.QFrame):
-    """Class describes slider widget which
-    allows modifying rascal property value and its representation
+    """Class describes slider widget which  allows modifying rascal property value and its representation
     in project table view.
+
     It also connects with table view and accepts changes in min/max/value
     obtained from  property.
     """
@@ -355,12 +375,15 @@ class LabeledSlider(QtWidgets.QFrame):
 
     def __init__(self, param: SliderChangeHolder):
         """Construct LabeledSlider for a particular property
-        Inputs:
+
+        Parameters:
         -------
-        param       --  instance of the SliderChangeHolder class, containing reference to the property to be modified by
-                        slider and the reference to visual model, which controls the position and the place of this
-                        property in the correspondent project table.
+        param: SliceChangeHolder
+               instance of the SliderChangeHolder class, containing reference to the property to be modified by
+               slider and the reference to visual model, which controls the position and the place of this
+               property in the correspondent project table.
         """
+
         super().__init__()
         self._prop = param  # hold the property controlled by slider
         if param is None:
@@ -410,17 +433,24 @@ class LabeledSlider(QtWidgets.QFrame):
         layout.addWidget(self._slider)
         layout.addLayout(scale_layout)
 
-        # signal to update label dynamically
+        # signal to update label dynamically and change all dependent properties
         self._slider.valueChanged.connect(self._update_value)
 
         self.setObjectName(self.slider_name)
         self.setFrameShape(QtWidgets.QFrame.Shape.Box)
         self.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
+        self.setMaximumHeight(self._slider.height())
 
     def set_slider_gui_position(self, value: float) -> None:
         """Set specified slider GUI position programmatically
+
         As value assumed to be already correct, block signal
         for change, associated with slider position change in GUI
+
+        Parameters:
+        ----------
+            value: float
+                new float value of the slider
         """
         self._value = value
         self._value_label.setText(self._value_label_format.format(value))
@@ -431,7 +461,17 @@ class LabeledSlider(QtWidgets.QFrame):
         self.__block_slider_value_changed_signal = False
 
     def update_slider_parameters(self, param: SliderChangeHolder, in_constructor=False):
-        """Modifies slider values which may change for this slider from his parent property"""
+        """Modifies slider values which may change for this slider from his parent property
+
+        Parameters:
+        -----------
+
+        param: SliderChangeHolder
+            instance of the SliderChangeHolder class, containing updated values for the slider
+        in_constructor: bool,default False
+            logical value, indicating that the method is invoked in constructor. If true,
+            some additional initialization will be performed.
+        """
         self._prop = param
         # Changing RASCAL property this slider modifies is currently prohibited,
         # as property connected through table model and project parameters:
@@ -445,6 +485,14 @@ class LabeledSlider(QtWidgets.QFrame):
         if property, underlying sliders parameters have changed.
 
         Bound to event received from delegate when table values are changed.
+
+        Parameters
+        ----------
+
+        in_constructor: bool,default False
+            logical value, indicating that the method is invoked in constructor. If True,
+            avoid change in graphics as these changes + graphics initialization
+            will be performed separately.
         """
         # note the order of methods in comparison. Should be as here, as may break
         # property updates in constructor otherwise.
@@ -465,8 +513,13 @@ class LabeledSlider(QtWidgets.QFrame):
             self._labels[idx].setText(self._tick_label_format.format(tick_value))
 
     def _updated_from_rascal_property(self) -> bool:
-        """Check if rascal property values related to slider widget have changed.
-        Update them if they are and return True. False if they have not been changed.
+        """Check if rascal property values related to slider widget have changed
+        and update them accordingly
+
+        Returns:
+        -------
+
+            True if change detected and False otherwise
         """
         updated = False
         if self._value_min != self._prop.param.min:
@@ -481,11 +534,39 @@ class LabeledSlider(QtWidgets.QFrame):
         return updated
 
     def _value_to_slider_pos(self, value: float) -> int:
-        """Convert double value into slider position"""
+        """Convert double (property) value into slider position
+
+        Parameters:
+        -----------
+
+            value : float
+                double value within slider's min-max range to identify integer
+                position corresponding to this value
+
+        Returns:
+        --------
+
+              index : int
+              integer position within 0-self._slider_max_idx range corresponding to input value
+        """
         return int(round(self._slider_max_idx * (value - self._value_min) / self._value_range, 0))
 
     def _slider_pos_to_value(self, index: int) -> float:
-        """Convert slider GUI position (index) into double value"""
+        """Convert slider GUI position (index) into double property value
+
+        Parameters:
+        -----------
+
+            index : int
+              integer position within 0-self._slider_max_idx range to process
+
+        Returns:
+        --------
+
+              value : float
+                double value within slider's min-max range corresponding to input index
+        """
+
         value = self._value_min + index * self._value_step
         if value > self._value_max:  # This should not happen but do occur due to round-off errors
             value = self._value_max
@@ -493,7 +574,20 @@ class LabeledSlider(QtWidgets.QFrame):
 
     def _build_slider(self, initial_value: float) -> QtWidgets.QSlider:
         """Construct slider widget with integer scales and ticks in integer positions
+
         Part of slider constructor
+
+        Parameters:
+        -----------
+            value : float
+                double value within slider's min-max range to identify integer
+                position corresponding to this value.
+
+        Returns:
+        --------
+
+              QtWidgets.QSlider instance
+              with settings, corresponding to input parameters.
         """
 
         slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
@@ -507,7 +601,18 @@ class LabeledSlider(QtWidgets.QFrame):
         return slider
 
     def _update_value(self, idx: int) -> None:
-        """Bound in constructor to GUI slider position changed event"""
+        """Method which converts slider position into double property value
+        and informs all dependent clients about this.
+
+        Bound in constructor to GUI slider position changed event
+
+        Parameters:
+        ----------
+
+            idx : int
+                integer position of slider deal in GUI
+
+        """
         if self.__block_slider_value_changed_signal:
             return
         val = self._slider_pos_to_value(idx)
@@ -523,16 +628,18 @@ class EmptySlider(LabeledSlider):
     def __init__(self):
         """Construct empty slider which have interface of LabeledSlider but no properties
         associated with it
-        Inputs:
-        ------
-        ignored
+
+        Parameters:
+        ----------
+            All input parameters are ignored
         """
         super().__init__(None)
         # Build all sliders widget and arrange them as expected
         self._slider = self._build_slider(0)
 
         name_label = QtWidgets.QLabel(
-            "No property to fit within the project. No sliders constructed",
+            "There are no fitted parameters.\n" 
+            " Select parameters to fit in the project view to populate the sliders view.",
             alignment=QtCore.Qt.AlignmentFlag.AlignCenter,
         )
         layout = QtWidgets.QVBoxLayout(self)
