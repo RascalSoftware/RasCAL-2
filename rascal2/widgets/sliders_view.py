@@ -40,7 +40,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         # create initial slider view layout and everything else which depends on it
         self.init()
 
-        self.__sliders_widgets_layout = None # Placeholder for the area, containing sliders widgets
+        self.__sliders_widgets_layout = None  # Placeholder for the area, containing sliders widgets
 
     def show(self):
         """Overload parent show method to deal with mdi container
@@ -182,8 +182,8 @@ class SlidersViewWidget(QtWidgets.QWidget):
         table parameters have been processed.
         At this stage, rascal properties have already been modified, so we just modify appropriate slider appearance
 
-        Parameters:
-        ------------
+        Parameters
+        ----------
         index: QtCore.QtTableIndex
             Index of appropriate rascal property in correspondent GUI table.
             Duplicates slider name is already in dictionary here so is not currently used.
@@ -240,7 +240,6 @@ class SlidersViewWidget(QtWidgets.QWidget):
         else:
             content_layout = self.__sliders_widgets_layout
 
-
         # We are adding new sliders, so delete all previous ones. Update is done in another routine.
         for slider in self._sliders.values():
             slider.deleteLater()
@@ -273,7 +272,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
         changed_properties = self._identify_changed_properties()
         if len(changed_properties) > 0:
-            last_changed_prop_num = len(changed_properties)-1
+            last_changed_prop_num = len(changed_properties) - 1
             for prop_num, (name, val) in enumerate(self._values_to_revert.items()):
                 self._prop_to_change[name].update_value_representation(
                     val,
@@ -288,7 +287,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         """Identify properties changed by sliders from initial sliders state.
 
         Returns
-        ------
+        -------
          :dict
             dictionary of the initial values of properties changed by sliders.
         """
@@ -316,7 +315,7 @@ class SliderChangeHolder:
     def __init__(self, row_number: int, model: ParametersModel, param: ratapi.models.Parameter) -> None:
         """Class Initialization function:
 
-        Parameters:
+        Parameters
         ----------
         row_number: int
          the number of the row in the project table, which should be changed
@@ -347,8 +346,8 @@ class SliderChangeHolder:
 
         No checks are necessary as value comes from slider or undo cache
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         val: float
             new value to set up slider position according to the slider's numerical scale
             (recalculated into actual integer position)
@@ -383,8 +382,8 @@ class LabeledSlider(QtWidgets.QFrame):
     def __init__(self, param: SliderChangeHolder):
         """Construct LabeledSlider for a particular property
 
-        Parameters:
-        -------
+        Parameters
+        ----------
         param: SliceChangeHolder
                instance of the SliderChangeHolder class, containing reference to the property to be modified by
                slider and the reference to visual model, which controls the position and the place of this
@@ -461,7 +460,7 @@ class LabeledSlider(QtWidgets.QFrame):
         As value assumed to be already correct, block signal
         for change, associated with slider position change in GUI
 
-        Parameters:
+        Parameters
         ----------
             value: float
                 new float value of the slider
@@ -477,9 +476,8 @@ class LabeledSlider(QtWidgets.QFrame):
     def update_slider_parameters(self, param: SliderChangeHolder, in_constructor=False):
         """Modifies slider values which may change for this slider from his parent property
 
-        Parameters:
-        -----------
-
+        Parameters
+        ----------
         param: SliderChangeHolder
             instance of the SliderChangeHolder class, containing updated values for the slider
         in_constructor: bool,default False
@@ -502,7 +500,6 @@ class LabeledSlider(QtWidgets.QFrame):
 
         Parameters
         ----------
-
         in_constructor: bool,default False
             logical value, indicating that the method is invoked in constructor. If True,
             avoid change in graphics as these changes + graphics initialization
@@ -532,7 +529,6 @@ class LabeledSlider(QtWidgets.QFrame):
 
         Returns:
         -------
-
             True if change detected and False otherwise
         """
         updated = False
@@ -552,14 +548,12 @@ class LabeledSlider(QtWidgets.QFrame):
 
         Parameters:
         -----------
-
             value : float
                 double value within slider's min-max range to identify integer
                 position corresponding to this value
 
         Returns:
         --------
-
               index : int
               integer position within 0-self._slider_max_idx range corresponding to input value
         """
@@ -568,15 +562,13 @@ class LabeledSlider(QtWidgets.QFrame):
     def _slider_pos_to_value(self, index: int) -> float:
         """Convert slider GUI position (index) into double property value
 
-        Parameters:
-        -----------
-
+        Parameters
+        ----------
             index : int
               integer position within 0-self._slider_max_idx range to process
 
-        Returns:
-        --------
-
+        Returns
+        -------
               value : float
                 double value within slider's min-max range corresponding to input index
         """
@@ -591,15 +583,14 @@ class LabeledSlider(QtWidgets.QFrame):
 
         Part of slider constructor
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
             value : float
                 double value within slider's min-max range to identify integer
                 position corresponding to this value.
 
-        Returns:
-        --------
-
+        Returns
+        -------
               QtWidgets.QSlider instance
               with settings, corresponding to input parameters.
         """
@@ -620,9 +611,8 @@ class LabeledSlider(QtWidgets.QFrame):
 
         Bound in constructor to GUI slider position changed event
 
-        Parameters:
+        Parameters
         ----------
-
             idx : int
                 integer position of slider deal in GUI
 
@@ -643,7 +633,7 @@ class EmptySlider(LabeledSlider):
         """Construct empty slider which have interface of LabeledSlider but no properties
         associated with it
 
-        Parameters:
+        Parameters
         ----------
             All input parameters are ignored
         """
