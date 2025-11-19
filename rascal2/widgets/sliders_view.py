@@ -37,10 +37,11 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
         self._sliders = {}  # dictionary of the sliders used to display fittable values.
 
+        self.__sliders_widgets_layout = None  # Placeholder for the area, containing sliders widgets
+
         # create initial slider view layout and everything else which depends on it
         self.init()
 
-        self.__sliders_widgets_layout = None  # Placeholder for the area, containing sliders widgets
 
     def show(self):
         """Overload parent show method to deal with mdi container
@@ -391,15 +392,16 @@ class LabeledSlider(QtWidgets.QFrame):
         """
 
         super().__init__()
+        # Defaults for property min/max. Will be overwritten from actual input property
+        self._value_min   = 0  # minimal value property may have
+        self._value_max   = 100  # maximal value property may have
+        self._value       = 50  # cache for property value
+        self._value_range = 100  # difference between maximal and minimal values of the property
+        self._value_step  = 1  # the change in property value per single step slider move
+
         self._prop = param  # hold the property controlled by slider
         if param is None:
             return
-        # Defaults for property min/max. Will be overwritten from actual input property
-        _value_min: float | None = 0  # minimal value property may have
-        _value_max: float | None = 100  # maximal value property may have
-        _value: float | None = 50  # cache for property value
-        _value_range: float | None = 100  # difference between maximal and minimal values of the property
-        _value_step: float | None = 1  # the change in property value per single step slider move
 
         self._labels = []  # list of slider labels describing sliders axis
         self.__block_slider_value_changed_signal = False
@@ -638,8 +640,6 @@ class EmptySlider(LabeledSlider):
             All input parameters are ignored
         """
         super().__init__(None)
-        # Build all sliders widget and arrange them as expected
-        self._slider = self._build_slider(0)
 
         name_label = QtWidgets.QLabel(
             "There are no fitted parameters.\n"
