@@ -173,7 +173,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         accept_button.clicked.connect(self._apply_changes_from_sliders)
 
         cancel_button = QtWidgets.QPushButton("Cancel", self, objectName="CancelButton")
-        cancel_button.clicked.connect(self.cancel_changes_from_sliders)
+        cancel_button.clicked.connect(self._cancel_changes_from_sliders)
 
         button_layout = QtWidgets.QHBoxLayout()
         button_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
@@ -227,7 +227,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         for name, prop in self._prop_to_change.items():
             self._sliders[name].update_slider_parameters(prop)
 
-    def cancel_changes_from_sliders(self):
+    def _cancel_changes_from_sliders(self):
         """Revert changes to values of properties, controlled and modified by sliders
         to their initial values and hide sliders view.
         """

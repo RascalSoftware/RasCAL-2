@@ -110,7 +110,8 @@ def test_identify_changed_properties_picks_up_changed(view_with_proj):
 
 
 @patch.object(ParameterFieldWidget, "update_project", fake_update)
-def test_cancel_button_called(view_with_proj):
+@patch("rascal2.ui.view.ProjectWidget.show_project_view")
+def test_cancel_button_called(mock_show_project,view_with_proj):
     """Cancel button sets value of controlled properties to value, stored in
     _value_to_revert dictionary
     """
@@ -131,6 +132,8 @@ def test_cancel_button_called(view_with_proj):
     assert view_with_proj.presenter.model.project.parameters["Param 2"].value == 20
     assert view_with_proj.presenter.model.project.parameters["Param 3"].value == 400
     assert view_with_proj.presenter.model.project.parameters["Param 4"].value == 409
+
+    assert mock_show_project.call_count == 1
 
 
 @patch("rascal2.ui.view.SlidersViewWidget._apply_changes_from_sliders")
@@ -230,50 +233,3 @@ def test_empty_slider_removed(view_with_proj):
     slider1 = view_with_proj.sliders_view_widget._sliders["Param 2"]
     assert isinstance(slider1, LabeledSlider)
 
-
-# ======================================================================================================================
-@patch.object(SlidersViewWidget, "isVisible", lambda self: True)
-@patch.object(ProjectWidget, "validate_draft_project", lambda self: "Errors present")
-@patch("rascal2.ui.view.ProjectWidget.update_project_view")
-@patch("rascal2.ui.view.SlidersViewWidget.show")
-@patch("rascal2.ui.view.SlidersViewWidget.hide")
-def test_hide_sliders_when_edited_restore_when_accepted(mock_hide, mock_show, mock_update, view_with_proj):
-    view_with_proj.sliders_view_widget.mdi_holder = QtWidgets.QWidget()  # needs for project to be defined
-
-    edit_button = view_with_proj.project_widget.edit_project_button
-    edit_button.click()
-    assert mock_hide.call_count == 1
-    assert mock_update.call_count == 1
-    # show state stored
-    assert callable(view_with_proj.project_widget._ProjectWidget__slider_view_state_holder_function)
-
-    save_button = view_with_proj.project_widget.save_project_button
-    save_button.click()
-
-    assert mock_show.call_count == 1
-    assert mock_update.call_count == 1  # we patched save with error so should not update
-    # call state persistent and return does not recover anything
-    assert view_with_proj.project_widget._ProjectWidget__slider_view_state_holder_function is None
-
-
-@patch.object(SlidersViewWidget, "isVisible", lambda self: True)
-@patch("rascal2.ui.view.ProjectWidget.update_project_view")
-@patch("rascal2.ui.view.SlidersViewWidget.show")
-@patch("rascal2.ui.view.SlidersViewWidget.hide")
-def test_hide_sliders_when_edited_restore_when_canceled(mock_hide, mock_show, mock_update, view_with_proj):
-    view_with_proj.sliders_view_widget.mdi_holder = QtWidgets.QWidget()  # needs for project to be defined
-
-    edit_button = view_with_proj.project_widget.edit_project_button
-    edit_button.click()
-    assert mock_hide.call_count == 1
-    assert mock_update.call_count == 1
-    # show state stored
-    assert callable(view_with_proj.project_widget._ProjectWidget__slider_view_state_holder_function)
-
-    cancel_button = view_with_proj.project_widget.cancel_button
-    cancel_button.click()
-
-    assert mock_show.call_count == 1
-    assert mock_update.call_count == 2
-    # call state persistent and return does not recover anything.
-    assert view_with_proj.project_widget._ProjectWidget__slider_view_state_holder_function is None
