@@ -266,8 +266,8 @@ class SlidersViewWidget(QtWidgets.QWidget):
             self._sliders[name].update_slider_parameters(prop)
 
     def _cancel_changes_from_sliders(self):
-        """
-        Cancel changes to properties obtained from sliders and hide sliders view.
+        """Revert changes to values of properties, controlled and modified by sliders
+        to their initial values and hide sliders view.
         """
 
         changed_properties = self._identify_changed_properties()
@@ -289,7 +289,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         Returns
         -------
          :dict
-            dictionary of the initial values of properties changed by sliders.
+            dictionary of the original values for properties changed by sliders.
         """
 
         changed_properties = {}
