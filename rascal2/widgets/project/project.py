@@ -86,7 +86,7 @@ class ProjectWidget(QtWidgets.QWidget):
         main_layout.setSpacing(20)
 
         show_sliders_button = QtWidgets.QPushButton("Show sliders", self, objectName="ShowSliders")
-        show_sliders_button.clicked.connect(self._show_sliders_view)
+        show_sliders_button.clicked.connect(lambda: self.parent.show_or_hide_sliders(True))
 
         self.edit_project_button = QtWidgets.QPushButton("Edit Project", self, icon=QtGui.QIcon(path_for("edit.png")))
         self.edit_project_button.clicked.connect(self.show_edit_view)
@@ -362,11 +362,6 @@ class ProjectWidget(QtWidgets.QWidget):
         self.setWindowTitle("Project")
         self.parent.controls_widget.run_button.setEnabled(True)
         self.stacked_widget.setCurrentIndex(0)
-
-    def _show_sliders_view(self):
-        # Show sliders widget instead of the project view
-        self.parent.show_or_hide_sliders(do_show_sliders=True)
-
 
     def show_edit_view(self) -> None:
         """Show edit view"""
