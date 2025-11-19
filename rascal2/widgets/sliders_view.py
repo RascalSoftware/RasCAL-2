@@ -43,9 +43,8 @@ class SlidersViewWidget(QtWidgets.QWidget):
         self.init()
 
     def show(self):
-        """Overload parent show method to deal with mdi container
-        showing sliders widget window. Also sets up or updates sliders
-        widget list depending on previous state of the widget.
+        """Overload parent show method sets up or updates sliders
+        list depending on previous state of the widget.
         """
 
         # avoid running init view more than once if sliders are visible.
@@ -53,31 +52,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
             return
 
         self.init()
-        if self.mdi_holder is None:
-            self._view_geometry = None
-            super().show()
-        else:
-            if self._view_geometry is None:
-                # inherit geometry from project view
-                for window in self._parent.mdi.subWindowList():
-                    if window.windowTitle() == "Project":
-                        self._view_geometry = window.geometry()
-                        break
-
-            self.mdi_holder.setGeometry(self._view_geometry)
-            self.mdi_holder.show()
-
-    def hide(self):
-        """Overload parent hide method to deal with mdi container
-        hiding slider widgets window
-        """
-
-        if self.mdi_holder is None:
-            super().hide()
-        else:
-            # store sliders geometry which may be user changed for the following view
-            self._view_geometry = self.mdi_holder.geometry()
-            self.mdi_holder.hide()
+        super().show()
 
     def init(self) -> None:
         """Initializes general contents (buttons) of the sliders widget if they have not been initialized.
