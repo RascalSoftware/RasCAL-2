@@ -111,7 +111,7 @@ def test_identify_changed_properties_picks_up_changed(view_with_proj):
 
 @patch.object(ParameterFieldWidget, "update_project", fake_update)
 @patch("rascal2.ui.view.ProjectWidget.show_project_view")
-def test_cancel_button_called(mock_show_project,view_with_proj):
+def test_cancel_button_called(mock_show_project, view_with_proj):
     """Cancel button sets value of controlled properties to value, stored in
     _value_to_revert dictionary
     """
@@ -232,4 +232,3 @@ def test_empty_slider_removed(view_with_proj):
     assert len(view_with_proj.sliders_view_widget._sliders) == 1
     slider1 = view_with_proj.sliders_view_widget._sliders["Param 2"]
     assert isinstance(slider1, LabeledSlider)
-
