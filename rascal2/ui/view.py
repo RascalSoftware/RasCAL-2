@@ -308,7 +308,9 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         if self.show_sliders:
             self._show_or_hide_slider_action.setText(self._sliders_menu_control_text["HideSliders"])
-            self.project_widget.show_sliders_view()
+            self.sliders_view_widget.show()
+            self.project_widget.setWindowTitle("Sliders View")
+            self.project_widget.stacked_widget.setCurrentIndex(2)
         else:
             self._show_or_hide_slider_action.setText(self._sliders_menu_control_text["ShowSliders"])
             self.sliders_view_widget.hide()

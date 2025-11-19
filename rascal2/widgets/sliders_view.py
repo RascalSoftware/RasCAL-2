@@ -173,7 +173,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         accept_button.clicked.connect(self._apply_changes_from_sliders)
 
         cancel_button = QtWidgets.QPushButton("Cancel", self, objectName="CancelButton")
-        cancel_button.clicked.connect(self._cancel_changes_from_sliders)
+        cancel_button.clicked.connect(self.cancel_changes_from_sliders)
 
         button_layout = QtWidgets.QHBoxLayout()
         button_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
@@ -193,7 +193,6 @@ class SlidersViewWidget(QtWidgets.QWidget):
             main_layout = self.layout()
             scroll = QtWidgets.QScrollArea()
             scroll.setWidgetResizable(True)  # important: resize content to fit area
-            scroll.setObjectName("Scroll")
             main_layout.addWidget(scroll)
             content = QtWidgets.QWidget()
             scroll.setWidget(content)
@@ -228,7 +227,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         for name, prop in self._prop_to_change.items():
             self._sliders[name].update_slider_parameters(prop)
 
-    def _cancel_changes_from_sliders(self):
+    def cancel_changes_from_sliders(self):
         """Revert changes to values of properties, controlled and modified by sliders
         to their initial values and hide sliders view.
         """
@@ -243,8 +242,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
                     # last changed property only not to recalculate project multiple times.
                 )
         # else: all properties value remain the same so no point in reverting to them
-        self.hide()
-        self._parent.project_widget.show_project_view()
+        self._parent.show_or_hide_sliders(do_show_sliders=False)
 
     def _identify_changed_properties(self) -> dict:
         """Identify properties changed by sliders from initial sliders state.
@@ -266,8 +264,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         Apply changes obtained from sliders to the project  and make them permanent
         """
         # Changes have already been applied so just hide sliders widget
-        self.hide()
-        self._parent.project_widget.show_project_view()
+        self._parent.show_or_hide_sliders(do_show_sliders=False)
         return
 
 
