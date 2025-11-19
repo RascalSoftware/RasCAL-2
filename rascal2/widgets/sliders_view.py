@@ -141,20 +141,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
                         # Store information about necessary property and the model, which contains the property.
                         # The model is the source of methods which modify dependent table and force project
                         # recalculation.
-                        slider_info = SliderChangeHolder(row_number=row, model=data_model, param=model_param)
-                        trial_properties[model_param.name] = slider_info
-                        # Connect delegates which propagate parameters changed in tables to correspondent sliders.
-                        # Can be improved by using item index as these delegates emit "edited" signal for the whole
-                        # column, but row index is presented in signal itself.
-                        this_prop_change_delegates = table_view.get_item_delegates(["min", "max", "value"])
-                        for delegate in this_prop_change_delegates:
-                            delegate.edit_finished_inform_sliders.connect(
-                                lambda index,
-                                field,
-                                slider_name=model_param.name: self._table_edit_finished_change_slider(
-                                    index, field, slider_name
-                                )
-                            )
+                        trial_properties[model_param.name] = SliderChangeHolder(row_number=row, model=data_model, param=model_param)
 
                         if model_param.name in self._prop_to_change:
                             n_updated_properties += 1
@@ -174,30 +161,6 @@ class SlidersViewWidget(QtWidgets.QWidget):
         self._values_to_revert = {name: prop.value for name, prop in trial_properties.items()}
 
         return update_properties
-
-    def _table_edit_finished_change_slider(self, index, field_name: str, slider_name: str) -> None:
-        """Method to bind with tables delegates and change slider appearance accordingly to changes in tables.
-
-        Signal about slider parameters changed is sent to sliders widget last after all other signals on
-        table parameters have been processed.
-        At this stage, rascal properties have already been modified, so we just modify appropriate slider appearance
-
-        Parameters
-        ----------
-        index: QtCore.QtTableIndex
-            Index of appropriate rascal property in correspondent GUI table.
-            Duplicates slider name is already in dictionary here so is not currently used.
-        field_name: str
-            string indicating changed min/max/value fields of property. May be used later to optimize changes
-            but benefit of that  is minuscules.
-        slider_name: str
-            name of the property, slider describes used as a key, which defines slider position in the dictionary
-            of sliders.
-        """
-
-        if self.isVisible():  # Do not bother otherwise, as slider appearance will be modified when made visible and
-            # slider itself may have even been deleted
-            self._sliders[slider_name].update_slider_display_from_property(in_constructor=False)
 
     def _create_slider_view_layout(self) -> None:
         """Create sliders layout with all necessary controls and connections
@@ -280,8 +243,8 @@ class SlidersViewWidget(QtWidgets.QWidget):
                     # last changed property only not to recalculate project multiple times.
                 )
         # else: all properties value remain the same so no point in reverting to them
-
-        self._parent.show_or_hide_sliders(do_show_sliders=False)
+        self.hide()
+        self._parent.project_widget.show_project_view()
 
     def _identify_changed_properties(self) -> dict:
         """Identify properties changed by sliders from initial sliders state.
@@ -303,7 +266,8 @@ class SlidersViewWidget(QtWidgets.QWidget):
         Apply changes obtained from sliders to the project  and make them permanent
         """
         # Changes have already been applied so just hide sliders widget
-        self._parent.show_or_hide_sliders(False)
+        self.hide()
+        self._parent.project_widget.show_project_view()
         return
 
 

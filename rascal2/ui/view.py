@@ -43,8 +43,9 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.plot_widget = PlotWidget(self)
         self.terminal_widget = TerminalWidget()
         self.controls_widget = ControlsWidget(self)
-        self.project_widget = ProjectWidget(self)
         self.sliders_view_widget = SlidersViewWidget(self)
+        self.project_widget = ProjectWidget(self)
+
 
         ## protected interface and public properties construction
 
@@ -304,38 +305,14 @@ class MainWindowView(QtWidgets.QMainWindow):
         else:
             self.show_sliders = do_show_sliders
 
-        # ignore show/hide operations if project and its mdi container are not defined
-        if self.sliders_view_widget.mdi_holder is None:
-            return
 
         if self.show_sliders:
             self._show_or_hide_slider_action.setText(self._sliders_menu_control_text["HideSliders"])
-            self.sliders_view_widget.show()
+            self.project_widget.show_sliders_view()
         else:
             self._show_or_hide_slider_action.setText(self._sliders_menu_control_text["ShowSliders"])
             self.sliders_view_widget.hide()
-
-    def sliders_view_enabled(self, is_enabled: bool, prev_call_vis_sliders_state: bool = False):
-        """Makes sliders view button in menu enabled or disabled depending
-        on the state of the input parameters.
-
-        Used by: project widget to control menu when project editing is enabled.
-
-        Parameters:
-        -----------
-        is_enabled: bool,
-                if True, slider state should be enabled, if False - disabled.
-        prev_call_vis_sliders_state : bool,default False
-                logical stating what sliders view widget  view state was when this method was called
-                when slider state was disabled
-        """
-        self._show_or_hide_slider_action.setEnabled(is_enabled)
-
-        # hide sliders when disabled or else
-        if is_enabled:
-            self.show_or_hide_sliders(do_show_sliders=prev_call_vis_sliders_state)
-        else:
-            self.show_or_hide_sliders(do_show_sliders=False)
+            self.project_widget.show_project_view()
 
     def open_about_info(self):
         """Opens about menu containing information about RASCAL gui"""
@@ -386,13 +363,6 @@ class MainWindowView(QtWidgets.QMainWindow):
                 widget, QtCore.Qt.WindowType.WindowMinMaxButtonsHint | QtCore.Qt.WindowType.WindowTitleHint
             )
             window.setWindowTitle(title)
-        #  Add sliders view widget separately, as it will behave and is controlled differently from other
-        # mdi windows
-        self.mdi.addSubWindow(
-            self.sliders_view_widget,
-            QtCore.Qt.WindowType.WindowMinMaxButtonsHint | QtCore.Qt.WindowType.WindowTitleHint,
-        )
-        self.sliders_view_widget.setWindowTitle("Sliders View")
 
         self.reset_mdi_layout()
         self.startup_dlg = self.takeCentralWidget()
@@ -407,7 +377,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.plot_widget.clear()
         self.terminal_widget.clear()
         self.terminal_widget.write_startup()
-        self.sliders_view_widget.init()
 
     def reset_mdi_layout(self):
         """Reset MDI layout to the default."""
