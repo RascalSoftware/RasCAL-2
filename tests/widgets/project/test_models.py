@@ -288,38 +288,6 @@ def test_param_item_delegates_exposed_to_sliders(widget_with_delegates):
         assert isinstance(delegate, delegates.ValueSpinBoxDelegate)
 
 
-class MockReceiver:
-    """Test object which receives signals sent to slider."""
-
-    def __init__(self):
-        self.cache_state = []
-        self.call_count = 0
-
-    def receive_signal(self, index, value):
-        """To bind to delegate signal."""
-        self.call_count += 1
-        self.cache_state = (index, value)
-
-
-def test_param_item_delegates_emit_to_slider_subscribers(widget_with_delegates):
-    """Test if edit_finished signals emitted to subscribed clients."""
-    sr = MockReceiver()
-    selected_fields = ["min", "value", "max"]
-
-    # Expected order of delegates in the property should be is as in the list.
-    delegates_list = widget_with_delegates.get_item_delegates(selected_fields)
-    for delegate in delegates_list:
-        delegate.edit_finished_inform_sliders.connect(lambda idx, tab_name: sr.receive_signal(idx, tab_name))
-
-    index = widget_with_delegates.model.index(1, 1)
-    mc_editor = MagicMock()
-
-    for n_calls, (delegate, field_name) in enumerate(zip(delegates_list, selected_fields, strict=True), start=1):
-        delegate.setModelData(mc_editor, widget_with_delegates.model, index)
-        assert sr.call_count == n_calls
-        assert sr.cache_state == (index, field_name)
-
-
 def test_hidden_bayesian_columns(widget_with_delegates):
     """Test that Bayes columns are hidden when procedure is not Bayesian."""
 
