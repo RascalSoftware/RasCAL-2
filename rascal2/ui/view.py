@@ -353,7 +353,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         """Creates the multi-document interface"""
         # if windows are already created, don't set them up again,
         # just refresh the widget data
-        if len(self.mdi.subWindowList()) == 5:
+        if len(self.mdi.subWindowList()) == 4:
             self.setup_mdi_widgets()
             return
 
