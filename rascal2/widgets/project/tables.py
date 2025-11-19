@@ -80,9 +80,8 @@ class ClassListTableModel(QtCore.QAbstractTableModel):
     ) -> bool:
         """Implement abstract setData method of QAbstractTableModel.
 
-        Parameters:
+        Parameters
         ----------
-
         index: QtCore.QModelIndex
             QModelIndex representing the row and column indices of edited cell wrt. the edited table
         value:
@@ -90,11 +89,12 @@ class ClassListTableModel(QtCore.QAbstractTableModel):
         role: QtCore.Qt.ItemDataRole
             not sure what it is but apparently controls table behaviour amd needs to be Edit.
             it nof Edit, method does nothing.
-
         recalculate_proj: bool,default True
             Additional control for RAT project recalculation. Set it to False when modifying
             a bunch of properties in a loop changing it to True for the last value to recalculate
             project and update all table's dependent widgets.
+            IMPORTANT: ensure last value differs from the existing one for this property as project
+                       will be not recalculated otherwise.
         """
         if role == QtCore.Qt.ItemDataRole.EditRole or role == QtCore.Qt.ItemDataRole.CheckStateRole:
             row = index.row()

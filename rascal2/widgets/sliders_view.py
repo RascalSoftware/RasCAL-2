@@ -106,14 +106,10 @@ class SlidersViewWidget(QtWidgets.QWidget):
         dictionary  to reset properties values back to their initial values if "Cancel"
         button is pressed.
 
-        Input:
-        ------
+        Requests:   SlidersViewWidget with initialized Project.
 
-        SlidersViewWidget with initialized Project.
-
-        Returns:
+        Returns
         --------
-
         bool
             true if all properties in the project have already had sliders, generated for them
             earlier so we may update existing widgets instead of generating new ones.
@@ -188,7 +184,6 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
         Parameters:
         ------------
-
         index: QtCore.QtTableIndex
             Index of appropriate rascal property in correspondent GUI table.
             Duplicates slider name is already in dictionary here so is not currently used.
@@ -375,16 +370,8 @@ class LabeledSlider(QtWidgets.QFrame):
     obtained from  property.
     """
 
-    # Instance attributes generator
-    # Defaults for property min/max. Will be overwritten from actual input property
-    _value_min: float | None = 0  # minimal value property may have
-    _value_max: float | None = 100  # maximal value property may have
-    _value: float | None = 50  # cache for property value
-    _value_range: float | None = 100  # difference between maximal and minimal values of the property
-    _value_step: float | None = 1  # the change in property value per single step slider move
-
     # Class attributes of slider widget which usually remain the same for all classes.
-    # Do not override unless in __init__ method
+    # Affect all sliders behaviour so are global.
     _num_slider_ticks: int = 10
     _slider_max_idx: int = 100  # defines accuracy of slider motion
     _ticks_step: int = 10  # Number of sliders ticks
@@ -408,6 +395,13 @@ class LabeledSlider(QtWidgets.QFrame):
         self._prop = param  # hold the property controlled by slider
         if param is None:
             return
+        # Defaults for property min/max. Will be overwritten from actual input property
+        _value_min: float | None = 0  # minimal value property may have
+        _value_max: float | None = 100  # maximal value property may have
+        _value: float | None = 50  # cache for property value
+        _value_range: float | None = 100  # difference between maximal and minimal values of the property
+        _value_step: float | None = 1  # the change in property value per single step slider move
+
         self._labels = []  # list of slider labels describing sliders axis
         self.__block_slider_value_changed_signal = False
 
@@ -462,7 +456,7 @@ class LabeledSlider(QtWidgets.QFrame):
         self.setMaximumHeight(self._slider.height())
 
     def set_slider_gui_position(self, value: float) -> None:
-        """Set specified slider GUI position programmatically
+        """Set specified slider GUI position programmatically.
 
         As value assumed to be already correct, block signal
         for change, associated with slider position change in GUI
