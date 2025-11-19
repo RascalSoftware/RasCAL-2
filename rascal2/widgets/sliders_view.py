@@ -42,7 +42,6 @@ class SlidersViewWidget(QtWidgets.QWidget):
         # create initial slider view layout and everything else which depends on it
         self.init()
 
-
     def show(self):
         """Overload parent show method to deal with mdi container
         showing sliders widget window. Also sets up or updates sliders
@@ -393,11 +392,11 @@ class LabeledSlider(QtWidgets.QFrame):
 
         super().__init__()
         # Defaults for property min/max. Will be overwritten from actual input property
-        self._value_min   = 0  # minimal value property may have
-        self._value_max   = 100  # maximal value property may have
-        self._value       = 50  # cache for property value
+        self._value_min = 0  # minimal value property may have
+        self._value_max = 100  # maximal value property may have
+        self._value = 50  # cache for property value
         self._value_range = 100  # difference between maximal and minimal values of the property
-        self._value_step  = 1  # the change in property value per single step slider move
+        self._value_step = 1  # the change in property value per single step slider move
 
         self._prop = param  # hold the property controlled by slider
         if param is None:
