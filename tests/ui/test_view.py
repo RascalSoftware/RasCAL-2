@@ -219,7 +219,6 @@ def test_click_on_select_sliders_works_as_expected(mock_hide, mock_show, test_vi
     and initiates correct callback
     """
 
-
     main_menu = test_view_with_mdi.menuBar()
     submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
     all_actions = submenu.actions()
@@ -234,7 +233,7 @@ def test_click_on_select_sliders_works_as_expected(mock_hide, mock_show, test_vi
 @patch("rascal2.ui.view.SlidersViewWidget.show")
 @patch("rascal2.ui.view.SlidersViewWidget.hide")
 @patch("rascal2.ui.view.ProjectWidget.update_project_view")
-def test_click_on_select_tabs_works_as_expected(mock_update_proj,mock_hide, mock_show, test_view_with_mdi):
+def test_click_on_select_tabs_works_as_expected(mock_update_proj, mock_hide, mock_show, test_view_with_mdi):
     """Test if click on menu in the state "Show Sliders" changes text appropriately
     and initiates correct callback
     """
