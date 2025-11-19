@@ -219,9 +219,6 @@ def test_click_on_select_sliders_works_as_expected(mock_hide, mock_show, test_vi
     and initiates correct callback
     """
 
-    # check initial state -- defined now but needs to be refactored when
-    # this may be included in configuration
-    assert not test_view_with_mdi.show_sliders
 
     main_menu = test_view_with_mdi.menuBar()
     submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
@@ -236,14 +233,11 @@ def test_click_on_select_sliders_works_as_expected(mock_hide, mock_show, test_vi
 
 @patch("rascal2.ui.view.SlidersViewWidget.show")
 @patch("rascal2.ui.view.SlidersViewWidget.hide")
-def test_click_on_select_tabs_works_as_expected(mock_hide, mock_show, test_view_with_mdi):
+@patch("rascal2.ui.view.ProjectWidget.update_project_view")
+def test_click_on_select_tabs_works_as_expected(mock_update_proj,mock_hide, mock_show, test_view_with_mdi):
     """Test if click on menu in the state "Show Sliders" changes text appropriately
     and initiates correct callback
     """
-
-    # check initial state -- defined now but needs to be refactored when
-    # this may be included in configuration
-    assert not test_view_with_mdi.show_sliders
 
     main_menu = test_view_with_mdi.menuBar()
     submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
@@ -254,53 +248,10 @@ def test_click_on_select_tabs_works_as_expected(mock_hide, mock_show, test_view_
     assert test_view_with_mdi.show_sliders
     assert mock_show.call_count == 1  # this would show sliders widget
     # check if next click returns to initial state
+    assert mock_update_proj.call_count == 0
     all_actions[0].trigger()
 
     assert all_actions[0].text() == "&Show Sliders"
     assert not test_view_with_mdi.show_sliders
     assert mock_hide.call_count == 1  # this would hide sliders widget
-
-
-@patch("rascal2.ui.view.SlidersViewWidget.hide")
-def test_enable_disable_sliders_menu_without_params(mock_hide, test_view_with_mdi):
-    """Test if click on menu in the state "Show Sliders" changes text appropriately
-    and initiates correct callback
-    """
-    assert not test_view_with_mdi.sliders_view_widget.isVisible()
-
-    main_menu = test_view_with_mdi.menuBar()
-    submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
-    all_actions = submenu.actions()
-    assert all_actions[0].isEnabled()  # enabled in patch
-
-    test_view_with_mdi.sliders_view_enabled(False)
-    assert not all_actions[0].isEnabled()  # disabled now
-    assert mock_hide.call_count == 1  # this would hide sliders widget if it was visible
-
-    test_view_with_mdi.sliders_view_enabled(True)
-    assert all_actions[0].isEnabled()  # enabled now
-    assert mock_hide.call_count == 2  # still call hide as this was the previous state
-
-    # here as it remembers the call state
-
-
-@patch("rascal2.ui.view.SlidersViewWidget.show")
-@patch("rascal2.ui.view.SlidersViewWidget.hide")
-def test_enable_disable_sliders_menu_with_params(mock_hide, mock_show, test_view_with_mdi):
-    """Test if click on menu in the state "Show Sliders" changes text appropriately
-    and initiates correct callback
-    """
-    assert not test_view_with_mdi.sliders_view_widget.isVisible()
-
-    main_menu = test_view_with_mdi.menuBar()
-    submenu = main_menu.findChild(QtWidgets.QMenu, "&Tools")
-    all_actions = submenu.actions()
-    assert all_actions[0].isEnabled()  # enabled in patch
-
-    test_view_with_mdi.sliders_view_enabled(False, True)
-    assert not all_actions[0].isEnabled()
-    assert mock_hide.call_count == 1  # this would hide sliders widget if it was visible
-
-    test_view_with_mdi.sliders_view_enabled(True, True)
-    assert all_actions[0].isEnabled()  # enabled now
-    assert mock_show.call_count == 1  #  call show as this was the previous prev_call_vis_sliders_state state
+    assert mock_update_proj.call_count == 1
