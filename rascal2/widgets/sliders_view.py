@@ -141,7 +141,9 @@ class SlidersViewWidget(QtWidgets.QWidget):
                         # Store information about necessary property and the model, which contains the property.
                         # The model is the source of methods which modify dependent table and force project
                         # recalculation.
-                        trial_properties[model_param.name] = SliderChangeHolder(row_number=row, model=data_model, param=model_param)
+                        trial_properties[model_param.name] = SliderChangeHolder(
+                            row_number=row, model=data_model, param=model_param
+                        )
 
                         if model_param.name in self._prop_to_change:
                             n_updated_properties += 1

@@ -46,7 +46,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.sliders_view_widget = SlidersViewWidget(self)
         self.project_widget = ProjectWidget(self)
 
-
         ## protected interface and public properties construction
 
         # define menu controlling switch between table and slider views
@@ -304,7 +303,6 @@ class MainWindowView(QtWidgets.QMainWindow):
             self.show_sliders = not self.show_sliders
         else:
             self.show_sliders = do_show_sliders
-
 
         if self.show_sliders:
             self._show_or_hide_slider_action.setText(self._sliders_menu_control_text["HideSliders"])
