@@ -260,7 +260,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
                 slider.setMaximumHeight(100)
 
                 self._sliders[name] = slider
-                content_layout.addWidget(slider,alignment=QtCore.Qt.AlignmentFlag.AlignTop)
+                content_layout.addWidget(slider, alignment=QtCore.Qt.AlignmentFlag.AlignTop)
 
     def _update_sliders_widgets(self) -> None:
         """
@@ -658,7 +658,7 @@ class EmptySlider(LabeledSlider):
         self._slider = self._build_slider(0)
 
         name_label = QtWidgets.QLabel(
-            "There are no fitted parameters.\n" 
+            "There are no fitted parameters.\n"
             " Select parameters to fit in the project view to populate the sliders view.",
             alignment=QtCore.Qt.AlignmentFlag.AlignCenter,
         )

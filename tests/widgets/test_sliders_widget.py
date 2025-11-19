@@ -93,15 +93,14 @@ def fake_update(self, recalculate_project):
 fake_update.num_calls = 0
 fake_update.project_updated = []
 
-def test_identify_last_changed_property_none_for_unchanged(view_with_proj):
 
+def test_identify_last_changed_property_none_for_unchanged(view_with_proj):
     view_with_proj.sliders_view_widget.init()
 
     assert view_with_proj.sliders_view_widget._identify_last_changed_property() is None
 
 
 def test_identify_last_changed_property_picks_up_last_changed(view_with_proj):
-
     view_with_proj.sliders_view_widget.init()
     view_with_proj.sliders_view_widget._values_to_revert["Param 1"] = 4
     view_with_proj.sliders_view_widget._values_to_revert["Param 3"] = 400

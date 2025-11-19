@@ -311,7 +311,7 @@ def test_param_item_delegates_emit_to_slider_subscribers(widget_with_delegates):
     for delegate in delegates_list:
         delegate.edit_finished_inform_sliders.connect(lambda idx, tab_name: sr.receive_signal(idx, tab_name))
 
-    index = widget_with_delegates.model.index(1,1)
+    index = widget_with_delegates.model.index(1, 1)
     mc_editor = MagicMock()
 
     for n_calls, (delegate, field_name) in enumerate(zip(delegates_list, selected_fields, strict=True), start=1):
