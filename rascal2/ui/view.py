@@ -375,10 +375,10 @@ class MainWindowView(QtWidgets.QMainWindow):
         # if windows are already created, don't set them up again,
         # just refresh the widget data
         if len(self.mdi.subWindowList()) == 5:
-            self.init_mdi_widgets()
+            self.setup_mdi_widgets()
             return
 
-        self.init_mdi_widgets()
+        self.setup_mdi_widgets()
 
         for title, widget in reversed(self._main_window_widgets.items()):
             widget.setWindowTitle(title)
@@ -398,8 +398,10 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.startup_dlg = self.takeCentralWidget()
         self.setCentralWidget(self.mdi)
 
-    def init_mdi_widgets(self):
-        """Performs initialization of MDI widgets that relies on the Project existing."""
+    def setup_mdi_widgets(self):
+        """
+        Performs initialization of MDI widgets that rely on the Project being defined.
+        """
         self.controls_widget.setup_controls()
         self.project_widget.show_project_view()
         self.plot_widget.clear()

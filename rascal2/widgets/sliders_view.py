@@ -40,6 +40,8 @@ class SlidersViewWidget(QtWidgets.QWidget):
         # create initial slider view layout and everything else which depends on it
         self.init()
 
+        self.__sliders_widgets_layout = None # Placeholder for the area, containing sliders widgets
+
     def show(self):
         """Overload parent show method to deal with mdi container
         showing sliders widget window. Also sets up or updates sliders
@@ -228,21 +230,21 @@ class SlidersViewWidget(QtWidgets.QWidget):
         """Given sliders view layout and list of properties which can be controlled by sliders
         add appropriate sliders to sliders view Widget
         """
-        scroll = self.findChild(QtWidgets.QScrollArea, "Scroll")
-        if scroll is None:
+
+        if self.__sliders_widgets_layout is None:
             main_layout = self.layout()
             scroll = QtWidgets.QScrollArea()
             scroll.setWidgetResizable(True)  # important: resize content to fit area
             scroll.setObjectName("Scroll")
             main_layout.addWidget(scroll)
             content = QtWidgets.QWidget()
-            content.setObjectName("Scroll_content")
             scroll.setWidget(content)
             # --- Add content layout
             content_layout = QtWidgets.QVBoxLayout(content)
+            self.__sliders_widgets_layout = content_layout
         else:
-            content = scroll.findChild(QtWidgets.QWidget, "Scroll_content")
-            content_layout = content.layout()
+            content_layout = self.__sliders_widgets_layout
+
 
         # We are adding new sliders, so delete all previous ones. Update is done in another routine.
         for slider in self._sliders.values():
@@ -274,34 +276,33 @@ class SlidersViewWidget(QtWidgets.QWidget):
         Cancel changes to properties obtained from sliders and hide sliders view.
         """
 
-        last_changed_name = self._identify_last_changed_property()
-        if last_changed_name is not None:
-            for name, val in self._values_to_revert.items():
+        changed_properties = self._identify_changed_properties()
+        if len(changed_properties) > 0:
+            last_changed_prop_num = len(changed_properties)-1
+            for prop_num, (name, val) in enumerate(self._values_to_revert.items()):
                 self._prop_to_change[name].update_value_representation(
                     val,
-                    recalculate_project=(name == last_changed_name),  # it is important to update project for
-                    # last changed property only not to recalculate project multiple times
+                    recalculate_project=(prop_num == last_changed_prop_num),  # it is important to update project for
+                    # last changed property only not to recalculate project multiple times.
                 )
         # else: all properties value remain the same so no point in reverting to them
 
         self._parent.show_or_hide_sliders(do_show_sliders=False)
 
-    def _identify_last_changed_property(self) -> str:
-        """Identify last changed property in the list of properties to revert.
+    def _identify_changed_properties(self) -> dict:
+        """Identify properties changed by sliders from initial sliders state.
 
-        To update project once, loop through the list of properties to revert
-        and indentify the name of last changed property to ensure the project
-        will be updated.
-
-        Relies on the assumption that the same loop will maintain the same
-        order in this procedure and _cancel_changes_from_sliders procedure
+        Returns
+        ------
+         :dict
+            dictionary of the initial values of properties changed by sliders.
         """
 
-        last_changed = None
+        changed_properties = {}
         for prop_name, value in self._values_to_revert.items():
             if value != self._prop_to_change[prop_name].value:
-                last_changed = prop_name
-        return last_changed
+                changed_properties[prop_name] = value
+        return changed_properties
 
     def _apply_changes_from_sliders(self) -> None:
         """
@@ -314,7 +315,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
 class SliderChangeHolder:
     """Helper class containing information necessary for update ratapi parameter and its representation
-    in project table view  when slider position is changed
+    in project table view  when slider position is changed.
     """
 
     def __init__(self, row_number: int, model: ParametersModel, param: ratapi.models.Parameter) -> None:
@@ -322,7 +323,6 @@ class SliderChangeHolder:
 
         Parameters:
         ----------
-
         row_number: int
          the number of the row in the project table, which should be changed
         model: rascal2.widgets.project.tables.ParametersModel
