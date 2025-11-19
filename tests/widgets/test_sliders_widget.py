@@ -94,18 +94,19 @@ fake_update.num_calls = 0
 fake_update.project_updated = []
 
 
-def test_identify_last_changed_property_none_for_unchanged(view_with_proj):
+def test_identify_changed_properties_empty_for_unchanged(view_with_proj):
     view_with_proj.sliders_view_widget.init()
 
-    assert view_with_proj.sliders_view_widget._identify_last_changed_property() is None
+    assert len(view_with_proj.sliders_view_widget._identify_changed_properties()) == 0
 
 
-def test_identify_last_changed_property_picks_up_last_changed(view_with_proj):
+def test_identify_changed_properties_picks_up_changed(view_with_proj):
     view_with_proj.sliders_view_widget.init()
     view_with_proj.sliders_view_widget._values_to_revert["Param 1"] = 4
     view_with_proj.sliders_view_widget._values_to_revert["Param 3"] = 400
 
-    assert view_with_proj.sliders_view_widget._identify_last_changed_property() == "Param 3"
+    assert len(view_with_proj.sliders_view_widget._identify_changed_properties()) == 2
+    assert list(view_with_proj.sliders_view_widget._identify_changed_properties().keys()) == ["Param 1", "Param 3"]
 
 
 @patch.object(ParameterFieldWidget, "update_project", fake_update)
