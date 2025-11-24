@@ -381,7 +381,6 @@ class MainWindowView(QtWidgets.QMainWindow):
             for window in self.mdi.subWindowList():
                     window.showNormal()
             self.mdi.tileSubWindows()
-            self.sliders_view_widget.mdi_holder = slider_view_wrapper
         else:
             for window in self.mdi.subWindowList():
                 # get corresponding MDIGeometries entry for the widget
