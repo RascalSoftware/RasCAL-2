@@ -379,7 +379,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         """Reset MDI layout to the default."""
         if self.settings.mdi_defaults is None:
             for window in self.mdi.subWindowList():
-                    window.showNormal()
+                window.showNormal()
             self.mdi.tileSubWindows()
         else:
             for window in self.mdi.subWindowList():

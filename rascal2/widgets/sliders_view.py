@@ -34,12 +34,11 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
         self._sliders = {}  # dictionary of the sliders used to display fittable values.
 
-        self.__accept_button = None # Placeholder for accept button indicating particular. Presence indicates
+        self.__accept_button = None  # Placeholder for accept button indicating particular. Presence indicates
         # initial stage of widget construction was completed
         self.__sliders_widgets_layout = None  # Placeholder for the area, containing sliders widgets.
         # presence indicates advanced stage of slider widget construction was completed and sliders widgets
         # cam be propagated.
-
 
         # create initial slider view layout and everything else which depends on it
         self.init()
