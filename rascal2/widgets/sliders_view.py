@@ -147,7 +147,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
         main_layout = QtWidgets.QVBoxLayout()
 
-        accept_button = QtWidgets.QPushButton("Accept", self)
+        accept_button = QtWidgets.QPushButton("Accept", self, objectName="AcceptButton")
         accept_button.clicked.connect(self._apply_changes_from_sliders)
         self.__accept_button = accept_button
 
