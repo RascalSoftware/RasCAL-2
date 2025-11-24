@@ -22,9 +22,6 @@ class SlidersViewWidget(QtWidgets.QWidget):
                 An instance of the MainWindowView
         """
         super().__init__()
-        self.mdi_holder = None  # the variable contains reference to mdi container holding this widget
-        # Will be set up in the presenter, which arranges mdi windows for all MainWindow widgets
-        self._view_geometry = None  # holder for slider view geometry, created to store slider view location
         # within the main window for subsequent calls to show sliders. Not yet restored from hdd properly
         # inherits project geometry on the first view.
         self._parent = parent  # reference to main view widget which holds sliders view
@@ -37,7 +34,12 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
         self._sliders = {}  # dictionary of the sliders used to display fittable values.
 
-        self.__sliders_widgets_layout = None  # Placeholder for the area, containing sliders widgets
+        self.__accept_button = None # Placeholder for accept button indicating particular. Presence indicates
+        # initial stage of widget construction was completed
+        self.__sliders_widgets_layout = None  # Placeholder for the area, containing sliders widgets.
+        # presence indicates advanced stage of slider widget construction was completed and sliders widgets
+        # cam be propagated.
+
 
         # create initial slider view layout and everything else which depends on it
         self.init()
@@ -60,7 +62,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         If project is defined extracts properties, used to build sliders and generate list of sliders
          widgets to control the properties.
         """
-        if self.findChild(QtWidgets.QWidget, "AcceptButton") is None:
+        if self.__accept_button is None:
             self._create_slider_view_layout()
 
         if self._parent.presenter.model.project is None:
@@ -146,8 +148,9 @@ class SlidersViewWidget(QtWidgets.QWidget):
 
         main_layout = QtWidgets.QVBoxLayout()
 
-        accept_button = QtWidgets.QPushButton("Accept", self, objectName="AcceptButton")
+        accept_button = QtWidgets.QPushButton("Accept", self)
         accept_button.clicked.connect(self._apply_changes_from_sliders)
+        self.__accept_button = accept_button
 
         cancel_button = QtWidgets.QPushButton("Cancel", self, objectName="CancelButton")
         cancel_button.clicked.connect(self._cancel_changes_from_sliders)

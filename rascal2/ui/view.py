@@ -71,15 +71,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.setCentralWidget(self.startup_dlg)
 
         self.about_dialog = AboutDialog(self)
-        # dictionary of main widgets present in the main operation area controlled
-        # by mdi interface.
-        # There are other widgets (sliders_view) which are initially hidden.
-        self._main_window_widgets = {
-            "Plots": self.plot_widget,
-            "Project": self.project_widget,
-            "Terminal": self.terminal_widget,
-            "Fitting Controls": self.controls_widget,
-        }
 
     def closeEvent(self, event):
         if self.presenter.ask_to_save_project():
@@ -355,9 +346,15 @@ class MainWindowView(QtWidgets.QMainWindow):
             self.setup_mdi_widgets()
             return
 
+        widgets = {
+            "Plots": self.plot_widget,
+            "Project": self.project_widget,
+            "Terminal": self.terminal_widget,
+            "Fitting Controls": self.controls_widget,
+        }
         self.setup_mdi_widgets()
 
-        for title, widget in reversed(self._main_window_widgets.items()):
+        for title, widget in reversed(widgets.items()):
             widget.setWindowTitle(title)
             window = self.mdi.addSubWindow(
                 widget, QtCore.Qt.WindowType.WindowMinMaxButtonsHint | QtCore.Qt.WindowType.WindowTitleHint
@@ -380,27 +377,12 @@ class MainWindowView(QtWidgets.QMainWindow):
 
     def reset_mdi_layout(self):
         """Reset MDI layout to the default."""
-
-        main_widget_names = self._main_window_widgets.keys()
         if self.settings.mdi_defaults is None:
-            # logic expects "Sliders View" the only widget in the mdi list
-            slider_view_wrapper = None
             for window in self.mdi.subWindowList():
-                if window.windowTitle() in main_widget_names:
                     window.showNormal()
-                else:
-                    window.hide()
-                    slider_view_wrapper = window
             self.mdi.tileSubWindows()
             self.sliders_view_widget.mdi_holder = slider_view_wrapper
         else:
-            # reliability check. Can we have project saved previously with mdi defaults
-            # and initialized here newer entering the "if mdi_defaults" loop above?
-            if self.sliders_view_widget.mdi_holder is None:
-                for window in self.mdi.subWindowList():
-                    if window.windowTitle() == "Sliders View":
-                        self.sliders_view_widget.mdi_holder = window
-
             for window in self.mdi.subWindowList():
                 # get corresponding MDIGeometries entry for the widget
                 widget_name = window.windowTitle().replace(" ", "")
