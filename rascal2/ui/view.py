@@ -347,20 +347,19 @@ class MainWindowView(QtWidgets.QMainWindow):
             return
 
         widgets = {
-            "plots": self.plot_widget,
-            "project": self.project_widget,
-            "terminal": self.terminal_widget,
-            "fitting controls": self.controls_widget,
+            "Plots": self.plot_widget,
+            "Project": self.project_widget,
+            "Terminal": self.terminal_widget,
+            "Fitting Controls": self.controls_widget,
         }
         self.setup_mdi_widgets()
 
         for title, widget in reversed(widgets.items()):
-            widget.setWindowTitle(title.title())
+            widget.setWindowTitle(title)
             window = self.mdi.addSubWindow(
                 widget, QtCore.Qt.WindowType.WindowMinMaxButtonsHint | QtCore.Qt.WindowType.WindowTitleHint
             )
-            window.setWindowTitle(title.title())
-
+            window.setWindowTitle(title)
         self.reset_mdi_layout()
         self.startup_dlg = self.takeCentralWidget()
         self.setCentralWidget(self.mdi)
