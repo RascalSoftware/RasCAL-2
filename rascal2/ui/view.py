@@ -347,19 +347,19 @@ class MainWindowView(QtWidgets.QMainWindow):
             return
 
         widgets = {
-            "Plots": self.plot_widget,
-            "Project": self.project_widget,
-            "Terminal": self.terminal_widget,
-            "Fitting Controls": self.controls_widget,
+            "plots": self.plot_widget,
+            "project": self.project_widget,
+            "terminal": self.terminal_widget,
+            "fitting controls": self.controls_widget,
         }
         self.setup_mdi_widgets()
 
         for title, widget in reversed(widgets.items()):
-            widget.setWindowTitle(title)
+            widget.setWindowTitle(title.title())
             window = self.mdi.addSubWindow(
                 widget, QtCore.Qt.WindowType.WindowMinMaxButtonsHint | QtCore.Qt.WindowType.WindowTitleHint
             )
-            window.setWindowTitle(title)
+            window.setWindowTitle(title.title())
 
         self.reset_mdi_layout()
         self.startup_dlg = self.takeCentralWidget()
@@ -384,7 +384,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         else:
             for window in self.mdi.subWindowList():
                 # get corresponding MDIGeometries entry for the widget
-                widget_name = window.windowTitle().replace(" ", "")
+                widget_name = window.windowTitle().lower().split(" ")[-1]
                 x, y, width, height, minimized = getattr(self.settings.mdi_defaults, widget_name)
                 if minimized:
                     window.showMinimized()
@@ -397,7 +397,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         geoms = {}
         for window in self.mdi.subWindowList():
             # get corresponding MDIGeometries entry for the widget
-            widget_name = window.windowTitle().replace(" ", "")
+            widget_name = window.windowTitle().lower().split(" ")[-1]
             geom = window.geometry()
             geoms[widget_name] = (geom.x(), geom.y(), geom.width(), geom.height(), window.isMinimized())
 
