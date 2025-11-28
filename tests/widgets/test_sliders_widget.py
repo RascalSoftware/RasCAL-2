@@ -155,27 +155,27 @@ def test_cancel_cancel_button_connections(mock_cancel, view_with_proj):
     assert mock_cancel.called == 1
 
 
-def fake_show_or_hide_sliders(self, do_show_sliders):
-    fake_show_or_hide_sliders.num_calls = +1
-    fake_show_or_hide_sliders.call_param = do_show_sliders
+def fake_toggle_sliders(self, do_show_sliders):
+    fake_toggle_sliders.num_calls = +1
+    fake_toggle_sliders.call_param = do_show_sliders
 
 
-fake_show_or_hide_sliders.num_calls = 0
-fake_show_or_hide_sliders.call_param = []
+fake_toggle_sliders.num_calls = 0
+fake_toggle_sliders.call_param = []
 
 
-@patch.object(MainWindowView, "show_or_hide_sliders", fake_show_or_hide_sliders)
+@patch.object(MainWindowView, "toggle_sliders", fake_toggle_sliders)
 def test_apply_cancel_changes_called_hide_sliders(view_with_proj):
     view_with_proj.sliders_view_widget._cancel_changes_from_sliders()
-    assert fake_show_or_hide_sliders.num_calls == 1
-    assert not fake_show_or_hide_sliders.call_param
+    assert fake_toggle_sliders.num_calls == 1
+    assert not fake_toggle_sliders.call_param
 
-    fake_show_or_hide_sliders.num_calls = 0
-    fake_show_or_hide_sliders.call_param = []
+    fake_toggle_sliders.num_calls = 0
+    fake_toggle_sliders.call_param = []
 
     view_with_proj.sliders_view_widget._apply_changes_from_sliders()
-    assert fake_show_or_hide_sliders.num_calls == 1
-    assert not fake_show_or_hide_sliders.call_param
+    assert fake_toggle_sliders.num_calls == 1
+    assert not fake_toggle_sliders.call_param
 
 
 # ======================================================================================================================
