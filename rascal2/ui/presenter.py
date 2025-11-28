@@ -10,6 +10,7 @@ from rascal2.config import EXAMPLES_PATH, MatlabHelper, get_matlab_engine
 from rascal2.core import commands
 from rascal2.core.enums import UnsavedReply
 from rascal2.core.runner import LogData, RATRunner
+from rascal2.core.writer import write_result_to_zipped_csvs
 from rascal2.settings import update_recent_projects
 
 from .model import MainWindowModel
@@ -149,31 +150,42 @@ class MainWindowPresenter:
 
         return proceed
 
-    def export_results(self):
-        """Export the results object."""
-        if self.model.results:
-            filename = self.model.project.name.replace(" ", "_")
-            save_file = self.view.get_save_file("Export Results", filename, "*.json")
-            if not save_file:
-                return
+    def export_fits(self):
+        """Export results into multiple csv files in a zip file"""
+        if self.model.results is None:
+            return
 
-            try:
-                self.model.results.save(save_file)
-            except OSError as err:
-                self.view.logging.error(f"Failed to save project at path {save_file}.\n", exc_info=err)
+        results = self.model.results
+        filename = self.model.project.name.replace(" ", "_")
+        save_file = self.view.get_save_file("Export Results as ZIP Archive", filename, "*.zip")
+        if not save_file:
+            return
+
+        try:
+            write_result_to_zipped_csvs(save_file, results)
+        except OSError as err:
+            self.view.logging.error(f"Failed to save fits to {save_file}.\n", exc_info=err)
 
     def interrupt_terminal(self):
         """Sends an interrupt signal to the RAT runner."""
         self.runner.interrupt()
 
-    def quick_run(self):
-        """Run rat calculation with calculate procedure.
+    def quick_run(self, project=None):
+        """Run rat calculation with calculate procedure on the given project.
+        The project in the MainWindowModel is used if no project is provided.
+
+        Parameters
+        ----------
+        project : Optional[ratapi.Project]
+            The project to use for run
 
         Returns
         -------
         results : Union[ratapi.outputs.Results, ratapi.outputs.BayesResults]
             The calculation results.
         """
+        if project is None:
+            project = self.model.project
         if ratapi.wrappers.MatlabWrapper.loader is None and any(
             [file.language == "matlab" for file in self.model.project.custom_files]
         ):
@@ -181,7 +193,7 @@ class MainWindowPresenter:
             result = get_matlab_engine(matlab_helper.ready_event, matlab_helper.engine_output)
             if isinstance(result, Exception):
                 raise result
-        return rat.run(self.model.project, rat.Controls(display="off"))[1]
+        return rat.run(project, rat.Controls(display="off"))[1]
 
     def run(self):
         """Run rat using multiprocessing."""
@@ -238,7 +250,7 @@ class MainWindowPresenter:
             case LogData():
                 self.view.logging.log(event.level, event.msg)
 
-    def edit_project(self, updated_project: dict, preview: bool = False) -> None:
+    def edit_project(self, updated_project: dict, preview: bool = True) -> None:
         """Edit the Project with a dictionary of attributes.
 
         Parameters

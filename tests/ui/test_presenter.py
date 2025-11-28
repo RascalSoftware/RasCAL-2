@@ -213,35 +213,35 @@ def test_ask_to_save_project(presenter, reply, undo_clean_state, expected):
     assert presenter.ask_to_save_project() is expected
 
 
-def test_export_results(presenter):
+@patch("rascal2.ui.presenter.write_result_to_zipped_csvs")
+def test_export_fits(mock_write_result, presenter):
     """Test that results can be exported."""
-    test_json_file = "test.json"
-    presenter.model.results.save = MagicMock()
-    presenter.view.get_save_file = MagicMock(return_value=test_json_file)
+    test_zip_file = "test.zip"
+    presenter.view.get_save_file = MagicMock(return_value=test_zip_file)
 
-    presenter.export_results()
-    presenter.model.results.save.assert_called_once_with(test_json_file)
+    presenter.export_fits()
+    mock_write_result.assert_called_once_with(test_zip_file, presenter.model.results)
 
-    # If we do not return a save file, don't export the results
-    presenter.model.results.save.reset_mock()
+    # If we do not return a save file, don't export
+    mock_write_result.reset_mock()
     presenter.view.get_save_file = MagicMock(return_value=None)
 
-    presenter.export_results()
-    presenter.model.results.save.assert_not_called()
+    presenter.export_fits()
+    mock_write_result.assert_not_called()
 
     # If there is an OSError, log the error
     error = OSError("Test Error")
-    presenter.model.results.save = MagicMock(side_effect=error)
-    presenter.view.get_save_file = MagicMock(return_value=test_json_file)
+    mock_write_result.side_effect = error
+    presenter.view.get_save_file = MagicMock(return_value=test_zip_file)
     presenter.view.logging.error = MagicMock()
 
-    presenter.export_results()
-    presenter.model.results.save.assert_called_once_with(test_json_file)
-    presenter.view.logging.error.assert_called_once_with("Failed to save project at path test.json.\n", exc_info=error)
+    presenter.export_fits()
+    mock_write_result.assert_called_once_with(test_zip_file, presenter.model.results)
+    presenter.view.logging.error.assert_called_once_with("Failed to save fits to test.zip.\n", exc_info=error)
 
     # If we do not have any results, don't ask for a file
     presenter.view.get_save_file.reset_mock()
     presenter.model.results = None
 
-    presenter.export_results()
+    presenter.export_fits()
     presenter.view.get_save_file.assert_not_called()

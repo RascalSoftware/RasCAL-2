@@ -281,7 +281,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
                 )
         # else: all properties value remain the same so no point in reverting to them
 
-        self._parent.show_or_hide_sliders(do_show_sliders=False)
+        self._parent.toggle_sliders(do_show_sliders=False)
 
     def _identify_changed_properties(self) -> dict:
         """Identify properties changed by sliders from initial sliders state.
@@ -303,7 +303,7 @@ class SlidersViewWidget(QtWidgets.QWidget):
         Apply changes obtained from sliders to the project  and make them permanent
         """
         # Changes have already been applied so just hide sliders widget
-        self._parent.show_or_hide_sliders(False)
+        self._parent.toggle_sliders(False)
         return
 
 

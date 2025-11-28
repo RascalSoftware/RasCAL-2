@@ -244,14 +244,12 @@ class AbstractPlotWidget(QtWidgets.QWidget):
 
     def show_result_summary(self, results):
         """Show log z and log z error in summary label"""
-        if isinstance(results, ratapi.outputs.BayesResults):
-            samples = results.nestedSamplerOutput.nestSamples
-            if samples.shape != (1, 2):
-                self.result_summary.setText(
-                    f"log (Z) = {results.nestedSamplerOutput.logZ:.5f}\n"
-                    f"log (Z) error = {results.nestedSamplerOutput.logZErr:.5f}"
-                )
-                self.result_summary.setVisible(True)
+        if isinstance(results, ratapi.outputs.BayesResults) and results.from_procedure() == "ns":
+            self.result_summary.setText(
+                f"log (Z) = {results.nestedSamplerOutput.logZ:.5f}\n"
+                f"log (Z) error = {results.nestedSamplerOutput.logZErr:.5f}"
+            )
+            self.result_summary.setVisible(True)
 
     def make_interaction_layout(self):
         """Make layout with pan, zoom, and reset button.

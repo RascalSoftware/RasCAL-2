@@ -1,7 +1,7 @@
 PyInstaller==6.9.0
 PyQt6==6.7.1
 PyQt6-Qt6==6.7.3
-ratapi==0.0.0.dev9
+ratapi==0.0.0.dev10
 pydantic==2.8.2
 PyQt6-QScintilla==2.14.1
 nexusformat==1.0.7

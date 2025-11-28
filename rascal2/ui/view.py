@@ -28,7 +28,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         #  (not implemented yet)
 
         self.setWindowTitle(MAIN_WINDOW_TITLE)
-
         window_icon = QtGui.QIcon(path_for("logo.png"))
 
         self.undo_stack = QtGui.QUndoStack(self)
@@ -56,8 +55,7 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         self.create_actions()
 
-        main_menu = self.menuBar()
-        self.add_submenus(main_menu)
+        self.add_submenus()
 
         self.create_toolbar()
         self.create_status_bar()
@@ -168,11 +166,11 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.undo_view_action.setEnabled(False)
         self.disabled_elements.append(self.undo_view_action)
 
-        self.export_results_action = QtGui.QAction("Export Results", self)
-        self.export_results_action.setStatusTip("Export Results to a specified file.")
-        self.export_results_action.triggered.connect(lambda: self.presenter.export_results())
-        self.export_results_action.setEnabled(False)
-        self.disabled_elements.append(self.export_results_action)
+        self.export_fits_action = QtGui.QAction("Export Fits", self)
+        self.export_fits_action.setStatusTip("Export Result Data as CSV in a zip file.")
+        self.export_fits_action.triggered.connect(self.presenter.export_fits)
+        self.export_fits_action.setEnabled(False)
+        self.disabled_elements.append(self.export_fits_action)
 
         self.settings_action = QtGui.QAction("Settings", self)
         self.settings_action.setStatusTip("Settings")
@@ -181,30 +179,28 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.settings_action.setEnabled(False)
         self.disabled_elements.append(self.settings_action)
 
-        open_help_action = QtGui.QAction("&Help", self)
-        open_help_action.setStatusTip("Open Documentation")
-        open_help_action.setIcon(QtGui.QIcon(path_for("help.png")))
-        open_help_action.triggered.connect(self.open_docs)
-        self.open_help_action = open_help_action
+        self.open_help_action = QtGui.QAction("&Help", self)
+        self.open_help_action.setStatusTip("Open Documentation")
+        self.open_help_action.setIcon(QtGui.QIcon(path_for("help.png")))
+        self.open_help_action.triggered.connect(self.open_docs)
 
         # done this way expecting the value "show_sliders" being stored
         # in configuration in a future + "show_sliders" is public for this reason
         if self.show_sliders:
             # if show_sliders state is True, action will be hide
-            show_or_hide_slider_action = QtGui.QAction(self._sliders_menu_control_text["HideSliders"], self)
+            toggle_slider_action = QtGui.QAction(self._sliders_menu_control_text["HideSliders"], self)
         else:
             # if display_sliders state is False, action will be show
-            show_or_hide_slider_action = QtGui.QAction(self._sliders_menu_control_text["ShowSliders"], self)
-        show_or_hide_slider_action.setStatusTip("Show or Hide Sliders")
-        show_or_hide_slider_action.triggered.connect(lambda: self.show_or_hide_sliders(None))
-        self._show_or_hide_slider_action = show_or_hide_slider_action
-        self._show_or_hide_slider_action.setEnabled(False)
-        self.disabled_elements.append(self._show_or_hide_slider_action)
+            toggle_slider_action = QtGui.QAction(self._sliders_menu_control_text["ShowSliders"], self)
+        toggle_slider_action.setStatusTip("Show or Hide Sliders")
+        toggle_slider_action.triggered.connect(lambda: self.toggle_sliders(None))
+        self._toggle_slider_action = toggle_slider_action
+        self._toggle_slider_action.setEnabled(False)
+        self.disabled_elements.append(self._toggle_slider_action)
 
-        open_about_action = QtGui.QAction("&About", self)
-        open_about_action.setStatusTip("Report RAT version&info")
-        open_about_action.triggered.connect(self.open_about_info)
-        self.open_about_action = open_about_action
+        self.open_about_action = QtGui.QAction("&About", self)
+        self.open_about_action.setStatusTip("Report RAT version&info")
+        self.open_about_action.triggered.connect(self.open_about_info)
 
         self.exit_action = QtGui.QAction("E&xit", self)
         self.exit_action.setStatusTip(f"Quit {MAIN_WINDOW_TITLE}")
@@ -240,13 +236,12 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.setup_matlab_action.setStatusTip("Set the path of the MATLAB executable")
         self.setup_matlab_action.triggered.connect(lambda: self.show_settings_dialog(tab_name="Matlab"))
 
-    def add_submenus(self, main_menu: QtWidgets.QMenuBar):
+    def add_submenus(self):
         """Add sub menus to the main menu bar"""
-
+        main_menu = self.menuBar()
         main_menu.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.PreventContextMenu)
 
         file_menu = main_menu.addMenu("&File")
-        file_menu.setObjectName("&File")
         file_menu.addAction(self.new_project_action)
         file_menu.addSeparator()
         file_menu.addAction(self.open_project_action)
@@ -255,20 +250,18 @@ class MainWindowView(QtWidgets.QMainWindow):
         file_menu.addAction(self.save_project_action)
         file_menu.addAction(self.save_as_action)
         file_menu.addSeparator()
-        file_menu.addAction(self.export_results_action)
+        file_menu.addAction(self.export_fits_action)
         file_menu.addSeparator()
         file_menu.addAction(self.settings_action)
         file_menu.addSeparator()
         file_menu.addAction(self.exit_action)
 
         edit_menu = main_menu.addMenu("&Edit")
-        edit_menu.setObjectName("&Edit")
         edit_menu.addAction(self.undo_action)
         edit_menu.addAction(self.redo_action)
         edit_menu.addAction(self.undo_view_action)
 
         windows_menu = main_menu.addMenu("&Windows")
-        windows_menu.setObjectName("&Windows")
         windows_menu.addAction(self.tile_windows_action)
         windows_menu.addAction(self.reset_windows_action)
         windows_menu.addAction(self.save_default_windows_action)
@@ -276,25 +269,22 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.disabled_elements.append(windows_menu)
 
         tools_menu = main_menu.addMenu("&Tools")
-        tools_menu.setObjectName("&Tools")
-        tools_menu.addAction(self._show_or_hide_slider_action)
+        tools_menu.addAction(self._toggle_slider_action)
         tools_menu.addSeparator()
         tools_menu.addAction(self.clear_terminal_action)
         tools_menu.addSeparator()
         tools_menu.addAction(self.setup_matlab_action)
 
         help_menu = main_menu.addMenu("&Help")
-        help_menu.setObjectName("&Help")
         help_menu.addAction(self.open_about_action)
         help_menu.addAction(self.open_help_action)
 
-    def show_or_hide_sliders(self, do_show_sliders=None):
+    def toggle_sliders(self,do_show_sliders=None):
         """Depending on current state, show or hide sliders for
         table properties within Project class view.
 
         Parameters:
         -----------
-
         do_show_sliders: bool,default None
             if provided, sets self.show_sliders logical variable into the requested state
             (True/False), forcing sliders widget to appear/disappear. if None, applies not to current state.
@@ -309,10 +299,10 @@ class MainWindowView(QtWidgets.QMainWindow):
             return
 
         if self.show_sliders:
-            self._show_or_hide_slider_action.setText(self._sliders_menu_control_text["HideSliders"])
+            self._toggle_slider_action.setText(self._sliders_menu_control_text["HideSliders"])
             self.sliders_view_widget.show()
         else:
-            self._show_or_hide_slider_action.setText(self._sliders_menu_control_text["ShowSliders"])
+            self._toggle_slider_action.setText(self._sliders_menu_control_text["ShowSliders"])
             self.sliders_view_widget.hide()
 
     def sliders_view_enabled(self, is_enabled: bool, prev_call_vis_sliders_state: bool = False):

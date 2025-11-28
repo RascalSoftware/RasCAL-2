@@ -40,7 +40,7 @@ class MockMainWindow(QtWidgets.QMainWindow):
         self.project_widget = None
         self.sliders_view_widget = SlidersViewWidget(self)
 
-    def show_or_hide_sliders(self, do_show_sliders=True):
+    def toggle_sliders(self, do_show_sliders=True):
         if do_show_sliders:
             self.sliders_view_widget.show()
         else:

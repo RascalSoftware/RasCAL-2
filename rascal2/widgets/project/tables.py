@@ -78,17 +78,17 @@ class ClassListTableModel(QtCore.QAbstractTableModel):
     def setData(
         self, index: QtCore.QModelIndex, value, role=QtCore.Qt.ItemDataRole.EditRole, recalculate_proj=True
     ) -> bool:
-        """Implement abstract setData method of QAbstractTableModel.
+        """Implement abstract setData method of QAbstractTableModel 
+        and sets the data of a given index in the table model
 
         Parameters
         ----------
         index: QtCore.QModelIndex
-            QModelIndex representing the row and column indices of edited cell wrt. the edited table
-        value:
+            QModelIndex index indicates which cells to change
+        value: Any
             new value of appropriate cell of the table.
         role: QtCore.Qt.ItemDataRole
-            not sure what it is but apparently controls table behaviour amd needs to be Edit.
-            it nof Edit, method does nothing.
+            controls table behaviour and needs to be Edit. It nof Edit, method does nothing.
         recalculate_proj: bool,default True
             Additional control for RAT project recalculation. Set it to False when modifying
             a bunch of properties in a loop changing it to True for the last value to recalculate
