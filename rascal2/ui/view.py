@@ -319,13 +319,13 @@ class MainWindowView(QtWidgets.QMainWindow):
                 logical stating what sliders view widget  view state was when this method was called
                 when slider state was disabled
         """
-        self._show_or_hide_slider_action.setEnabled(is_enabled)
+        self._toggle_slider_action.setEnabled(is_enabled)
 
         # hide sliders when disabled or else
         if is_enabled:
-            self.show_or_hide_sliders(do_show_sliders=prev_call_vis_sliders_state)
+            self.toggle_sliders(do_show_sliders=prev_call_vis_sliders_state)
         else:
-            self.show_or_hide_sliders(do_show_sliders=False)
+            self.toggle_sliders(do_show_sliders=False)
 
     def open_about_info(self):
         """Opens about menu containing information about RASCAL gui"""
