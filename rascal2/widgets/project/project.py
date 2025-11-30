@@ -11,7 +11,6 @@ from ratapi.utils.enums import Calculations, Geometries, LayerModels
 
 from rascal2.config import path_for
 from rascal2.widgets.project.lists import ContrastWidget, DataWidget
-from rascal2.widgets.project.slider_view import SliderViewWidget
 from rascal2.widgets.project.tables import (
     BackgroundsFieldWidget,
     CustomFileWidget,
@@ -42,7 +41,6 @@ class ProjectWidget(QtWidgets.QWidget):
         self.parent_model = self.parent.presenter.model
 
         self.parent_model.project_updated.connect(self.update_project_view)
-        self.parent_model.project_updated.connect(self.update_slider_view)
         self.parent_model.controls_updated.connect(self.handle_controls_update)
 
         self.tabs = {
@@ -79,6 +77,9 @@ class ProjectWidget(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.stacked_widget)
         self.setLayout(layout)
+        # function holder to store/restore state of slider_view when edit project
+        # button is pressed
+        self.__slider_view_state_holder_function = None
 
     def create_project_view(self) -> QtWidgets.QWidget:
         """Creates the project (non-edit) view"""
@@ -86,8 +87,8 @@ class ProjectWidget(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(20)
 
-        show_sliders_button = QtWidgets.QPushButton("Show sliders", self)
-        show_sliders_button.clicked.connect(self.parent.toggle_sliders)
+        show_sliders_button = QtWidgets.QPushButton("Show sliders", self, objectName="ShowSliders")
+        show_sliders_button.clicked.connect(lambda: self.parent.toggle_sliders(True))
 
         self.edit_project_button = QtWidgets.QPushButton("Edit Project", self, icon=QtGui.QIcon(path_for("edit.png")))
         self.edit_project_button.clicked.connect(self.show_edit_view)
@@ -247,26 +248,6 @@ class ProjectWidget(QtWidgets.QWidget):
 
         return edit_project_widget
 
-    def show_slider_view(self):
-        """Create slider view and make it visible."""
-        if self.stacked_widget.count() == 3:
-            # 3 widgets means slider view already exist
-            # (with project view and edit view) so delete before replacing with new one
-            old_slider_widget = self.stacked_widget.widget(2)
-            self.stacked_widget.removeWidget(old_slider_widget)
-            old_slider_widget.deleteLater()
-        slider_view = SliderViewWidget(create_draft_project(self.parent_model.project), self.parent)
-        self.stacked_widget.addWidget(slider_view)
-        self.stacked_widget.setCurrentIndex(2)
-
-    def update_slider_view(self):
-        """Update the slider view if the project changes when it is opened."""
-        if self.stacked_widget.currentIndex() == 2:
-            # slider view is the 3rd widget in the layout
-            widget = self.stacked_widget.widget(2)
-            widget.draft_project = create_draft_project(self.parent_model.project)
-            widget.initialize()
-
     def update_project_view(self, update_tab_index=None) -> None:
         """Updates the project view."""
 
@@ -383,10 +364,22 @@ class ProjectWidget(QtWidgets.QWidget):
         self.setWindowTitle("Project")
         self.parent.controls_widget.run_button.setEnabled(True)
         self.stacked_widget.setCurrentIndex(0)
+        if self.__slider_view_state_holder_function is not None:
+            # restore previous sliders view
+            self.__slider_view_state_holder_function()
+            self.__slider_view_state_holder_function = None
 
     def show_edit_view(self) -> None:
         """Show edit view"""
 
+        # disable possibility to enable sliders view until project is edited
+        # and store current state of sliders view to restore it when editing
+        # finishes.
+        sliders_visible = self.parent.sliders_view_widget.isVisible()
+        self.parent.sliders_view_enabled(False, sliders_visible)
+        self.__slider_view_state_holder_function = (
+            lambda enbl=True, vis=sliders_visible: self.parent.sliders_view_enabled(enbl, vis)
+        )
         # will be updated according to edit changes
         self.update_project_view(0)
         self.setWindowTitle("Edit Project")
@@ -410,6 +403,10 @@ class ProjectWidget(QtWidgets.QWidget):
                 self.parent.terminal_widget.write_error(f"Could not save draft project:\n  {custom_errors}")
             else:
                 self.show_project_view()
+        if self.__slider_view_state_holder_function is not None:
+            # restore previous sliders view state
+            self.__slider_view_state_holder_function()
+            self.__slider_view_state_holder_function = None
 
     def validate_draft_project(self) -> Generator[str, None, None]:
         """Get all errors with the draft project."""

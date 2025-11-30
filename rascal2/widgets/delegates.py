@@ -11,6 +11,10 @@ from rascal2.widgets.inputs import AdaptiveDoubleSpinBox, MultiSelectList, get_v
 class ValidatedInputDelegate(QtWidgets.QStyledItemDelegate):
     """Item delegate for validated inputs."""
 
+    # create custom signal to send to labelled sliders when contents of a cell in
+    # a table class have been changed
+    edit_finished_inform_sliders = QtCore.pyqtSignal(QtCore.QModelIndex, object)
+
     def __init__(self, field_info, parent, remove_items: list[int] = None, open_on_show: bool = False):
         super().__init__(parent)
         self.table = parent
@@ -50,6 +54,7 @@ class ValidatedInputDelegate(QtWidgets.QStyledItemDelegate):
     def setModelData(self, _editor, model, index):
         data = self.widget.get_data()
         model.setData(index, data, QtCore.Qt.ItemDataRole.EditRole)
+        self.edit_finished_inform_sliders.emit(index, self.field_info)
 
 
 class CustomFileFunctionDelegate(QtWidgets.QStyledItemDelegate):
@@ -97,6 +102,10 @@ class ValueSpinBoxDelegate(QtWidgets.QStyledItemDelegate):
 
     """
 
+    # create custom signal to send to labelled sliders when contents of a cell in
+    # a table cell attached to sliders have been changed
+    edit_finished_inform_sliders = QtCore.pyqtSignal(QtCore.QModelIndex, object)
+
     def __init__(self, field: Literal["min", "value", "max"], parent):
         super().__init__(parent)
         self.table = parent
@@ -130,6 +139,7 @@ class ValueSpinBoxDelegate(QtWidgets.QStyledItemDelegate):
     def setModelData(self, editor, model, index):
         data = editor.value()
         model.setData(index, data, QtCore.Qt.ItemDataRole.EditRole)
+        self.edit_finished_inform_sliders.emit(index, self.field)
 
 
 class ProjectFieldDelegate(QtWidgets.QStyledItemDelegate):

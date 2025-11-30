@@ -75,17 +75,26 @@ class ClassListTableModel(QtCore.QAbstractTableModel):
         elif role == QtCore.Qt.ItemDataRole.CheckStateRole and self.index_header(index) == "fit":
             return QtCore.Qt.CheckState.Checked if data else QtCore.Qt.CheckState.Unchecked
 
-    def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole) -> bool:
-        """Set the data of a given index in the table model.
+    def setData(
+        self, index: QtCore.QModelIndex, value, role=QtCore.Qt.ItemDataRole.EditRole, recalculate_proj=True
+    ) -> bool:
+        """Implement abstract setData method of QAbstractTableModel
+        and sets the data of a given index in the table model
 
         Parameters
         ----------
         index: QtCore.QModelIndex
-            The model index indicates which cells to change
+            QModelIndex index indicates which cells to change
         value: Any
-            The new data value
+            new value of appropriate cell of the table.
         role: QtCore.Qt.ItemDataRole
-            Indicates the role of the Data.
+            controls table behaviour and needs to be Edit. It nof Edit, method does nothing.
+        recalculate_proj: bool,default True
+            Additional control for RAT project recalculation. Set it to False when modifying
+            a bunch of properties in a loop changing it to True for the last value to recalculate
+            project and update all table's dependent widgets.
+            IMPORTANT: ensure last value differs from the existing one for this property as project
+                       will be not recalculated otherwise.
         """
         if role == QtCore.Qt.ItemDataRole.EditRole or role == QtCore.Qt.ItemDataRole.CheckStateRole:
             row = index.row()
@@ -104,7 +113,7 @@ class ClassListTableModel(QtCore.QAbstractTableModel):
                     return False
                 if not self.edit_mode:
                     # recalculate plots if value was changed
-                    recalculate = self.index_header(index) == "value"
+                    recalculate = self.index_header(index) == "value" and recalculate_proj
                     self.parent.update_project(recalculate)
                 self.dataChanged.emit(index, index)
                 return True
@@ -260,10 +269,18 @@ class ProjectFieldWidget(QtWidgets.QWidget):
     def set_item_delegates(self):
         """Set item delegates and open persistent editors for the table."""
         for i, header in enumerate(self.model.headers):
-            self.table.setItemDelegateForColumn(
-                i + self.model.col_offset,
-                delegates.ValidatedInputDelegate(self.model.item_type.model_fields[header], self.table),
-            )
+            delegate = delegates.ValidatedInputDelegate(self.model.item_type.model_fields[header], self.table)
+            self.table.setItemDelegateForColumn(i + self.model.col_offset, delegate)
+
+    def get_item_delegates(self, fields_list: list):
+        """Return list of delegates attached to the fields
+        with the names provided as input
+        """
+        dlgts = []
+        for i, header in enumerate(self.model.headers):
+            if header in fields_list:
+                dlgts.append(self.table.itemDelegateForColumn(i + self.model.col_offset))
+        return dlgts
 
     def append_item(self):
         """Append an item to the model if the model exists."""

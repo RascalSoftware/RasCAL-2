@@ -44,6 +44,7 @@ class MockWindowView(QtWidgets.QMainWindow):
         self.logging = MagicMock()
         self.settings = MagicMock()
         self.get_project_folder = lambda: "new path/"
+        self.sliders_view_widget = MagicMock()
 
 
 @pytest.fixture

@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pydantic
 import pytest
@@ -6,6 +6,7 @@ import ratapi
 from PyQt6 import QtCore, QtWidgets
 from ratapi.utils.enums import Calculations, Geometries, LayerModels
 
+from rascal2.widgets import SlidersViewWidget
 from rascal2.widgets.project.project import ProjectTabWidget, ProjectWidget, create_draft_project
 from rascal2.widgets.project.tables import (
     ClassListTableModel,
@@ -37,7 +38,21 @@ class MockMainWindow(QtWidgets.QMainWindow):
         self.presenter = MockPresenter()
         self.controls_widget = MagicMock()
         self.project_widget = None
-        self.toggle_sliders = MagicMock()
+        self.sliders_view_widget = SlidersViewWidget(self)
+
+    def toggle_sliders(self, do_show_sliders=True):
+        if do_show_sliders:
+            self.sliders_view_widget.show()
+        else:
+            self.sliders_view_widget.hide()
+
+    def sliders_view_enabled(self, is_enabled: bool, prev_call_vis_sliders_state: bool = False):
+        self.sliders_view_widget.setEnabled(is_enabled)
+        # hide sliders when disabled or else
+        if is_enabled:
+            self.toggle_sliders(do_show_sliders=prev_call_vis_sliders_state)
+        else:
+            self.toggle_sliders(do_show_sliders=False)
 
 
 class DataModel(pydantic.BaseModel, validate_assignment=True):
@@ -154,7 +169,8 @@ def test_project_widget_initial_state(setup_project_widget):
     assert project_widget.edit_project_tab.currentIndex() == 0
 
 
-def test_edit_cancel_button_toggle(setup_project_widget):
+@patch("rascal2.ui.view.SlidersViewWidget.hide")
+def test_edit_cancel_button_toggle(mock_hide, setup_project_widget):
     """
     Tests clicking the edit button causes the stacked widget to change state.
     """
@@ -163,6 +179,7 @@ def test_edit_cancel_button_toggle(setup_project_widget):
     assert project_widget.stacked_widget.currentIndex() == 0
     project_widget.edit_project_button.click()
     assert project_widget.stacked_widget.currentIndex() == 1
+    assert mock_hide.call_count == 1
 
     assert project_widget.geometry_combobox.currentText() == Geometries.AirSubstrate
     assert project_widget.model_combobox.currentText() == LayerModels.StandardLayers
@@ -176,24 +193,25 @@ def test_edit_cancel_button_toggle(setup_project_widget):
     assert project_widget.calculation_type.text() == Calculations.Normal
 
 
-def test_save_changes_to_model_project(setup_project_widget):
+@patch("rascal2.ui.view.SlidersViewWidget.hide")
+def test_save_changes_to_model_project(mock_hide, setup_project_widget):
     """
     Tests that making changes to the project settings
     """
-    project_widget = setup_project_widget
 
-    project_widget.edit_project_button.click()
+    setup_project_widget.edit_project_button.click()
+    assert mock_hide.call_count == 1
 
-    project_widget.calculation_combobox.setCurrentText(Calculations.Domains)
-    project_widget.geometry_combobox.setCurrentText(Geometries.SubstrateLiquid)
-    project_widget.model_combobox.setCurrentText(LayerModels.CustomXY)
+    setup_project_widget.calculation_combobox.setCurrentText(Calculations.Domains)
+    setup_project_widget.geometry_combobox.setCurrentText(Geometries.SubstrateLiquid)
+    setup_project_widget.model_combobox.setCurrentText(LayerModels.CustomXY)
 
-    assert project_widget.draft_project["geometry"] == Geometries.SubstrateLiquid
-    assert project_widget.draft_project["model"] == LayerModels.CustomXY
-    assert project_widget.draft_project["calculation"] == Calculations.Domains
+    assert setup_project_widget.draft_project["geometry"] == Geometries.SubstrateLiquid
+    assert setup_project_widget.draft_project["model"] == LayerModels.CustomXY
+    assert setup_project_widget.draft_project["calculation"] == Calculations.Domains
 
-    project_widget.save_changes()
-    assert project_widget.parent.presenter.edit_project.call_count == 1
+    setup_project_widget.save_changes()
+    assert setup_project_widget.parent.presenter.edit_project.call_count == 1
 
 
 def test_cancel_changes_to_model_project(setup_project_widget):
