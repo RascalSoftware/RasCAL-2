@@ -403,7 +403,6 @@ class LabeledSlider(QtWidgets.QFrame):
             return
 
         self._labels = []  # list of slider labels describing sliders axis
-        self.__block_slider_value_changed_signal = False
 
         self.slider_name = param.name  # name the slider as the property it refers to. Sets up once here.
         self.update_slider_parameters(param, in_constructor=True)  # Retrieve slider's parameters from input property
@@ -470,9 +469,10 @@ class LabeledSlider(QtWidgets.QFrame):
         self._value_label.setText(self._value_label_format.format(value))
 
         idx = self._value_to_slider_pos(value)
-        self.__block_slider_value_changed_signal = True
+
+        self._slider.blockSignals(True)
         self._slider.setValue(idx)
-        self.__block_slider_value_changed_signal = False
+        self._slider.blockSignals(False)
 
     def update_slider_parameters(self, param: SliderChangeHolder, in_constructor=False):
         """Modifies slider values which may change for this slider from his parent property
@@ -618,8 +618,6 @@ class LabeledSlider(QtWidgets.QFrame):
                 integer position of slider deal in GUI
 
         """
-        if self.__block_slider_value_changed_signal:
-            return
         val = self._slider_pos_to_value(idx)
         self._value = val
         self._value_label.setText(self._value_label_format.format(val))
