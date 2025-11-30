@@ -78,7 +78,7 @@ class ClassListTableModel(QtCore.QAbstractTableModel):
     def setData(
         self, index: QtCore.QModelIndex, value, role=QtCore.Qt.ItemDataRole.EditRole, recalculate_proj=True
     ) -> bool:
-        """Implement abstract setData method of QAbstractTableModel 
+        """Implement abstract setData method of QAbstractTableModel
         and sets the data of a given index in the table model
 
         Parameters

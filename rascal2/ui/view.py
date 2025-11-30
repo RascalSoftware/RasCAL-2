@@ -47,12 +47,6 @@ class MainWindowView(QtWidgets.QMainWindow):
 
         ## protected interface and public properties construction
 
-        # define menu controlling switch between table and slider views
-        self._sliders_menu_control_text = {
-            "ShowSliders": "&Show Sliders",  # if state is show sliders, click will show them
-            "HideSliders": "&Hide Sliders",
-        }  # if state is show table, click will show sliders
-
         self.create_actions()
 
         self.add_submenus()
@@ -184,19 +178,17 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.open_help_action.setIcon(QtGui.QIcon(path_for("help.png")))
         self.open_help_action.triggered.connect(self.open_docs)
 
+        self._toggle_slider_action = QtGui.QAction("Show &Sliders", self)
+        self._toggle_slider_action.setProperty("show_text", "Show &Sliders")
+        self._toggle_slider_action.setProperty("hide_text", "Hide &Sliders")
+        self._toggle_slider_action.setStatusTip("Show or Hide Sliders")
+        self._toggle_slider_action.triggered.connect(lambda: self.toggle_sliders(None))
         # done this way expecting the value "show_sliders" being stored
         # in configuration in a future + "show_sliders" is public for this reason
-        if self.show_sliders:
-            # if show_sliders state is True, action will be hide
-            toggle_slider_action = QtGui.QAction(self._sliders_menu_control_text["HideSliders"], self)
-        else:
-            # if display_sliders state is False, action will be show
-            toggle_slider_action = QtGui.QAction(self._sliders_menu_control_text["ShowSliders"], self)
-        toggle_slider_action.setStatusTip("Show or Hide Sliders")
-        toggle_slider_action.triggered.connect(lambda: self.toggle_sliders(None))
-        self._toggle_slider_action = toggle_slider_action
-        self._toggle_slider_action.setEnabled(False)
-        self.disabled_elements.append(self._toggle_slider_action)
+        self.toggle_sliders(self.show_sliders)
+        if not self.show_sliders:
+            self._toggle_slider_action.setEnabled(False)
+            self.disabled_elements.append(self._toggle_slider_action)
 
         self.open_about_action = QtGui.QAction("&About", self)
         self.open_about_action.setStatusTip("Report RAT version&info")
@@ -269,6 +261,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.disabled_elements.append(windows_menu)
 
         tools_menu = main_menu.addMenu("&Tools")
+        tools_menu.setObjectName("&Tools")
         tools_menu.addAction(self._toggle_slider_action)
         tools_menu.addSeparator()
         tools_menu.addAction(self.clear_terminal_action)
@@ -279,7 +272,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         help_menu.addAction(self.open_about_action)
         help_menu.addAction(self.open_help_action)
 
-    def toggle_sliders(self,do_show_sliders=None):
+    def toggle_sliders(self, do_show_sliders=None):
         """Depending on current state, show or hide sliders for
         table properties within Project class view.
 
@@ -299,11 +292,12 @@ class MainWindowView(QtWidgets.QMainWindow):
             return
 
         if self.show_sliders:
-            self._toggle_slider_action.setText(self._sliders_menu_control_text["HideSliders"])
+            sliders_text = self._toggle_slider_action.property("hide_text")
             self.sliders_view_widget.show()
         else:
-            self._toggle_slider_action.setText(self._sliders_menu_control_text["ShowSliders"])
+            sliders_text = self._toggle_slider_action.property("show_text")
             self.sliders_view_widget.hide()
+        self._toggle_slider_action.setText(sliders_text)
 
     def sliders_view_enabled(self, is_enabled: bool, prev_call_vis_sliders_state: bool = False):
         """Makes sliders view button in menu enabled or disabled depending
