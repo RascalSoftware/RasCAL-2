@@ -201,6 +201,7 @@ def test_help_menu_actions_present(test_view, submenu_name, action_names_and_lay
     for action, name in zip(actions, action_names_and_layout, strict=True):
         assert action.text() == name
 
+
 @pytest.fixture
 def test_view_with_mdi():
     """An instance of MainWindowView with mdi property defined to some rubbish
@@ -214,11 +215,11 @@ def test_view_with_mdi():
     mw.enable_elements()
     return mw
 
+
 @patch("rascal2.ui.view.SlidersViewWidget.show")
 @patch("rascal2.ui.view.SlidersViewWidget.hide")
-def test_toggle_slider(mock_hide, mock_show,test_view_with_mdi):
+def test_toggle_slider(mock_hide, mock_show, test_view_with_mdi):
     mw = test_view_with_mdi
-
 
     show_text = mw._toggle_slider_action.property("show_text")
     hide_text = mw._toggle_slider_action.property("hide_text")
