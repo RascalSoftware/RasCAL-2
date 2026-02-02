@@ -5,7 +5,7 @@ from contextlib import suppress
 
 from PyQt6 import QtCore, QtWidgets
 
-from rascal2.config import MATLAB_ARCH_FILE, MatlabHelper
+from rascal2.config import LOGGER, MATLAB_ARCH_FILE, MatlabHelper
 from rascal2.settings import SettingsGroups
 from rascal2.widgets.inputs import get_validated_input
 
@@ -136,7 +136,7 @@ class MatlabSetupTab(QtWidgets.QWidget):
         label_layout.addWidget(QtWidgets.QLabel("Current Matlab Directory:"))
         label_layout.addStretch(1)
         self.matlab_path = QtWidgets.QLineEdit(self)
-        self.matlab_path.setText(MatlabHelper().get_matlab_path())
+        self.matlab_path.setText(MatlabHelper().matlab_dir)
         self.matlab_path.setReadOnly(True)
         self.matlab_path.setPlaceholderText("Select MATLAB directory")
         self.matlab_path.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
@@ -165,7 +165,12 @@ class MatlabSetupTab(QtWidgets.QWidget):
 
     def open_folder_selector(self) -> None:
         """Open folder selector."""
-        folder_name = QtWidgets.QFileDialog.getExistingDirectory(self, "Select MATLAB Directory", ".")
+        if platform.system() == "Darwin":
+            folder_name = QtWidgets.QFileDialog.getOpenFileName(self, "Select MATLAB Application", filter="(*.app)")[0]
+        else:
+            folder_name = QtWidgets.QFileDialog.getExistingDirectory(
+                self, "Select MATLAB Directory", self.matlab_path.text()
+            )
         if folder_name:
             self.matlab_path.setText(folder_name)
             self.changed = True
@@ -175,25 +180,35 @@ class MatlabSetupTab(QtWidgets.QWidget):
         if not self.changed:
             return
 
-        should_init = False
+        # should_init = False
         with suppress(FileNotFoundError), open(MATLAB_ARCH_FILE, "r+") as path_file:
-            install_dir = pathlib.Path(self.matlab_path.text())
-            if not getattr(sys, "frozen", False):
-                return
+            try:
+                install_dir = pathlib.Path(self.matlab_path.text())
+                LOGGER.info(f"install_dir: {install_dir}")
+                if not getattr(sys, "frozen", False):
+                    return
 
-            if len(path_file.readlines()) == 0:
-                should_init = True
+                # if len(path_file.readlines()) == 0:
+                #     should_init = True
 
-            path_file.truncate(0)
-
-            arch = "win64" if platform.system() == "Windows" else "glnxa64"
-            path_file.writelines(
-                [
-                    f"{arch}\n",
-                    str(install_dir / f"bin/{arch}\n"),
-                    str(install_dir / f"extern/engines/python/dist/matlab/engine/{arch}\n"),
-                    str(install_dir / f"extern/bin/{arch}\n"),
-                ]
-            )
-        if should_init:
-            MatlabHelper().async_start()
+                path_file.seek(0)
+                if platform.system() == "Windows":
+                    arch = "win64"
+                elif platform.system() == "Darwin":
+                    arch = "maca64" if platform.mac_ver()[-1] == "arm64" else "maci64"
+                else:
+                    arch = "glnxa64"
+                LOGGER.info(f"arch: {arch}")
+                path_file.writelines(
+                    [
+                        f"{arch}\n",
+                        str(install_dir / f"bin/{arch}\n"),
+                        str(install_dir / f"extern/engines/python/dist/matlab/engine/{arch}\n"),
+                        str(install_dir / f"extern/bin/{arch}\n"),
+                    ]
+                )
+                path_file.truncate()
+            except Exception as ex:
+                LOGGER.error("exception occurred", exc_info=ex)
+        # if should_init:
+        MatlabHelper().async_start()

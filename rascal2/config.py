@@ -14,6 +14,9 @@ if getattr(sys, "frozen", False):
     # we are running in a bundle
     SOURCE_PATH = pathlib.Path(sys.executable).parent.parent
     SITE_PATH = SOURCE_PATH / "bin/_internal"
+    if pathlib.Path(SOURCE_PATH / "MacOS").is_dir():
+        SOURCE_PATH = SOURCE_PATH / "Resources"
+        SITE_PATH = SOURCE_PATH
     EXAMPLES_PATH = SOURCE_PATH / "examples"
 else:
     SOURCE_PATH = pathlib.Path(__file__).parent
@@ -159,6 +162,9 @@ def get_matlab_engine(engine_ready, engine_output):
 class MatlabHelper:
     """Helper to start MATLAB on another process."""
 
+    class ConfigError(Exception):
+        pass
+
     _instance = None
 
     def __new__(cls):
@@ -167,6 +173,7 @@ class MatlabHelper:
             cls._instance.ready_event = mp.Event()
             cls._instance.close_event = mp.Event()
             cls._instance.engine_output = None
+            cls._instance.matlab_dir = ""
             cls._instance.__engine = None
             cls._instance.async_start()
 
@@ -218,19 +225,28 @@ class MatlabHelper:
             Return MATLAB install directory.
         """
         install_dir = ""
-        error = ""
 
         try:
             with open(MATLAB_ARCH_FILE) as path_file:
                 lines = path_file.readlines()
                 if len(lines) == 4:
+                    arch = {"x86_64": "maci64", "arm64": "maca64"}
+                    if platform.system() == "Darwin" and arch.get(platform.mac_ver()[-1]) != lines[0].strip():
+                        # installed intel Matlab on ARM or vice versa
+                        raise MatlabHelper.ConfigError("The installed MATLAB is incompatible, "
+                                                       f"ensure the {platform.mac_ver()[-1]} version of "
+                                                       "MATLAB is installed instead.")
+
                     install_dir = pathlib.Path(lines[1]).parent.parent
                 else:
-                    error = "Matlab not found, use 'Tools > Setup Matlab' to specify MATLAB location "
-        except FileNotFoundError:
-            error = "Matlab engine could not be found, ensure it is installed properly"
-        if error:
+                    raise MatlabHelper.ConfigError("Matlab not found, specify MATLAB location in "
+                                                   "settings i.e. 'File > Settings' menu.")
+        except (FileNotFoundError, MatlabHelper.ConfigError) as ex:
+            if isinstance(ex, FileNotFoundError):
+                ex.add_note("Matlab engine could not be found, ensure it is installed properly.")
             self.engine_output[:] = []
-            self.engine_output.append(Exception(error))
-            LOGGER.error(f"{error}. Attempt to read MATLAB _arch file failed {MATLAB_ARCH_FILE}.")
-        return str(install_dir)
+            self.engine_output.append(ex)
+            LOGGER.error(f"Attempt to read MATLAB _arch file failed {MATLAB_ARCH_FILE}.\n {ex}.")
+
+        self.matlab_dir = str(install_dir)
+        return self.matlab_dir

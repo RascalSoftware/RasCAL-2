@@ -152,9 +152,8 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.settings_action = QtGui.QAction("Settings", self)
         self.settings_action.setStatusTip("Settings")
         self.settings_action.setIcon(QtGui.QIcon(path_for("settings.png")))
+        self.settings_action.setMenuRole(QtGui.QAction.MenuRole.PreferencesRole)
         self.settings_action.triggered.connect(lambda: self.show_settings_dialog())
-        self.settings_action.setEnabled(False)
-        self.disabled_elements.append(self.settings_action)
 
         self.open_help_action = QtGui.QAction("&Help", self)
         self.open_help_action.setStatusTip("Open Documentation")
@@ -169,13 +168,16 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.toggle_slider_action.setEnabled(False)
         self.disabled_elements.append(self.toggle_slider_action)
 
-        self.open_about_action = QtGui.QAction("&About", self)
-        self.open_about_action.setStatusTip("Report RAT version&info")
-        self.open_about_action.triggered.connect(self.open_about_info)
+        open_about_action = QtGui.QAction("&About", self)
+        open_about_action.setStatusTip(f"About {MAIN_WINDOW_TITLE}")
+        open_about_action.triggered.connect(self.open_about_info)
+        open_about_action.setMenuRole(QtGui.QAction.MenuRole.AboutQtRole)
+        self.open_about_action = open_about_action
 
         self.exit_action = QtGui.QAction("E&xit", self)
         self.exit_action.setStatusTip(f"Quit {MAIN_WINDOW_TITLE}")
         self.exit_action.setShortcut(QtGui.QKeySequence.StandardKey.Quit)
+        self.exit_action.setMenuRole(QtGui.QAction.MenuRole.QuitRole)
         self.exit_action.triggered.connect(self.close)
 
         # Window menu actions
@@ -202,10 +204,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.clear_terminal_action = QtGui.QAction("Clear Terminal", self)
         self.clear_terminal_action.setStatusTip("Clear text in the terminal")
         self.clear_terminal_action.triggered.connect(self.terminal_widget.clear)
-
-        self.setup_matlab_action = QtGui.QAction("Setup MATLAB", self)
-        self.setup_matlab_action.setStatusTip("Set the path of the MATLAB executable")
-        self.setup_matlab_action.triggered.connect(lambda: self.show_settings_dialog(tab_name="Matlab"))
 
     def create_menus(self):
         """Add sub menus to the main menu bar."""
@@ -243,8 +241,6 @@ class MainWindowView(QtWidgets.QMainWindow):
         tools_menu.addAction(self.toggle_slider_action)
         tools_menu.addSeparator()
         tools_menu.addAction(self.clear_terminal_action)
-        tools_menu.addSeparator()
-        tools_menu.addAction(self.setup_matlab_action)
 
         help_menu = main_menu.addMenu("&Help")
         help_menu.addAction(self.open_about_action)
