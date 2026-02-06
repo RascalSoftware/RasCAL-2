@@ -224,8 +224,6 @@ class PathInputWidget(BaseInputWidget):
 class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     """A double spinbox which adapts to given numbers of decimals."""
 
-    MIN_DECIMALS = 2
-
     def __init__(self, parent=None):
         super().__init__(parent)
 

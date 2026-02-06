@@ -21,6 +21,7 @@ from rascal2.widgets.project.tables import (
     ProjectFieldWidget,
     ResolutionsFieldWidget,
 )
+from rascal2.widgets.utils import FlowLayout
 
 
 class ProjectWidget(QtWidgets.QWidget):
@@ -77,16 +78,43 @@ class ProjectWidget(QtWidgets.QWidget):
         layout.addWidget(self.stacked_widget)
         self.setLayout(layout)
 
+    @staticmethod
+    def make_labelled_widget(label_text, form_widget):
+        """Create widget containing a label and the given widget.
+
+        Parameters
+        ----------
+        label_text: str
+            The label text for the form widget.
+        form_widget
+            The widget to add.
+
+        Returns
+        -------
+            label_form_widget:
+                A widget with label and the given widget.
+        """
+        layout = QtWidgets.QHBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(2, 5, 2, 5)
+        layout.addWidget(QtWidgets.QLabel(f"{label_text}: ", objectName="BoldLabel"))
+        layout.addWidget(form_widget)
+
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Fixed)
+        return widget
+
     def create_project_view(self) -> QtWidgets.QWidget:
         """Create the project (non-edit) view."""
         project_widget = QtWidgets.QWidget()
         main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(20)
 
-        show_sliders_button = QtWidgets.QPushButton("Show sliders", self)
+        show_sliders_button = QtWidgets.QPushButton("Show sliders")
         show_sliders_button.clicked.connect(self.parent.toggle_sliders)
 
-        self.edit_project_button = QtWidgets.QPushButton("Edit Project", self, icon=QtGui.QIcon(path_for("edit.png")))
+        self.edit_project_button = QtWidgets.QPushButton("Edit Project", icon=QtGui.QIcon(path_for("edit.png")))
         self.edit_project_button.clicked.connect(self.show_edit_view)
         button_layout = QtWidgets.QHBoxLayout()
         button_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
@@ -95,42 +123,27 @@ class ProjectWidget(QtWidgets.QWidget):
 
         main_layout.addLayout(button_layout)
 
-        settings_layout = QtWidgets.QHBoxLayout()
-        settings_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+        settings_layout = FlowLayout(spacing=2)
+        settings_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
 
-        absorption_label = QtWidgets.QLabel("Absorption:", self, objectName="BoldLabel")
         self.absorption_checkbox = QtWidgets.QCheckBox()
         self.absorption_checkbox.setDisabled(True)
+        settings_layout.addWidget(self.make_labelled_widget("Absorption", self.absorption_checkbox))
 
-        settings_layout.addWidget(absorption_label)
-        settings_layout.addWidget(self.absorption_checkbox)
-
-        self.calculation_label = QtWidgets.QLabel("Calculation:", self, objectName="BoldLabel")
-
-        self.calculation_type = QtWidgets.QLineEdit(self)
+        self.calculation_type = QtWidgets.QLineEdit()
         self.calculation_type.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.calculation_type.setReadOnly(True)
+        settings_layout.addWidget(self.make_labelled_widget("Calculation", self.calculation_type))
 
-        settings_layout.addWidget(self.calculation_label)
-        settings_layout.addWidget(self.calculation_type)
-
-        self.model_type_label = QtWidgets.QLabel("Model Type:", self, objectName="BoldLabel")
-
-        self.model_type = QtWidgets.QLineEdit(self)
+        self.model_type = QtWidgets.QLineEdit()
         self.model_type.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.model_type.setReadOnly(True)
+        settings_layout.addWidget(self.make_labelled_widget("Model Type", self.model_type))
 
-        settings_layout.addWidget(self.model_type_label)
-        settings_layout.addWidget(self.model_type)
-
-        self.geometry_label = QtWidgets.QLabel("Geometry:", self, objectName="BoldLabel")
-
-        self.geometry_type = QtWidgets.QLineEdit(self)
+        self.geometry_type = QtWidgets.QLineEdit()
         self.geometry_type.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.geometry_type.setReadOnly(True)
-
-        settings_layout.addWidget(self.geometry_label)
-        settings_layout.addWidget(self.geometry_type)
+        settings_layout.addWidget(self.make_labelled_widget("Geometry", self.geometry_type))
 
         main_layout.addLayout(settings_layout)
 
@@ -152,11 +165,11 @@ class ProjectWidget(QtWidgets.QWidget):
         main_layout.setSpacing(20)
 
         self.save_project_button = QtWidgets.QPushButton(
-            "Accept Changes", self, icon=QtGui.QIcon(path_for("save-project.png"))
+            "Accept Changes", icon=QtGui.QIcon(path_for("save-project.png"))
         )
         self.save_project_button.clicked.connect(self.save_changes)
 
-        self.cancel_button = QtWidgets.QPushButton("Cancel", self, icon=QtGui.QIcon(path_for("cancel-dark.png")))
+        self.cancel_button = QtWidgets.QPushButton("Cancel", icon=QtGui.QIcon(path_for("cancel-dark.png")))
         self.cancel_button.clicked.connect(self.show_project_view)
 
         buttons_layout = QtWidgets.QHBoxLayout()
@@ -165,47 +178,24 @@ class ProjectWidget(QtWidgets.QWidget):
         buttons_layout.addWidget(self.cancel_button)
         main_layout.addLayout(buttons_layout)
 
-        settings_layout = QtWidgets.QHBoxLayout()
+        settings_layout = FlowLayout(spacing=2)
         settings_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
 
-        absorption_label = QtWidgets.QLabel("Absorption:", self, objectName="BoldLabel")
         self.edit_absorption_checkbox = QtWidgets.QCheckBox()
+        settings_layout.addWidget(self.make_labelled_widget("Absorption", self.edit_absorption_checkbox))
 
-        settings_layout.addWidget(absorption_label)
-        settings_layout.addWidget(self.edit_absorption_checkbox)
-
-        self.edit_calculation_label = QtWidgets.QLabel("Calculation:", self, objectName="BoldLabel")
-
-        self.calculation_combobox = QtWidgets.QComboBox(self)
-        self.calculation_combobox.setSizePolicy(
-            QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.Fixed
-        )
+        self.calculation_combobox = QtWidgets.QComboBox()
         self.calculation_combobox.addItems([calc for calc in Calculations])
+        settings_layout.addWidget(self.make_labelled_widget("Calculation", self.calculation_combobox))
 
-        settings_layout.addWidget(self.edit_calculation_label)
-        settings_layout.addWidget(self.calculation_combobox)
-
-        self.edit_model_type_label = QtWidgets.QLabel("Model Type:", self, objectName="BoldLabel")
-
-        self.model_combobox = QtWidgets.QComboBox(self)
-        self.model_combobox.setSizePolicy(
-            QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.Fixed
-        )
+        self.model_combobox = QtWidgets.QComboBox()
         self.model_combobox.addItems([model for model in LayerModels])
+        settings_layout.addWidget(self.make_labelled_widget("Model Type", self.model_combobox))
 
-        settings_layout.addWidget(self.edit_model_type_label)
-        settings_layout.addWidget(self.model_combobox)
-
-        self.edit_geometry_label = QtWidgets.QLabel("Geometry:", self, objectName="BoldLabel")
-
-        self.geometry_combobox = QtWidgets.QComboBox(self)
-        self.geometry_combobox.setSizePolicy(
-            QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.Fixed
-        )
+        self.geometry_combobox = QtWidgets.QComboBox()
         self.geometry_combobox.addItems([geo for geo in Geometries])
+        settings_layout.addWidget(self.make_labelled_widget("Geometry", self.geometry_combobox))
 
-        settings_layout.addWidget(self.edit_geometry_label)
-        settings_layout.addWidget(self.geometry_combobox)
         main_layout.addLayout(settings_layout)
 
         self.edit_absorption_checkbox.checkStateChanged.connect(

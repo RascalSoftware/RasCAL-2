@@ -215,7 +215,7 @@ class AbstractPlotWidget(QtWidgets.QWidget):
             sub_layout.addWidget(slider)
             sub_layout.addStretch(1)
             plot_toolbar.addLayout(sub_layout)
-            plot_toolbar.addSpacing(15)
+            plot_toolbar.addSpacing(5)
 
         sidebar = QtWidgets.QHBoxLayout()
         sidebar.addWidget(self.plot_controls)
@@ -237,6 +237,7 @@ class AbstractPlotWidget(QtWidgets.QWidget):
         scroll_area.setWidgetResizable(True)
 
         central_layout = QtWidgets.QVBoxLayout()
+        central_layout.setSpacing(0)
         central_layout.setContentsMargins(0, 0, 0, 0)
         self.interaction_layout = self.make_interaction_layout()
         if self.interaction_layout is not None:
@@ -399,6 +400,8 @@ class RefSLDWidget(AbstractPlotWidget):
         self.resize_timer = 0
         figure = matplotlib.figure.Figure()
         figure.subplots(1, 2)
+        figure.set_tight_layout(True)
+        figure.set_tight_layout({"pad": 0, "w_pad": 0.5})
 
         return figure
 
@@ -465,7 +468,6 @@ class RefSLDWidget(AbstractPlotWidget):
         show_legend = self.show_legend.isChecked() if self.current_plot_data.contrastNames else False
         self.figure.clear()
         self.update_figure_size()
-        self.figure.tight_layout()
         ratapi.plotting.plot_ref_sld_helper(
             self.current_plot_data,
             self.figure,

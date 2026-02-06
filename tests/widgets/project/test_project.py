@@ -110,15 +110,12 @@ def test_project_widget_initial_state(setup_project_widget):
     assert project_widget.edit_project_button.isEnabled()
     assert project_widget.edit_project_button.text() == "Edit Project"
 
-    assert project_widget.calculation_label.text() == "Calculation:"
     assert project_widget.calculation_type.text() == Calculations.Normal
     assert project_widget.calculation_type.isReadOnly()
 
-    assert project_widget.model_type_label.text() == "Model Type:"
     assert project_widget.model_type.text() == LayerModels.StandardLayers
     assert project_widget.model_type.isReadOnly()
 
-    assert project_widget.geometry_label.text() == "Geometry:"
     assert project_widget.geometry_type.text() == Geometries.AirSubstrate
     assert project_widget.geometry_type.isReadOnly()
 
@@ -129,17 +126,14 @@ def test_project_widget_initial_state(setup_project_widget):
     assert project_widget.cancel_button.isEnabled()
     assert project_widget.cancel_button.text() == "Cancel"
 
-    assert project_widget.edit_calculation_label.text() == "Calculation:"
     assert project_widget.calculation_combobox.currentText() == Calculations.Normal
     for ix, calc in enumerate(Calculations):
         assert project_widget.calculation_combobox.itemText(ix) == calc
 
-    assert project_widget.edit_model_type_label.text() == "Model Type:"
     assert project_widget.model_combobox.currentText() == LayerModels.StandardLayers
     for ix, model in enumerate(LayerModels):
         assert project_widget.model_combobox.itemText(ix) == model
 
-    assert project_widget.edit_geometry_label.text() == "Geometry:"
     assert project_widget.geometry_combobox.currentText() == Geometries.AirSubstrate
     for ix, geometry in enumerate(Geometries):
         assert project_widget.geometry_combobox.itemText(ix) == geometry

@@ -47,7 +47,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.create_toolbar()
         self.create_status_bar()
 
-        self.setMinimumSize(1024, 800)
+        self.setMinimumSize(1360, 800)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
 
         self.settings = Settings()
@@ -182,7 +182,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         self.tile_windows_action = QtGui.QAction("Tile Windows", self)
         self.tile_windows_action.setStatusTip("Arrange windows in the default grid.")
         self.tile_windows_action.setIcon(QtGui.QIcon(path_for("tile.png")))
-        self.tile_windows_action.triggered.connect(self.mdi.tileSubWindows)
+        self.tile_windows_action.triggered.connect(self.custom_tile_layout)
         self.tile_windows_action.setEnabled(False)
         self.disabled_elements.append(self.tile_windows_action)
 
@@ -338,7 +338,7 @@ class MainWindowView(QtWidgets.QMainWindow):
         if mdi_defaults is None:
             for window in self.mdi.subWindowList():
                 window.showNormal()
-            self.mdi.tileSubWindows()
+            self.custom_tile_layout()
         else:
             for window in self.mdi.subWindowList():
                 # get corresponding MDIGeometries entry for the widget
@@ -363,6 +363,24 @@ class MainWindowView(QtWidgets.QMainWindow):
         global_setting.setValue("mdi_defaults", MDIGeometries.model_validate(geoms))
         global_setting.setValue("window_geometry", self.saveGeometry())
         global_setting.sync()
+
+    def custom_tile_layout(self):
+        """Tile the MDI windows using user recommended sizes."""
+        # The percentages are estimated from provided screenshot in
+        # https://github.com/RascalSoftware/RasCAL-2/issues/188
+        rect = self.centralWidget().contentsRect()
+        plot_width = round(0.6 * rect.width())
+        plot_height = round(0.65 * rect.height())
+        project_width = rect.width() - plot_width
+        project_height = round(0.5 * rect.height())
+
+        plot_geom = (0, 0, plot_width, plot_height)
+        project_geom = (plot_width, 0, project_width, project_height)
+        terminal_geom = (0, plot_height, plot_width, rect.height() - plot_height)
+        controls_geom = (plot_width, project_height, project_width, rect.height() - project_height)
+        geoms = [controls_geom, terminal_geom, project_geom, plot_geom]  # windows in reverse order of creation
+        for geom, windows in zip(geoms, self.mdi.subWindowList(), strict=False):
+            windows.setGeometry(*geom)
 
     def enable_elements(self):
         """Enable the elements that are disabled on startup."""
