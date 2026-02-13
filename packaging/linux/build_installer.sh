@@ -151,9 +151,9 @@ chmod 777 "$STAGE_DIR/rascal/packaging/linux/install.sh"
 echo ""
 echo "Creating self-extracting archive"
 echo ""
-EXECUTABLE="RasCAL-2-installer.run"
+EXECUTABLE="RasCAL-2-linux.run"
 if [ -n "$TAG" ]; then
-  EXECUTABLE="RasCAL-2-${TAG:1}-installer.run"
+  EXECUTABLE="RasCAL-2-${TAG:1}-linux.run"
 fi
 
 makeself --tar-format "posix" --tar-extra "--exclude=__pycache__ --exclude=.git --exclude=.github --exclude=rascal/doc --exclude=rascal/tests" "$STAGE_DIR" "$EXECUTABLE" "RasCAL-2 installer" ./rascal/packaging/linux/install.sh

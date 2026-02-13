@@ -11,11 +11,16 @@
 Unicode true
 
 ;Define name of the product
-!define PRODUCT "RasCAL 2"
+!define PRODUCT "RasCAL-2"
 
 ;Name and file
 Name "${PRODUCT}"
-OutFile "${PRODUCT}-${VERSION}-setup.exe"
+
+!ifdef NIGHTLY
+    OutFile "${PRODUCT}-windows.exe"
+!else
+    OutFile "${PRODUCT}-${VERSION}-windows.exe"
+!endif
 
 ;Default installation folder
 InstallDir "$PROGRAMFILES64\${PRODUCT}"

@@ -31,7 +31,12 @@ jobs:
           conda install -c nsis nsis=3.* accesscontrol
           pip install matlabengine==9.14.*
           python packaging/build_exe.py
-          makensis packaging/windows/build_installer.nsi
+          if ($env:GITHUB_REF_NAME -eq "main") {
+            makensis /DNIGHTLY packaging/windows/build_installer.nsi
+          }
+          else {
+            makensis packaging/windows/build_installer.nsi
+          }
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
@@ -90,7 +95,7 @@ jobs:
           if [ ${{ matrix.platform }} == "macos-14" ]; then
             ARCH="arm64"
             export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/Users/runner/hostedtoolcache/MATLAB/2023.2.999/arm64/MATLAB.app/bin/maca64
-            python -m pip install --no-build-isolation /Users/runner/hostedtoolcache/MATLAB/2023.2.999/arm64/MATLAB.app/extern/engines/python    
+            python -m pip install --no-build-isolation /Users/runner/hostedtoolcache/MATLAB/2023.2.999/arm64/MATLAB.app/extern/engines/python
           else
             ARCH="x64"
             export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/Users/runner/hostedtoolcache/MATLAB/2023.2.999/x64/MATLAB.app/bin/maci64
@@ -105,7 +110,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macOS installer-${{ strategy.job-index }}
-          path: packaging/macos/rascal2-*.pkg
+          path: packaging/macos/RasCAL-2*.pkg
   deploy-nightly:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
