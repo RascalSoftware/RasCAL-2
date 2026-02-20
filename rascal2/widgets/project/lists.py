@@ -121,7 +121,13 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
 
         item_list = QtWidgets.QVBoxLayout()
 
-        self.list = QtWidgets.QListView(parent)
+        self.list = QtWidgets.QTableView(parent)
+        self.list.verticalHeader().setObjectName("CountHeader")
+        self.list.verticalHeader().setVisible(self.item_type == "contrast")
+        self.list.horizontalHeader().setStretchLastSection(True)
+        self.list.horizontalHeader().hide()
+        self.list.setAlternatingRowColors(False)
+        self.list.setShowGrid(False)
         self.list.setMinimumWidth(70)
         self.list.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum)
 
@@ -179,7 +185,10 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
             The index of selected item.
 
         """
-        self.item_view.setTitle(f"{index.data()} {self.item_type}")
+        title = f"{index.data()} {self.item_type}"
+        if self.item_type == "contrast":
+            title = f"({index.row() + 1}) {title}"
+        self.item_view.setTitle(title)
         self.view_stack.setCurrentIndex(index.row())
 
     def update_item_view(self):
@@ -254,8 +263,9 @@ class AbstractProjectListWidget(QtWidgets.QWidget):
 
             self.update_item_view()
 
+            new_index = max(0, deleted_index - 1)
             self.list.selectionModel().setCurrentIndex(
-                self.model.index(deleted_index - 1, 0), self.list.selectionModel().SelectionFlag.ClearAndSelect
+                self.model.index(new_index, 0), self.list.selectionModel().SelectionFlag.ClearAndSelect
             )
 
     def create_view(self, i: int) -> QtWidgets.QWidget:

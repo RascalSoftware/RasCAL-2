@@ -62,6 +62,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.draft_project = None
         # for making model type changes non-destructive
         self.old_contrast_models = {}
+        self.old_layers = []
 
         project_view = self.create_project_view()
         project_edit = self.create_edit_view()
@@ -79,15 +80,17 @@ class ProjectWidget(QtWidgets.QWidget):
         self.setLayout(layout)
 
     @staticmethod
-    def make_labelled_widget(label_text, form_widget):
+    def make_labelled_widget(label_text, form_widget, pad=5):
         """Create widget containing a label and the given widget.
 
         Parameters
         ----------
         label_text: str
             The label text for the form widget.
-        form_widget
+        form_widget: QtWidgets.QWidget
             The widget to add.
+        pad: int
+            The padding for the widget.
 
         Returns
         -------
@@ -96,7 +99,7 @@ class ProjectWidget(QtWidgets.QWidget):
         """
         layout = QtWidgets.QHBoxLayout()
         layout.setSpacing(0)
-        layout.setContentsMargins(2, 5, 2, 5)
+        layout.setContentsMargins(2, pad, 2, pad)
         layout.addWidget(QtWidgets.QLabel(f"{label_text}: ", objectName="BoldLabel"))
         layout.addWidget(form_widget)
 
@@ -124,11 +127,10 @@ class ProjectWidget(QtWidgets.QWidget):
         main_layout.addLayout(button_layout)
 
         settings_layout = FlowLayout(spacing=2)
-        settings_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
 
         self.absorption_checkbox = QtWidgets.QCheckBox()
         self.absorption_checkbox.setDisabled(True)
-        settings_layout.addWidget(self.make_labelled_widget("Absorption", self.absorption_checkbox))
+        settings_layout.addWidget(self.make_labelled_widget("Absorption", self.absorption_checkbox, pad=8))
 
         self.calculation_type = QtWidgets.QLineEdit()
         self.calculation_type.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -179,7 +181,6 @@ class ProjectWidget(QtWidgets.QWidget):
         main_layout.addLayout(buttons_layout)
 
         settings_layout = FlowLayout(spacing=2)
-        settings_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
 
         self.edit_absorption_checkbox = QtWidgets.QCheckBox()
         settings_layout.addWidget(self.make_labelled_widget("Absorption", self.edit_absorption_checkbox))
@@ -271,6 +272,9 @@ class ProjectWidget(QtWidgets.QWidget):
             model = tab_to_update[tab].tables[tab.lower()].list.selectionModel()
             tab_indices[tab] = 0 if model is None else max(model.currentIndex().row(), 0)
 
+        self.old_contrast_models = {}
+        self.old_layers = []
+
         # draft project is a dict containing all the attributes of the parent model,
         # because we don't want validation errors going off while editing the model is in-progress
         self.draft_project: dict = create_draft_project(self.parent_model.project)
@@ -353,20 +357,44 @@ class ProjectWidget(QtWidgets.QWidget):
             old_entry = self.draft_project["calculation"]
             self.update_draft_project({"calculation": new_entry})
             contrast_invalid = self.draft_project["model"] == LayerModels.StandardLayers and old_entry != new_entry
+            old_key = f"{old_entry}_{self.draft_project['model'].split()[0]}"
         else:
             old_entry = self.draft_project["model"]
             self.update_draft_project({"model": new_entry})
             # we use 'xor' (^) as "if the old type was standard layers and the new type isn't, or vice versa"
             contrast_invalid = (old_entry == LayerModels.StandardLayers) ^ (new_entry == LayerModels.StandardLayers)
+            old_key = f"{self.draft_project['calculation']}_{old_entry.split()[0]}"
+
+            if old_entry == LayerModels.StandardLayers and new_entry != LayerModels.StandardLayers:
+                for layer in self.draft_project["layers"]:
+                    self.old_layers.append(layer.dict())
+                if self.draft_project["layers"]:
+                    empty = ratapi.ClassList()
+                    empty._class_handle = self.draft_project["layers"]._class_handle
+                    self.update_draft_project({"layers": empty})
+            elif old_entry != LayerModels.StandardLayers and new_entry == LayerModels.StandardLayers:
+                empty = ratapi.ClassList()
+                empty._class_handle = (
+                    ratapi.models.AbsorptionLayer if self.draft_project["absorption"] else ratapi.models.Layer
+                )
+                for layer in self.old_layers:
+                    if not self.draft_project["absorption"]:
+                        layer.pop("SLD_imaginary", "")
+                    else:
+                        layer.setdefault("SLD_imaginary", "")
+                    empty.append(**layer)
+                self.update_draft_project({"layers": empty})
+                self.old_layers.clear()
+                self.edit_tabs["Layers"].tables["layers"].update_model(empty)
 
         if contrast_invalid:
             old_contrast_models = {}
+            new_key = f"{self.draft_project['calculation']}_{self.draft_project['model'].split()[0]}"
             # clear contrasts as what the 'model' means has changed!
             for contrast in self.draft_project["contrasts"]:
                 old_contrast_models[contrast.name] = contrast.model
-                contrast.model = self.old_contrast_models.get(contrast.name, [])
-
-            self.old_contrast_models = old_contrast_models
+                contrast.model = self.old_contrast_models.get(new_key, {}).get(contrast.name, [])
+            self.old_contrast_models[old_key] = old_contrast_models
         self.edit_tabs["Contrasts"].tables["contrasts"].update_item_view()
 
     def show_project_view(self) -> None:

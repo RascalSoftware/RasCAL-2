@@ -423,9 +423,13 @@ AbstractProjectListWidget QPushButton {
     margin: 0, 0, 10px, 0;
 }
 
-AbstractProjectListWidget QListView {
+AbstractProjectListWidget QTableView {
     border: 1px solid @Midlight;
     background-color: white;
+}
+
+#CountHeader::section {
+    border: transparent;
 }
 
 #DelegateComboBox{

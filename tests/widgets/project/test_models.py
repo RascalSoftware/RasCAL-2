@@ -459,7 +459,7 @@ def test_file_model_set_filename(filename, expected_lang, expected_filenames):
         Path(tmp, "myfile.py").write_text(python_file)
         filepath = Path(tmp, filename)
         model.setData(model.index(0, filename_col), filepath)
-        assert model.classlist[0].path == Path(tmp).resolve()
+        assert model.classlist[0].path == Path(tmp)
         assert model.classlist[0].filename == filename
         assert model.classlist[0].language == expected_lang
 

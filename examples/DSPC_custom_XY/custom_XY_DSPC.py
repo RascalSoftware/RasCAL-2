@@ -1,10 +1,16 @@
-import math
+"""A custom XY model for a supported DSPC bilayer."""
+
+from math import sqrt
 
 import numpy as np
+from scipy.special import erf
 
 
 def custom_XY_DSPC(params, bulk_in, bulk_out, contrast):
-    """This function makes a model of a supported DSPC bilayer using volume restricted distribution functions."""
+    """Calculate the continuous SLD of a supported DSPC bilayer using volume restricted distribution functions."""
+    # Note - The first contrast number is 1 (not 0) so be careful if you use
+    # this variable for array indexing.
+
     # Split up the parameters
     subRough = params[0]
     oxideThick = params[1]
@@ -49,10 +55,10 @@ def custom_XY_DSPC(params, bulk_in, bulk_out, contrast):
     z = np.arange(0, 141)
 
     # Make our Silicon substrate
-    vfSilicon, siSurf = layer(z, -25, 50, 1, subRough, subRough)
+    vfSilicon, siSurf = make_layer(z, -25, 50, 1, subRough, subRough)
 
     # Add the Oxide
-    vfOxide, oxSurface = layer(z, siSurf, oxideThick, 1, subRough, subRough)
+    vfOxide, oxSurface = make_layer(z, siSurf, oxideThick, 1, subRough, subRough)
 
     # We fill in the water at the end, but there may be a hydration layer between the bilayer and the oxide,
     # so we start the bilayer stack an appropriate distance away
@@ -63,15 +69,15 @@ def custom_XY_DSPC(params, bulk_in, bulk_out, contrast):
     headThick = vHead / lipidAPM
 
     # ... and make a box for the volume fraction (1 for now, we correct for coverage later)
-    vfHeadL, headLSurface = layer(z, watSurface, headThick, 1, bilayerRough, bilayerRough)
+    vfHeadL, headLSurface = make_layer(z, watSurface, headThick, 1, bilayerRough, bilayerRough)
 
     # ... also do the same for the tails
     # We'll make both together, so the thickness will be twice the volume
     tailsThick = (2 * vTail) / lipidAPM
-    vfTails, tailsSurf = layer(z, headLSurface, tailsThick, 1, bilayerRough, bilayerRough)
+    vfTails, tailsSurf = make_layer(z, headLSurface, tailsThick, 1, bilayerRough, bilayerRough)
 
     # Finally the upper head ...
-    vfHeadR, headSurface = layer(z, tailsSurf, headThick, 1, bilayerRough, bilayerRough)
+    vfHeadR, headSurface = make_layer(z, tailsSurf, headThick, 1, bilayerRough, bilayerRough)
 
     # Making the model
     # We've created the volume fraction profiles corresponding to each of the groups.
@@ -106,19 +112,20 @@ def custom_XY_DSPC(params, bulk_in, bulk_out, contrast):
     sldHeadL = vfHeadL * sld_Value_Head
     sldHeadR = vfHeadR * sld_Value_Head
     sldTails = vfTails * sld_Value_Tails
-    sldWat = vfWat * bulk_out[contrast]
+    sldWat = vfWat * bulk_out[contrast - 1]
 
     # Put this all together
     totSLD = sldSilicon + sldOxide + sldHeadL + sldTails + sldHeadR + sldWat
 
     # Make the SLD array for output
-    SLD = [[a, b] for (a, b) in zip(z, totSLD)]
+    SLD = np.column_stack((z, totSLD))
 
     return SLD, subRough
 
 
-def layer(z, prevLaySurf, thickness, height, Sigma_L, Sigma_R):
-    """This produces a layer, with a defined thickness, height and roughness.
+def make_layer(z, prevLaySurf, thickness, height, Sigma_L, Sigma_R):
+    """Produce a layer, with a defined thickness, height and roughness.
+
     Each side of the layer has its own roughness value.
     """
     # Find the edges
@@ -126,12 +133,9 @@ def layer(z, prevLaySurf, thickness, height, Sigma_L, Sigma_R):
     right = prevLaySurf + thickness
 
     # Make our heaviside
-    a = (z - left) / ((2**0.5) * Sigma_L)
-    b = (z - right) / ((2**0.5) * Sigma_R)
+    erf_left = erf((z - left) / (sqrt(2) * Sigma_L))
+    erf_right = erf((z - right) / (sqrt(2) * Sigma_R))
 
-    erf_a = np.array([math.erf(value) for value in a])
-    erf_b = np.array([math.erf(value) for value in b])
-
-    VF = np.array((height / 2) * (erf_a - erf_b))
+    VF = np.array((0.5 * height) * (erf_left - erf_right))
 
     return VF, right

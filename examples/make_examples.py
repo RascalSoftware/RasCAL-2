@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 
 import ratapi as rat
 
@@ -16,5 +17,10 @@ for example in examples:
     p, _ = getattr(rat.examples, example)()
     example_folder = Path(f"./{example}/")
     example_folder.mkdir(parents=True, exist_ok=True)
-    p.save(example_folder, "project")
-    rat.Controls().save(example_folder, "controls") 
+
+    for custom_file in p.custom_files:
+        shutil.copy2(Path(custom_file.path) / custom_file.filename, example_folder)
+        custom_file.path = Path(".")
+
+    p.save(example_folder / "project")
+    rat.Controls().save(example_folder / "controls")
