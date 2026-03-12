@@ -5,7 +5,8 @@ from contextlib import suppress
 
 from PyQt6 import QtWidgets
 
-from rascal2.config import IMAGES_PATH, STATIC_PATH, MatlabHelper, handle_scaling, setup_logging
+from rascal2.config import MatlabHelper, handle_scaling, setup_logging
+from rascal2.paths import IMAGES_PATH, STATIC_PATH
 from rascal2.ui.view import MainWindowView
 
 

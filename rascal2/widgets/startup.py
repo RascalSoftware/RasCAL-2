@@ -1,7 +1,7 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 
-from rascal2.config import path_for
 from rascal2.dialogs.startup_dialog import LoadDialog, LoadR1Dialog, NewProjectDialog
+from rascal2.paths import path_for
 
 
 class StartUpWidget(QtWidgets.QWidget):

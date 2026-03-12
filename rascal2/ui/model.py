@@ -8,7 +8,7 @@ import ratapi as rat
 import ratapi.outputs
 from PyQt6 import QtCore
 
-from rascal2.config import EXAMPLES_PATH, EXAMPLES_TEMP_PATH
+from rascal2.paths import EXAMPLES_PATH, EXAMPLES_TEMP_PATH
 
 
 def copy_example_project(load_path):

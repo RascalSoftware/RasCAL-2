@@ -7,8 +7,9 @@ from pathlib import Path
 from PyQt6 import Qsci, QtGui, QtWidgets
 from ratapi.utils.enums import Languages
 
-from rascal2.config import EXAMPLES_PATH, LOGGER, SETTINGS, MatlabHelper
+from rascal2.config import LOGGER, SETTINGS, MatlabHelper
 from rascal2.core.enums import CustomFileType
+from rascal2.paths import EXAMPLES_PATH
 
 MATLAB_MODEL_TEMPLATE = """function [output, sub_rough] = {0}{1}
 % RasCAL-2 Layer Model Custom File.

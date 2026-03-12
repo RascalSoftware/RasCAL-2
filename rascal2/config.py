@@ -7,7 +7,6 @@ import sys
 from rascal2.paths import MATLAB_ARCH_FILE
 from rascal2.settings import Settings, get_global_settings
 
-EXAMPLES_TEMP_PATH = pathlib.Path(get_global_settings().fileName()).parent / "examples"
 LOGGER = logging.getLogger("rascal2")
 SETTINGS = Settings()
 
