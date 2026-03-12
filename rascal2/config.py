@@ -1,31 +1,12 @@
 import logging
-import os
-
-os.environ["DELAY_MATLAB_START"] = "1"
 import multiprocessing as mp
 import pathlib
 import platform
-import site
 import sys
 
+from rascal2.paths import MATLAB_ARCH_FILE
 from rascal2.settings import Settings, get_global_settings
 
-if getattr(sys, "frozen", False):
-    # we are running in a bundle
-    SOURCE_PATH = pathlib.Path(sys.executable).parent.parent
-    SITE_PATH = SOURCE_PATH / "bin/_internal"
-    if pathlib.Path(SOURCE_PATH / "MacOS").is_dir():
-        SOURCE_PATH = SOURCE_PATH / "Resources"
-        SITE_PATH = SOURCE_PATH
-    EXAMPLES_PATH = SOURCE_PATH / "examples"
-else:
-    SOURCE_PATH = pathlib.Path(__file__).parent
-    SITE_PATH = site.getsitepackages()[-1]
-    EXAMPLES_PATH = SOURCE_PATH.parent / "examples"
-
-STATIC_PATH = SOURCE_PATH / "static"
-IMAGES_PATH = STATIC_PATH / "images"
-MATLAB_ARCH_FILE = pathlib.Path(SITE_PATH) / "matlab/engine/_arch.txt"
 EXAMPLES_TEMP_PATH = pathlib.Path(get_global_settings().fileName()).parent / "examples"
 LOGGER = logging.getLogger("rascal2")
 SETTINGS = Settings()
@@ -37,22 +18,6 @@ def handle_scaling():
         from ctypes import windll
 
         windll.user32.SetProcessDPIAware()
-
-
-def path_for(filename: str):
-    """Get full path for the given image file.
-
-    Parameters
-    ----------
-    filename : str
-        basename and extension of image.
-
-    Returns
-    -------
-    full path : str
-        full path of the image.
-    """
-    return (IMAGES_PATH / filename).as_posix()
 
 
 def log_uncaught_exceptions(exc_type, exc_value, exc_traceback):

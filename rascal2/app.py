@@ -1,12 +1,11 @@
 import logging
 import multiprocessing
 import re
-import sys
 from contextlib import suppress
 
-from PyQt6 import QtGui, QtWidgets
+from PyQt6 import QtWidgets
 
-from rascal2.config import IMAGES_PATH, STATIC_PATH, MatlabHelper, handle_scaling, path_for, setup_logging
+from rascal2.config import IMAGES_PATH, STATIC_PATH, MatlabHelper, handle_scaling, setup_logging
 from rascal2.ui.view import MainWindowView
 
 
@@ -21,9 +20,6 @@ def ui_execute(splash):
     handle_scaling()
     QtWidgets.QApplication.setStyle("Fusion")
     app = QtWidgets.QApplication.instance()
-    if app is None:
-        app = QtWidgets.QApplication([])
-    app.setWindowIcon(QtGui.QIcon(path_for("logo.png")))
     with suppress(FileNotFoundError), open(STATIC_PATH / "style.css") as stylesheet:
         palette = app.palette()
         replacements = {
@@ -39,19 +35,16 @@ def ui_execute(splash):
     window = MainWindowView()
     window.show()
     splash.finish(window)
+
     return app.exec()
 
 
 def start_app(splash):
-    """Entry point function for starting RasCAL."""
-    multiprocessing.freeze_support()
+    """Start RasCAL app."""
     multiprocessing.set_start_method("spawn", force=True)
     setup_logging()
     matlab_helper = MatlabHelper()
     exit_code = ui_execute(splash)
     matlab_helper.close_event.set()
     logging.shutdown()
-    sys.exit(exit_code)
-
-
-
+    return exit_code

@@ -1,30 +1,32 @@
+import multiprocessing
+import os
 import sys
-from pathlib import Path
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPixmap, QIcon
+from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import QApplication, QSplashScreen
+
+from rascal2.paths import path_for
 
 
 def main():
+    """Entry point function for starting RasCAL."""
+    multiprocessing.freeze_support()
+
     app = QApplication([])
+    app.setWindowIcon(QIcon(path_for("logo.png")))
 
-    SOURCE_PATH = Path(sys.executable).parent.parent
-    if Path(SOURCE_PATH / "MacOS").is_dir():
-        SOURCE_PATH = SOURCE_PATH / "Resources"
-    IMAGE_PATH = SOURCE_PATH / "static" / "images"
-
-    app.setWindowIcon(QIcon(str(IMAGE_PATH / "logo.png")))
-
-    splash = QSplashScreen(QPixmap(str(IMAGE_PATH / "splash.png")),
-                           Qt.WindowType.WindowStaysOnTopHint)
+    splash = QSplashScreen(QPixmap(path_for("splash.png")), Qt.WindowType.WindowStaysOnTopHint)
+    splash.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
     splash.show()
     splash.raise_()
     splash.activateWindow()
     app.processEvents()
 
-    from app import start_app
-    start_app(splash)
+    os.environ["DELAY_MATLAB_START"] = "1"
+    from rascal2.app import start_app
+
+    sys.exit(start_app(splash))
 
 
 if __name__ == "__main__":
