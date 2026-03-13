@@ -9,8 +9,9 @@ import ratapi
 from PyQt6 import QtCore, QtGui, QtWidgets
 from ratapi.utils.enums import BackgroundActions, LayerModels
 
-from rascal2.config import SETTINGS, path_for
+from rascal2.config import SETTINGS
 from rascal2.core.readers import readers
+from rascal2.paths import path_for
 from rascal2.widgets.delegates import ProjectFieldDelegate
 from rascal2.widgets.inputs import RangeWidget
 

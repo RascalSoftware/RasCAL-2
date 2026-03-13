@@ -5,7 +5,8 @@ from contextlib import suppress
 
 from PyQt6 import QtCore, QtWidgets
 
-from rascal2.config import LOGGER, MATLAB_ARCH_FILE, SETTINGS, MatlabHelper
+from rascal2.config import LOGGER, SETTINGS, MatlabHelper
+from rascal2.paths import MATLAB_ARCH_FILE
 from rascal2.settings import SettingsGroups
 from rascal2.widgets.inputs import get_validated_input
 

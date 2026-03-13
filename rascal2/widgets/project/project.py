@@ -11,7 +11,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from ratapi.utils.custom_errors import custom_pydantic_validation_error
 from ratapi.utils.enums import Calculations, Geometries, LayerModels
 
-from rascal2.config import path_for
+from rascal2.paths import path_for
 from rascal2.widgets.project.lists import ContrastWidget, DataWidget
 from rascal2.widgets.project.slider_view import SliderViewWidget
 from rascal2.widgets.project.tables import (

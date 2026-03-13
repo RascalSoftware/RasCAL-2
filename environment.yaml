@@ -6,6 +6,7 @@ dependencies:
   - python=3.10
   - pip
   - llvm-openmp
+  - expat=2.7.3
   - pip:
     - -r requirements.txt
     - -r requirements-dev.txt

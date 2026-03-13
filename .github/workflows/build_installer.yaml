@@ -92,7 +92,6 @@ jobs:
         run: |
           conda init bash
           conda activate rascal2
-          conda install conda-forge::expat==2.7.3
           if [ ${{ matrix.platform }} == "macos-14" ]; then
             ARCH="arm64"
             export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/Users/runner/hostedtoolcache/MATLAB/2023.2.999/arm64/MATLAB.app/bin/maca64
