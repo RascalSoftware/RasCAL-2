@@ -120,15 +120,15 @@ class BayesPlotsDialog(QtWidgets.QDialog):
         for i, name in enumerate(results.fitNames):
             table.setItem(i, 0, QtWidgets.QTableWidgetItem(name))
             item1 = QtWidgets.QTableWidgetItem(f"{ci.mean[0][i]:g}")
-            item1.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+            item1.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
             table.setItem(i, 1, item1)
 
             item2 = QtWidgets.QTableWidgetItem(f"[{ci.percentile95[0][i]:g}, {ci.percentile95[1][i]:g}]")
-            item2.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+            item2.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
             table.setItem(i, 2, item2)
 
             item3 = QtWidgets.QTableWidgetItem(f"[{ci.percentile65[0][i]:g}, {ci.percentile65[1][i]:g}]")
-            item3.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+            item3.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
             table.setItem(i, 3, item3)
 
         table.resizeColumnsToContents()
