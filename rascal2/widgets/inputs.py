@@ -9,7 +9,7 @@ from pathlib import Path
 from pydantic.fields import FieldInfo
 from PyQt6 import QtCore, QtGui, QtWidgets
 
-from rascal2.config import path_for
+from rascal2.paths import path_for
 
 
 def get_validated_input(field_info: FieldInfo, parent=None) -> QtWidgets.QWidget:

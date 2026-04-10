@@ -1,54 +1,51 @@
-import logging
 import multiprocessing
-import re
+import os
 import sys
-from contextlib import suppress
 
-from PyQt6 import QtGui, QtWidgets
+from PyQt6.QtCore import Qt, QThread
+from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtWidgets import QApplication, QSplashScreen
 
-from rascal2.config import IMAGES_PATH, STATIC_PATH, MatlabHelper, handle_scaling, path_for, setup_logging
-from rascal2.ui.view import MainWindowView
+from rascal2.paths import path_for
 
 
-def ui_execute():
-    """Create main window and executes GUI event loop.
+class SplashScreen(QSplashScreen):
+    """Create splash screen widget."""
 
-    Returns
-    -------
-    exit code : int
-        QApplication exit code
-    """
-    handle_scaling()
-    QtWidgets.QApplication.setStyle("Fusion")
-    app = QtWidgets.QApplication(sys.argv[:1])
-    app.setWindowIcon(QtGui.QIcon(path_for("logo.png")))
-    with suppress(FileNotFoundError), open(STATIC_PATH / "style.css") as stylesheet:
-        palette = app.palette()
-        replacements = {
-            "@Path": IMAGES_PATH.as_posix(),
-            "@Window": palette.window().color().name(),
-            "@Highlight": palette.highlight().color().name(),
-            "@Midlight": palette.midlight().color().name(),
-            "@Text": palette.text().color().name(),
-        }
-        style = re.sub("|".join(replacements), lambda x: replacements[x.group(0)], stylesheet.read())
-        app.setStyleSheet(style)
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.painted = False
 
-    window = MainWindowView()
-    window.show()
-    return app.exec()
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        self.painted = True
 
 
 def main():
     """Entry point function for starting RasCAL."""
     multiprocessing.freeze_support()
-    multiprocessing.set_start_method("spawn", force=True)
-    setup_logging()
-    matlab_helper = MatlabHelper()
-    exit_code = ui_execute()
-    matlab_helper.close_event.set()
-    logging.shutdown()
-    sys.exit(exit_code)
+
+    app = QApplication([])
+    app.setWindowIcon(QIcon(path_for("logo.png")))
+
+    splash = SplashScreen(QPixmap(path_for("splash.png")), Qt.WindowType.WindowStaysOnTopHint)
+    splash.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+    splash.show()
+    splash.raise_()
+    splash.activateWindow()
+    app.processEvents()
+    for _ in range(100):
+        if splash.painted:
+            break
+        # wait for splash to paint on linux
+        QThread.usleep(100)
+        app.processEvents()
+    app.processEvents()
+
+    os.environ["DELAY_MATLAB_START"] = "1"
+    from rascal2.app import start_app
+
+    sys.exit(start_app(splash))
 
 
 if __name__ == "__main__":

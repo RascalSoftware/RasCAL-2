@@ -2,11 +2,12 @@ from pathlib import Path
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 
-from rascal2.config import EXAMPLES_PATH, EXAMPLES_TEMP_PATH, SETTINGS, path_for
+from rascal2.config import SETTINGS
 from rascal2.core.enums import UnsavedReply
 from rascal2.dialogs.about_dialog import AboutDialog
 from rascal2.dialogs.settings_dialog import SettingsDialog
 from rascal2.dialogs.startup_dialog import PROJECT_FILES, LoadDialog, LoadR1Dialog, NewProjectDialog, StartupDialog
+from rascal2.paths import EXAMPLES_PATH, EXAMPLES_TEMP_PATH, path_for
 from rascal2.settings import MDIGeometries, get_global_settings
 from rascal2.widgets import ControlsWidget, PlotWidget, TerminalWidget
 from rascal2.widgets.project import ProjectWidget

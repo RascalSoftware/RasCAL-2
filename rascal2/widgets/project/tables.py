@@ -13,9 +13,10 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 from ratapi.utils.enums import Calculations, Languages, Procedures, TypeOptions
 
 import rascal2.widgets.delegates as delegates
-from rascal2.config import LOGGER, SETTINGS, path_for
+from rascal2.config import LOGGER, SETTINGS
 from rascal2.core.enums import CustomFileType
 from rascal2.dialogs.custom_file_editor import create_new_file, edit_file
+from rascal2.paths import path_for
 
 
 class ClassListTableModel(QtCore.QAbstractTableModel):

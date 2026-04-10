@@ -3,8 +3,9 @@ from pathlib import Path
 
 from PyQt6 import QtCore, QtWidgets
 
-from rascal2.config import EXAMPLES_PATH, LOGGER
+from rascal2.config import LOGGER
 from rascal2.core.worker import Worker
+from rascal2.paths import EXAMPLES_PATH
 from rascal2.settings import update_recent_projects
 
 # global variable for required project files
