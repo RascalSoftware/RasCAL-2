@@ -5,7 +5,8 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 import rascal2
 import rascal2.widgets
-from rascal2.config import MatlabHelper, path_for
+from rascal2.config import MatlabHelper
+from rascal2.paths import path_for
 from rascal2.settings import get_global_settings
 
 
