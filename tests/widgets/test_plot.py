@@ -12,29 +12,17 @@ from rascal2.widgets.plot import (
 )
 
 
-class MockWindowView(QtWidgets.QMainWindow):
-    """A mock MainWindowView class."""
-
-    def __init__(self):
-        super().__init__()
-        self.presenter = MagicMock()
-        self.presenter.model = MagicMock()
-
-
-view = MockWindowView()
-
-
 @pytest.fixture
-def plot_widget():
-    plot_widget = PlotWidget(view)
+def plot_widget(mock_window_view):
+    plot_widget = PlotWidget(mock_window_view)
     plot_widget.reflectivity_plot = MagicMock()
 
     return plot_widget
 
 
 @pytest.fixture
-def sld_widget():
-    sld_widget = RefSLDWidget(view)
+def sld_widget(mock_window_view):
+    sld_widget = RefSLDWidget(mock_window_view)
     sld_widget.canvas = MagicMock()
     sld_widget.update_figure_size = MagicMock()
 
@@ -42,8 +30,8 @@ def sld_widget():
 
 
 @pytest.fixture
-def shaded_plot_widget():
-    shaded_plot_widget = ShadedPlotWidget(view)
+def shaded_plot_widget(mock_window_view):
+    shaded_plot_widget = ShadedPlotWidget(mock_window_view)
     shaded_plot_widget.canvas = MagicMock()
 
     return shaded_plot_widget
@@ -171,11 +159,11 @@ def test_ref_sld_plot(mock_inputs, sld_widget):
         sld_widget.canvas.draw.assert_called_once()
 
 
-def test_param_combobox_items(mock_bayes_results):
+def test_param_combobox_items(mock_bayes_results, mock_window_view):
     """Test that the parameter multi-select combobox items are the full set of fit parameters."""
     bayes_results = mock_bayes_results(["A", "B", "C"])
 
-    widget = MockPanelPlot(view)
+    widget = MockPanelPlot(mock_window_view)
     widget.plot(None, bayes_results)
 
     assert widget.all_params == ["A", "B", "C"]
@@ -188,11 +176,11 @@ def test_param_combobox_items(mock_bayes_results):
 
 
 @pytest.mark.parametrize("init_select", ([], ["A", "C"], ["B"], ["A", "B", "C"]))
-def test_param_combobox_select(mock_bayes_results, init_select):
+def test_param_combobox_select(mock_bayes_results, init_select, mock_window_view):
     """Test that the select button correctly selects all parameters."""
     bayes_results = mock_bayes_results(["A", "B", "C"])
 
-    widget = MockPanelPlot(view)
+    widget = MockPanelPlot(mock_window_view)
     widget.plot(None, bayes_results)
     widget.param_combobox.select_items(init_select)
 
@@ -211,11 +199,11 @@ def test_param_combobox_select(mock_bayes_results, init_select):
 
 
 @pytest.mark.parametrize("init_select", ([], ["A", "C"], ["B"], ["A", "B", "C"]))
-def test_param_combobox_deselect(mock_bayes_results, init_select):
+def test_param_combobox_deselect(mock_bayes_results, init_select, mock_window_view):
     """Test that the select button correctly selects all parameters."""
     bayes_results = mock_bayes_results(["A", "B", "C"])
 
-    widget = MockPanelPlot(view)
+    widget = MockPanelPlot(mock_window_view)
     widget.plot(None, bayes_results)
     widget.param_combobox.select_items(init_select)
 

@@ -10,25 +10,11 @@ from ratapi.controls import Controls, fields
 from rascal2.widgets.controls import ControlsWidget, FitSettingsWidget
 
 
-class MockWindowView(QtWidgets.QMainWindow):
-    """A mock MainWindowView class."""
-
-    def __init__(self):
-        super().__init__()
-        self.presenter = MagicMock()
-        self.presenter.model = MagicMock()
-        self.presenter.model.controls = Controls()
-        self.project_widget = MagicMock()
-        self.set_editing_enabled = MagicMock()
-
-
-view = MockWindowView()
-
-
 @pytest.fixture
-def controls_widget() -> ControlsWidget:
+def controls_widget(mock_window_view) -> ControlsWidget:
     def _widget():
-        widget = ControlsWidget(view)
+        mock_window_view.presenter.model.controls = Controls()
+        widget = ControlsWidget(mock_window_view)
         widget.setup_controls()
         return widget
 

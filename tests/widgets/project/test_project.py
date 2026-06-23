@@ -7,12 +7,7 @@ from PyQt6 import QtCore, QtWidgets
 from ratapi.utils.enums import Calculations, Geometries, LayerModels
 
 from rascal2.widgets.project.project import ProjectTabWidget, ProjectWidget, create_draft_project
-from rascal2.widgets.project.tables import (
-    ClassListTableModel,
-    ParameterFieldWidget,
-    ParametersModel,
-    ProjectFieldWidget,
-)
+from rascal2.widgets.project.tables import ParameterFieldWidget, ProjectFieldWidget
 
 
 class MockModel(QtCore.QObject):
@@ -31,23 +26,11 @@ class MockPresenter(QtWidgets.QMainWindow):
         self.edit_project = MagicMock()
 
 
-class MockMainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.presenter = MockPresenter()
-        self.controls_widget = MagicMock()
-        self.project_widget = None
-        self.toggle_sliders = MagicMock()
-
-
 class DataModel(pydantic.BaseModel, validate_assignment=True):
     """Test Pydantic model."""
 
     name: str = "Test Model"
     value: int = 15
-
-
-parent = MockMainWindow()
 
 
 @pytest.fixture
@@ -57,23 +40,17 @@ def classlist():
 
 
 @pytest.fixture
-def table_model(classlist):
-    """Test ClassListTableModel."""
-    return ClassListTableModel(classlist, parent)
-
-
-@pytest.fixture
-def setup_project_widget():
-    parent = MockMainWindow()
-    project_widget = ProjectWidget(parent)
+def project_widget(mock_window_view):
+    mock_window_view.presenter = MockPresenter()
+    project_widget = ProjectWidget(mock_window_view)
     project_widget.update_project_view()
     return project_widget
 
 
 @pytest.fixture
-def project_with_draft():
+def project_with_draft(mock_window_view):
     draft = create_draft_project(ratapi.Project())
-    project = ProjectWidget(parent)
+    project = ProjectWidget(mock_window_view)
     project.draft_project = draft
     return project
 
@@ -91,19 +68,8 @@ def param_classlist():
     return _classlist
 
 
-@pytest.fixture
-def param_model(param_classlist):
-    def _param_model(protected_indices):
-        model = ParametersModel(param_classlist(protected_indices), parent)
-        return model
-
-    return _param_model
-
-
-def test_project_widget_initial_state(setup_project_widget):
-    """Tests the inital state of the ProjectWidget class."""
-    project_widget = setup_project_widget
-
+def test_project_widget_initial_state(project_widget):
+    """Tests the initial state of the ProjectWidget class."""
     # Check the layout of the project view
     assert project_widget.stacked_widget.currentIndex() == 0
 
@@ -146,10 +112,8 @@ def test_project_widget_initial_state(setup_project_widget):
     assert project_widget.edit_project_tab.currentIndex() == 0
 
 
-def test_edit_cancel_button_toggle(setup_project_widget):
+def test_edit_cancel_button_toggle(project_widget):
     """Tests clicking the edit button causes the stacked widget to change state."""
-    project_widget = setup_project_widget
-
     assert project_widget.stacked_widget.currentIndex() == 0
     project_widget.edit_project_button.click()
     assert project_widget.stacked_widget.currentIndex() == 1
@@ -166,10 +130,24 @@ def test_edit_cancel_button_toggle(setup_project_widget):
     assert project_widget.calculation_type.text() == Calculations.Normal
 
 
-def test_save_changes_to_model_project(setup_project_widget):
-    """Tests that making changes to the project settings."""
-    project_widget = setup_project_widget
+def test_show_slider_view(project_widget):
+    assert project_widget.stacked_widget.currentIndex() == 0
+    project_widget.show_slider_view()
+    assert project_widget.stacked_widget.currentIndex() == 2
+    slider_view = project_widget.stacked_widget.currentWidget()
+    assert len(slider_view.parameters) == 1
 
+    project_widget.parent_model.project.parameters.append(name="test", fit=True)
+    project_widget.update_slider_view()
+
+    # show slider creates a new slider
+    project_widget.show_slider_view()
+    slider_view_2 = project_widget.stacked_widget.currentWidget()
+    assert len(slider_view_2.parameters) == 2
+
+
+def test_save_changes_to_model_project(project_widget):
+    """Tests that making changes to the project settings."""
     project_widget.edit_project_button.click()
 
     project_widget.calculation_combobox.setCurrentText(Calculations.Domains)
@@ -184,10 +162,8 @@ def test_save_changes_to_model_project(setup_project_widget):
     assert project_widget.parent.presenter.edit_project.call_count == 1
 
 
-def test_cancel_changes_to_model_project(setup_project_widget):
+def test_cancel_changes_to_model_project(project_widget):
     """Tests that making changes to the project settings and not saving them reverts the changes."""
-    project_widget = setup_project_widget
-
     project_widget.edit_project_button.click()
 
     project_widget.calculation_combobox.setCurrentText(Calculations.Domains)
@@ -209,9 +185,8 @@ def test_cancel_changes_to_model_project(setup_project_widget):
     assert project_widget.geometry_type.text() == Geometries.AirSubstrate
 
 
-def test_domains_tab(setup_project_widget):
+def test_domains_tab(project_widget):
     """Tests that domain tab is visible."""
-    project_widget = setup_project_widget
     project_widget.edit_project_button.click()
     project_widget.calculation_combobox.setCurrentText(Calculations.Domains)
     assert project_widget.draft_project["calculation"] == Calculations.Domains
@@ -222,11 +197,11 @@ def test_domains_tab(setup_project_widget):
     assert project_widget.edit_project_tab.isTabVisible(domains_tab_index)
 
 
-def test_project_tab_init():
+def test_project_tab_init(mock_window_view):
     """Test that the project tab correctly creates field widgets."""
     fields = ["my_field", "parameters", "bulk_in"]
 
-    tab = ProjectTabWidget(fields, parent)
+    tab = ProjectTabWidget(fields, mock_window_view)
 
     for field in fields:
         if field in ratapi.project.parameter_class_lists:
@@ -236,11 +211,11 @@ def test_project_tab_init():
 
 
 @pytest.mark.parametrize("edit_mode", [True, False])
-def test_project_tab_update_model(classlist, param_classlist, edit_mode):
+def test_project_tab_update_model(classlist, param_classlist, edit_mode, mock_window_view):
     """Test that updating a ProjectTabEditWidget produces the desired models."""
     new_model = {"my_field": classlist, "parameters": param_classlist([])}
 
-    tab = ProjectTabWidget(list(new_model), parent, edit_mode=edit_mode)
+    tab = ProjectTabWidget(list(new_model), mock_window_view, edit_mode=edit_mode)
     # change the parent to a mock to avoid spec issues
     for table in tab.tables.values():
         table.parent = MagicMock()
@@ -260,7 +235,7 @@ def test_project_tab_update_model(classlist, param_classlist, edit_mode):
     ],
 )
 @pytest.mark.parametrize("absorption", [True, False])
-def test_project_tab_validate_layers(input_params, absorption):
+def test_project_tab_validate_layers(input_params, absorption, mock_window_view):
     """Test that the project tab produces the correct result for validating the layers tab."""
     params = ["Param 1", "Param 2", "Invalid Param", ""]
     if absorption:
@@ -300,7 +275,7 @@ def test_project_tab_validate_layers(input_params, absorption):
         ]
     )
 
-    project = ProjectWidget(parent)
+    project = ProjectWidget(mock_window_view)
     project.draft_project = draft
 
     assert list(project.validate_layers()) == expected_err

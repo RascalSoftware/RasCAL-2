@@ -4,7 +4,6 @@ import pytest
 import ratapi
 from PyQt6 import QtWidgets
 
-from rascal2.ui.view import MainWindowView
 from rascal2.widgets.project.project import create_draft_project
 from rascal2.widgets.project.slider_view import LabeledSlider, SliderViewWidget
 
@@ -52,22 +51,20 @@ def draft_project():
     return draft
 
 
-def test_no_sliders_creation():
+def test_no_sliders_creation(mock_window_view):
     """Slider view should show warning when there is no fitted parameter."""
-    mw = MainWindowView()
     draft = create_draft_project(ratapi.Project())
     draft["parameters"][0].fit = False
-    slider_view = SliderViewWidget(draft, mw)
+    slider_view = SliderViewWidget(draft, mock_window_view)
     assert len(slider_view.parameters) == 0
     assert len(slider_view._sliders) == 0
     label = slider_view.slider_content_layout.takeAt(0).widget()
     assert label.text().startswith("There are no fitted parameters")
 
 
-def test_sliders_creation(draft_project):
+def test_sliders_creation(draft_project, mock_window_view):
     """Sliders should be created for fitted parameter only."""
-    mw = MainWindowView()
-    slider_view = SliderViewWidget(draft_project, mw)
+    slider_view = SliderViewWidget(draft_project, mock_window_view)
 
     assert len(slider_view.parameters) == 8
     assert len(slider_view._sliders) == 8
@@ -76,30 +73,30 @@ def test_sliders_creation(draft_project):
         assert param_name == slider_name
 
     draft_project["parameters"][0].fit = False
-    slider_view = SliderViewWidget(draft_project, mw)
+    slider_view = SliderViewWidget(draft_project, mock_window_view)
     assert len(slider_view.parameters) == 7
     assert draft_project["parameters"][0].name not in slider_view._sliders
 
 
-def test_accept_and_cancel_slider_buttons():
-    mw = MainWindowView()
+def test_accept_and_cancel_slider_buttons(mock_window_view):
+    mock_window_view.presenter = MagicMock()
     draft = create_draft_project(ratapi.Project())
-    mw.toggle_sliders = MagicMock()
-    mw.plot_widget.update_plots = MagicMock()
-    mw.presenter.edit_project = MagicMock()
+    mock_window_view.toggle_sliders = MagicMock()
+    mock_window_view.plot_widget.update_plots = MagicMock()
+    mock_window_view.presenter.edit_project = MagicMock()
 
-    slider_view = SliderViewWidget(draft, mw)
+    slider_view = SliderViewWidget(draft, mock_window_view)
     buttons = slider_view.findChildren(QtWidgets.QPushButton)
     accept_button = buttons[0]
     accept_button.click()
-    mw.toggle_sliders.assert_called_once()
-    mw.presenter.edit_project.assert_called_once_with(draft)
+    mock_window_view.toggle_sliders.assert_called_once()
+    mock_window_view.presenter.edit_project.assert_called_once_with(draft)
 
-    mw.toggle_sliders.reset_mock()
+    mock_window_view.toggle_sliders.reset_mock()
     cancel_button = buttons[1]
     cancel_button.click()
-    mw.toggle_sliders.assert_called_once()
-    mw.plot_widget.update_plots.assert_called_once()
+    mock_window_view.toggle_sliders.assert_called_once()
+    mock_window_view.plot_widget.update_plots.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -110,9 +107,12 @@ def test_accept_and_cancel_slider_buttons():
         ratapi.models.Parameter(name="Param 3", min=3, max=3, value=3, fit=True),
     ],
 )
-@patch("rascal2.widgets.project.slider_view.SliderViewWidget", autospec=True)
-def test_labelled_slider_value(slider_view, param):
-    slider_view.update_result_and_plots = MagicMock()
+@patch("rascal2.widgets.project.slider_view.LOGGER")
+def test_labelled_slider_value(mock_logger, param, mock_window_view):
+    draft = create_draft_project(ratapi.Project())
+    mock_window_view.presenter = MagicMock()
+    slider_view = SliderViewWidget(draft, mock_window_view)
+
     slider = LabeledSlider(param, slider_view)
     # actual range of the slider should never change but
     # value would be scaled to parameter range.
@@ -122,4 +122,9 @@ def test_labelled_slider_value(slider_view, param):
 
     slider._slider.setValue(79)
     assert param.value == slider._slider_value_to_param_value(slider._slider.value())
-    slider_view.update_result_and_plots.assert_called_once()
+    mock_window_view.presenter.quick_run.assert_called_once()
+    mock_window_view.plot_widget.reflectivity_plot.plot.assert_called_once()
+
+    mock_window_view.presenter.quick_run.side_effect = ValueError("calculate error")
+    slider._slider.setValue(90)
+    mock_logger.error.assert_called_once()

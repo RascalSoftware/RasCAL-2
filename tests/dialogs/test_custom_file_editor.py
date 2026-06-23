@@ -1,6 +1,7 @@
 """Tests for the custom file editor."""
 
 import logging
+import os
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -9,15 +10,22 @@ import pytest
 from PyQt6 import Qsci, QtWidgets
 from ratapi.utils.enums import Languages
 
-from rascal2.dialogs.custom_file_editor import CustomFileEditorDialog, edit_file_local, edit_file_matlab
-
-parent = QtWidgets.QMainWindow()
+from rascal2.dialogs.custom_file_editor import (
+    CustomFileEditorDialog,
+    create_new_file,
+    edit_file,
+    edit_file_local,
+    edit_file_matlab,
+)
+from tests.utils import assert_error_logged
 
 
 @pytest.fixture
 def custom_file_dialog():
     """Fixture for a custom file dialog."""
+    parent = QtWidgets.QMainWindow()
     dlg = CustomFileEditorDialog(parent)
+    dlg.show = MagicMock()
     yield dlg
     dlg.reject()
 
@@ -31,28 +39,24 @@ def temp_file():
         f.close()
 
 
-@patch("rascal2.dialogs.custom_file_editor.CustomFileEditorDialog.show")
-def test_edit_file_local(exec_mock):
+def test_edit_file_local(custom_file_dialog, mock_window_view):
     """Test that the dialog is executed when edit_file_local() is called on a valid file."""
     with tempfile.TemporaryDirectory() as tmp:
         file = Path(tmp, "testfile.py")
         file.touch()
-        edit_file_local(file, Languages.Python, parent)
+        edit_file_local(file, Languages.Python, mock_window_view)
 
-        exec_mock.assert_called_once()
+        custom_file_dialog.show.assert_called_once()
 
 
 @pytest.mark.parametrize("filepath", ["dir/", "not_there.m"])
-@patch("rascal2.dialogs.custom_file_editor.CustomFileEditorDialog")
-def test_edit_incorrect_file(dialog_mock, filepath, caplog):
+def test_edit_incorrect_file(filepath, caplog, mock_window_view):
     """A logger error should be emitted if a directory or nonexistent file is given to the editor."""
     with tempfile.TemporaryDirectory() as tmp:
         file = Path(tmp, filepath)
-        edit_file_local(file, Languages.Python, parent)
+        edit_file_local(file, Languages.Python, mock_window_view)
 
-    errors = [record for record in caplog.get_records("call") if record.levelno == logging.ERROR]
-    assert len(errors) == 1
-    assert "Attempted to edit a custom file which does not exist!" in caplog.text
+    assert_error_logged(caplog, "Attempted to edit a custom file which does not exist!")
 
 
 @patch("rascal2.dialogs.custom_file_editor.MatlabHelper", autospec=True)
@@ -101,9 +105,8 @@ def test_dialog_init(custom_file_dialog, temp_file, language, expected_lexer):
     assert custom_file_dialog.editor.text() == "Test text for a test dialog!"
 
 
-@patch("rascal2.dialogs.custom_file_editor.LOGGER")
 @patch("rascal2.dialogs.custom_file_editor.QtWidgets.QMessageBox")
-def test_dialog_save(mock_msg_box, mock_logger, custom_file_dialog):
+def test_dialog_save(mock_msg_box, caplog, custom_file_dialog):
     """Text changes to the editor are saved to the file when save_file is called."""
     temp_file = MagicMock()
     temp_file.read_text = MagicMock(return_value="This is a test")
@@ -132,11 +135,11 @@ def test_dialog_save(mock_msg_box, mock_logger, custom_file_dialog):
     custom_file_dialog.save_file()
     temp_file.write_text.assert_called_once()
     assert not custom_file_dialog.is_modified
-    custom_file_dialog.unchanged_text = temp_file.write_text.call_args[0]
 
+    custom_file_dialog.editor.setText("User changed text")
     temp_file.write_text = MagicMock(side_effect=OSError)
     custom_file_dialog.save_file()
-    mock_logger.error.assert_called_once()
+    assert_error_logged(caplog, f"Failed to save custom file to {custom_file_dialog.file}")
     mock_msg_box.critical.assert_called_once()
 
 
@@ -146,7 +149,6 @@ def test_save_changes_when_opening_file(mock_msg_box, custom_file_dialog, temp_f
     custom_file_dialog.open_file(temp_file, Languages.Python)
 
     custom_file_dialog.editor.setText("New test text...")
-
     # Opening the same file should not trigger a save warning
     custom_file_dialog.open_file(temp_file, Languages.Python)
 
@@ -167,3 +169,70 @@ def test_save_changes_when_opening_file(mock_msg_box, custom_file_dialog, temp_f
         # Changes should be discarded as user selected discard in msg box
         custom_file_dialog.open_file(temp_file, Languages.Python)
         assert new_file.read_text() == "This is a new file"
+
+
+@pytest.mark.parametrize(
+    "language, file_type, domain",
+    (
+        ["python", "Background", False],
+        ["python", "Model", True],
+        ["python", "Model", False],
+        ["matlab", "Background", False],
+        ["matlab", "Model", True],
+        ["matlab", "Model", False],
+    ),
+)
+@patch("rascal2.dialogs.custom_file_editor.edit_file", autospec=True)
+def test_create_file(mock_edit_file, mock_window_view, caplog, language, file_type, domain):
+    with tempfile.TemporaryDirectory() as tmp:
+        cur_dir = os.getcwd()
+        try:
+            os.chdir(tmp)
+            create_new_file("hello world", language, domain, file_type, mock_window_view)
+            mock_edit_file.assert_called()
+            file = Path("hello_world.py" if language == "python" else "hello_world.m")
+            assert file.is_file()
+            assert file.read_text().find("hello_world(") != -1
+
+            create_new_file("hello world", language, domain, file_type, mock_window_view)
+            # non-unique name so file already exist
+            assert_error_logged(
+                caplog, f"The file ({file.name}) already exists, change custom file name to create a different file."
+            )
+        finally:
+            os.chdir(cur_dir)
+
+
+@pytest.mark.parametrize(
+    "language, file_type, domain",
+    (
+        ["c++", "Background", False],
+        ["c++", "Model", True],
+    ),
+)
+@patch("rascal2.dialogs.custom_file_editor.edit_file", autospec=True)
+def test_create_bad_file_type(mock_edit_file, mock_window_view, caplog, language, file_type, domain):
+    create_new_file("hello world", language, domain, file_type, mock_window_view)
+    mock_edit_file.assert_not_called()
+
+    assert_error_logged(caplog, f"Creating a new file for {language} is not supported.")
+
+
+@patch("rascal2.dialogs.custom_file_editor.SETTINGS", autospec=True)
+@patch("rascal2.dialogs.custom_file_editor.edit_file_matlab", autospec=True)
+@patch("rascal2.dialogs.custom_file_editor.edit_file_local", autospec=True)
+def test_edit_file(mock_edit_file_local, mock_edit_file_matlab, mock_setting, mock_window_view):
+    mock_setting.matlab_as_default_editor = False
+    edit_file("hello", "python", mock_window_view)
+    mock_edit_file_local.assert_called_once()
+
+    mock_edit_file_matlab.return_value = True
+    edit_file("hello", "matlab", mock_window_view)
+    mock_edit_file_matlab.assert_called_once()
+    assert mock_edit_file_local.call_count == 1
+
+    mock_edit_file_matlab.return_value = False  # matlab editor failed so fallback on local
+    mock_setting.matlab_as_default_editor = True
+    edit_file("hello", "python", mock_window_view)
+    assert mock_edit_file_matlab.call_count == 2
+    assert mock_edit_file_local.call_count == 2

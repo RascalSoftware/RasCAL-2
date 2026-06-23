@@ -1,7 +1,9 @@
+import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
+os.environ["DELAY_MATLAB_START"] = "1"
 import pytest
 from PyQt6 import QtCore, QtWidgets
 
@@ -17,6 +19,11 @@ def qt_application():
 @pytest.fixture
 def global_setting():
     return GLOBAL_SETTING
+
+
+@pytest.fixture
+def mock_window_view():
+    return MockWindowView()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -38,3 +45,41 @@ def mock_setting(request):
             target.stop()
 
     request.addfinalizer(teardown_mock_setting)
+
+
+class MockUndoStack:
+    """A mock Undo stack."""
+
+    def __init__(self):
+        self.stack = []
+        self.clean = True
+
+    def push(self, command):
+        self.clean = False
+        command.redo()
+
+    def setClean(self):
+        self.clean = True
+
+    def isClean(self):
+        return self.clean
+
+
+class MockWindowView(QtWidgets.QMainWindow):
+    """A mock MainWindowView class."""
+
+    def __init__(self):
+        super().__init__()
+        self.undo_stack = MockUndoStack()
+        self.presenter = MagicMock()
+        self.controls_widget = MagicMock()
+        self.project_widget = MagicMock()
+        self.terminal_widget = MagicMock()
+        self.plot_widget = MagicMock()
+        self.handle_results = MagicMock()
+        self.settings = MagicMock()
+        self.get_project_folder = lambda: "new path/"
+        self.windowTitle = lambda: "RasCAL2"
+        self.show_message = MagicMock()
+        self.toggle_sliders = MagicMock()
+        self.set_editing_enabled = MagicMock()

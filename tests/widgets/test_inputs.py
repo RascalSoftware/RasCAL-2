@@ -11,8 +11,14 @@ import pytest
 from pydantic.fields import FieldInfo
 from PyQt6 import QtWidgets
 
-from rascal2.widgets import AdaptiveDoubleSpinBox, MultiSelectComboBox, MultiSelectList, get_validated_input
-from rascal2.widgets.inputs import PathWidget
+from rascal2.widgets import (
+    AdaptiveDoubleSpinBox,
+    MultiSelectComboBox,
+    MultiSelectList,
+    PathWidget,
+    ProgressButton,
+    get_validated_input,
+)
 
 
 class MyEnum(StrEnum):
@@ -86,3 +92,23 @@ def test_path_widget():
     widget.setText(path)
     assert widget.path == path.parent.as_posix()
     assert widget.text() == path.name
+
+
+def test_progress_button():
+    widget = ProgressButton("Progress", "Testing button")
+
+    assert widget.text() == "Progress"
+    widget.default_text = "Start"
+    assert widget.text() == "Start"
+
+    widget.click()
+    assert not widget.isEnabled()
+    assert widget.text() == "Testing button ..."
+
+    widget.update_progress(1, 2)
+    assert not widget.isEnabled()
+    assert widget.text() == "Testing button - 1 of 2"
+
+    widget.hide_progress()
+    assert widget.isEnabled()
+    assert widget.text() == "Start"

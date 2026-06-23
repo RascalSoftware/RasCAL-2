@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from pydantic import ValidationError
-from PyQt6 import QtWidgets
 from ratapi import Controls
 from ratapi.events import ProgressEventData
 from ratapi.inputs import ProblemDefinition
@@ -13,48 +12,13 @@ from rascal2.core.runner import LogData
 from rascal2.ui.presenter import MainWindowPresenter
 
 
-class MockUndoStack:
-    """A mock Undo stack."""
-
-    def __init__(self):
-        self.stack = []
-        self.clean = True
-
-    def push(self, command):
-        self.clean = False
-        command.redo()
-
-    def setClean(self):
-        self.clean = True
-
-    def isClean(self):
-        return self.clean
-
-
-class MockWindowView(QtWidgets.QMainWindow):
-    """A mock MainWindowView class."""
-
-    def __init__(self):
-        super().__init__()
-        self.undo_stack = MockUndoStack()
-        self.controls_widget = MagicMock()
-        self.project_widget = MagicMock()
-        self.terminal_widget = MagicMock()
-        self.plot_widget = MagicMock()
-        self.handle_results = MagicMock()
-        self.settings = MagicMock()
-        self.get_project_folder = lambda: "new path/"
-        self.windowTitle = lambda: "RasCAL2"
-        self.show_message = MagicMock()
-
-
 @pytest.fixture
-def presenter():
+def presenter(mock_window_view):
     with (
         patch("rascal2.ui.presenter.LOGGER", autospec=True) as mock_log,
         patch("rascal2.ui.model.os.chdir", autospec=True),
     ):
-        pr = MainWindowPresenter(MockWindowView())
+        pr = MainWindowPresenter(mock_window_view)
         pr.runner = MagicMock()
         pr.model.controls = Controls()
         pr.model.project = MagicMock()
