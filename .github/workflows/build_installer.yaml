@@ -87,7 +87,7 @@ jobs:
         uses: matlab-actions/setup-matlab@v2
         with:
           release: R2023b
-      - name: Make installer
+      - name: Make executable
         shell: bash -el {0}
         run: |
           conda init bash
@@ -108,10 +108,39 @@ jobs:
           export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$MATLAB_DIR
           python -m pip install --no-build-isolation $ENGINE_DIR
           python packaging/build_exe.py
-          chmod 777 packaging/bundle/rascal.app/Contents/Resources/matlab/engine/_arch.txt
+      - name: Build and Sign installer
+        run: |
           cd packaging/macos/
+          # create variables
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # import certificate to keychain
+          echo -n $CODE_SIGNING_CERTIFICATE_BASE64 | base64 -d -o   ./dev_id_app_certificate.p12
+          security import ./dev_id_app_certificate.p12 -A -t cert -f pkcs12 -k $KEYCHAIN_PATH -P "$CODE_SIGNING_PASSWORD" -T /usr/bin/codesign
+          echo -n $PKG_SIGNING_CERTIFICATE_BASE64 | base64 -d -o  ./dev_id_install_certificate.p12
+          security import ./dev_id_install_certificate.p12 -A -t cert -f pkcs12 -k $KEYCHAIN_PATH -P "$PKG_SIGNING_PASSWORD" -T /usr/bin/codesign
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          
+          ARCH="arm64"
+          echo -n $API_CONNECT_KEY | base64 -d -o  ./auth_key.p8
+          chmod 777 ../bundle/rascal.app/Contents/Resources/matlab/engine/_arch.txt
           chmod 777 make.sh
-          ./make.sh $GITHUB_REF_NAME $ARCH
+          ./make.sh $GITHUB_REF_NAME $ARCH $DEV_TEAM_ID $API_CONNECT_ISSUER $API_CONNECT_KEY_ID
+        env:
+          CODE_SIGNING_CERTIFICATE_BASE64: ${{ secrets.CODE_SIGNING_CERTIFICATE_BASE64 }}
+          CODE_SIGNING_PASSWORD: ${{ secrets.CODE_SIGNING_PASSWORD }}
+          PKG_SIGNING_CERTIFICATE_BASE64: ${{ secrets.PKG_SIGNING_CERTIFICATE_BASE64 }}
+          PKG_SIGNING_PASSWORD: ${{ secrets.PKG_SIGNING_PASSWORD }}
+          DEV_TEAM_ID: ${{ secrets.DEV_TEAM_ID }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          API_CONNECT_KEY_ID: ${{ secrets.API_CONNECT_KEY_ID }}
+          API_CONNECT_KEY: ${{ secrets.API_CONNECT_KEY }}
+          API_CONNECT_ISSUER: ${{ secrets.API_CONNECT_ISSUER }}
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
