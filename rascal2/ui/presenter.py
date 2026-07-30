@@ -299,6 +299,8 @@ class MainWindowPresenter:
 
         """
         project_dict = self.model.project.model_dump()
+        if project_dict != updated_project:
+            self.view.controls_widget.update_chi_squared('')
         project_dict.update(updated_project)
         self.model.project.model_validate(project_dict)
         self.view.undo_stack.push(commands.EditProject(updated_project, self, preview=preview))
