@@ -60,6 +60,7 @@ class AbstractModelEdit(QtGui.QUndoCommand):
         self.update_attribute(self.old_values)
         if self.preview:
             self.presenter.model.update_results(self.old_result)
+            self.presenter.view.controls_widget.update_chi_squared(self.old_result.calculationResults.sumChi)
 
     def redo(self):
         self.update_attribute(self.new_values)
@@ -73,6 +74,7 @@ class AbstractModelEdit(QtGui.QUndoCommand):
                     LOGGER.error(message, exc_info=ex)
                     self.presenter.view.terminal_widget.write(message)
             self.presenter.model.update_results(self.new_result)
+            self.presenter.view.controls_widget.update_chi_squared(self.new_result.calculationResults.sumChi)
         else:
             self.new_result = self.old_result
 
