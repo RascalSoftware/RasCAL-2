@@ -591,6 +591,29 @@ class ShadedPlotWidget(AbstractPlotWidget):
         control_layout.addWidget(QtWidgets.QLabel("Confidence Interval"))
         control_layout.addWidget(self.ci_param_box)
 
+        self.x_axis = QtWidgets.QComboBox()
+        self.x_axis.addItems(["Log", "Linear"])
+        self.x_axis.currentTextChanged.connect(lambda: self.draw_plot())
+        self.y_axis = QtWidgets.QComboBox()
+        self.y_axis.addItems(["Ref", "Q^4"])
+        self.y_axis.currentTextChanged.connect(lambda: self.draw_plot())
+        self.show_error_bar = QtWidgets.QCheckBox("Show Error Bars")
+        self.show_error_bar.setChecked(True)
+        self.show_error_bar.checkStateChanged.connect(lambda: self.draw_plot())
+        self.show_grid = QtWidgets.QCheckBox("Show Grid")
+        self.show_grid.checkStateChanged.connect(lambda: self.draw_plot())
+        self.show_legend = QtWidgets.QCheckBox("Show Legend")
+        self.show_legend.setChecked(True)
+        self.show_legend.checkStateChanged.connect(lambda: self.draw_plot())
+
+        control_layout.addWidget(QtWidgets.QLabel("X-Axis"))
+        control_layout.addWidget(self.x_axis)
+        control_layout.addWidget(QtWidgets.QLabel("Y-Axis"))
+        control_layout.addWidget(self.y_axis)
+        control_layout.addWidget(self.show_error_bar)
+        control_layout.addWidget(self.show_grid)
+        control_layout.addWidget(self.show_legend)
+
         return control_layout
 
     def plot(self, project, results: ratapi.outputs.BayesResults):
@@ -604,11 +627,17 @@ class ShadedPlotWidget(AbstractPlotWidget):
         """Plot the shaded reflectivity and SLD profiles."""
         self.clear()
 
+        show_legend = self.show_legend.isChecked()
         ratapi.plotting.plot_ref_sld(
             self.project,
             self.results,
             bayes=int(self.ci_param_box.currentText().strip("%")),
             fig=self.figure,
+            linear_x=self.x_axis.currentText() == "Linear",
+            q4=self.y_axis.currentText() == "Q^4",
+            show_error_bar=self.show_error_bar.isChecked(),
+            show_grid=self.show_grid.isChecked(),
+            show_legend=show_legend,
         )
         self.canvas.draw()
 
