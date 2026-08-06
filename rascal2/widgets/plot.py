@@ -616,6 +616,17 @@ class ShadedPlotWidget(AbstractPlotWidget):
 
         return control_layout
 
+    def make_toolbar_widget(self):
+        self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Vertical)
+        self.slider.setTracking(False)
+        self.slider.setInvertedAppearance(True)
+        self.slider.setMinimum(0)
+        self.slider.setMaximum(100)
+        self.slider.setValue(0)
+        self.slider.valueChanged.connect(lambda: self.draw_plot())
+
+        return self.slider
+
     def plot(self, project, results: ratapi.outputs.BayesResults):
         """Plot the shaded plot."""
         self.project = project
@@ -638,6 +649,7 @@ class ShadedPlotWidget(AbstractPlotWidget):
             show_error_bar=self.show_error_bar.isChecked(),
             show_grid=self.show_grid.isChecked(),
             show_legend=show_legend,
+            shift_value=self.slider.value(),
         )
         self.canvas.draw()
 
