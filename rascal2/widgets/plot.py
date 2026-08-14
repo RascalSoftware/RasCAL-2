@@ -577,42 +577,19 @@ class RefSLDWidget(AbstractPlotWidget):
             self.blit_plot.update(self.current_plot_data)
 
 
-class ShadedPlotWidget(AbstractPlotWidget):
+class ShadedPlotWidget(RefSLDWidget):
     """Widget for plotting a contour plot of two parameters."""
 
     def make_control_layout(self):
-        control_layout = QtWidgets.QVBoxLayout()
+        control_layout = super().make_control_layout()
 
         self.ci_param_box = QtWidgets.QComboBox(self)
         self.ci_param_box.addItems(["65%", "95%"])
-        self.ci_param_box.currentTextChanged.connect(lambda: self.draw_plot())
+        self.ci_param_box.currentTextChanged.connect(self.handle_control_changed)
 
         control_layout.addWidget(self.result_summary)
         control_layout.addWidget(QtWidgets.QLabel("Confidence Interval"))
         control_layout.addWidget(self.ci_param_box)
-
-        self.x_axis = QtWidgets.QComboBox()
-        self.x_axis.addItems(["Log", "Linear"])
-        self.x_axis.currentTextChanged.connect(lambda: self.draw_plot())
-        self.y_axis = QtWidgets.QComboBox()
-        self.y_axis.addItems(["Ref", "Q^4"])
-        self.y_axis.currentTextChanged.connect(lambda: self.draw_plot())
-        self.show_error_bar = QtWidgets.QCheckBox("Show Error Bars")
-        self.show_error_bar.setChecked(True)
-        self.show_error_bar.checkStateChanged.connect(lambda: self.draw_plot())
-        self.show_grid = QtWidgets.QCheckBox("Show Grid")
-        self.show_grid.checkStateChanged.connect(lambda: self.draw_plot())
-        self.show_legend = QtWidgets.QCheckBox("Show Legend")
-        self.show_legend.setChecked(True)
-        self.show_legend.checkStateChanged.connect(lambda: self.draw_plot())
-
-        control_layout.addWidget(QtWidgets.QLabel("X-Axis"))
-        control_layout.addWidget(self.x_axis)
-        control_layout.addWidget(QtWidgets.QLabel("Y-Axis"))
-        control_layout.addWidget(self.y_axis)
-        control_layout.addWidget(self.show_error_bar)
-        control_layout.addWidget(self.show_grid)
-        control_layout.addWidget(self.show_legend)
 
         return control_layout
 
@@ -623,7 +600,7 @@ class ShadedPlotWidget(AbstractPlotWidget):
         self.slider.setMinimum(0)
         self.slider.setMaximum(100)
         self.slider.setValue(0)
-        self.slider.valueChanged.connect(lambda: self.draw_plot())
+        self.slider.valueChanged.connect(self.handle_control_changed)
 
         return self.slider
 
@@ -632,9 +609,9 @@ class ShadedPlotWidget(AbstractPlotWidget):
         self.project = project
         self.results = results
 
-        self.draw_plot()
+        self.handle_control_changed()
 
-    def draw_plot(self):
+    def handle_control_changed(self):
         """Plot the shaded reflectivity and SLD profiles."""
         self.clear()
 
