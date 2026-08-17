@@ -62,7 +62,7 @@ class PlotWidget(QtWidgets.QWidget):
         self.reflectivity_plot.plot_with_blit(event)
 
     def show_bayes_plots(self):
-        bayes_plots = BayesPlotsDialog(self.parent)
+        bayes_plots = BayesPlotsDialog(self.parent, self.reflectivity_plot.get_current_plot_settings())
         bayes_plots.exec()
 
     def clear(self):
@@ -73,7 +73,7 @@ class PlotWidget(QtWidgets.QWidget):
 class BayesPlotsDialog(QtWidgets.QDialog):
     """The modal dialog for the Bayes plots."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, initial_plot_settings: list):
         super().__init__(parent)
         self.parent = parent
         self.resize_timer = 0
@@ -93,6 +93,8 @@ class BayesPlotsDialog(QtWidgets.QDialog):
 
         for plot_type, plot_widget in plots.items():
             self.add_tab(plot_type, plot_widget)
+
+        self.plot_tabs.widget(0).set_plot_settings(initial_plot_settings)
 
         self.sync_and_update_model()
         self.plot_tabs.addTab(self.create_confidence_table(), "Parameter values")
@@ -455,6 +457,18 @@ class RefSLDWidget(AbstractPlotWidget):
 
         return figure
 
+    def get_current_plot_settings(self):
+        plot_settings = [
+            self.x_axis.currentText(),
+            self.y_axis.currentText(),
+            self.show_error_bar.checkState(),
+            self.show_grid.checkState(),
+            self.show_legend.checkState(),
+            self.slider.value(),
+        ]
+
+        return plot_settings
+
     def handle_control_changed(self):
         if self.blit_plot is None:
             self.plot_event()
@@ -603,6 +617,14 @@ class ShadedPlotWidget(RefSLDWidget):
         self.slider.valueChanged.connect(self.handle_control_changed)
 
         return self.slider
+
+    def set_plot_settings(self, plot_settings: list):
+        self.x_axis.setCurrentText(plot_settings[0])
+        self.y_axis.setCurrentText(plot_settings[1])
+        self.show_error_bar.setCheckState(plot_settings[2])
+        self.show_grid.setCheckState(plot_settings[3])
+        self.show_legend.setCheckState(plot_settings[4])
+        self.slider.setValue(plot_settings[5])
 
     def plot(self, project, results: ratapi.outputs.BayesResults):
         """Plot the shaded plot."""
