@@ -386,9 +386,27 @@ class AbstractPlotWidget(QtWidgets.QWidget):
         """Save the figure to a file."""
         filepath, accepted = QtWidgets.QFileDialog.getSaveFileName(self, "Export Plot", filter="Image File (*.png)")
         if accepted:
-            sx = self.figure.get_figwidth() * self.figure.dpi
-            dpi = self.figure.dpi if sx > 1920 else 1920 // self.figure.get_figwidth()
-            self.figure.savefig(filepath, facecolor=SETTINGS.export_background_colour, dpi=dpi)
+            temp_fig = self.make_figure()
+            sx = temp_fig.get_figwidth() * temp_fig.dpi
+            dpi = temp_fig.dpi if sx > 1920 else 1920 // temp_fig.get_figwidth()
+            matplotlib.style.use("default")
+            self.plot_temp_fig(temp_fig)
+            axes = temp_fig.axes
+            for ax in axes:
+                ax.patch.set_facecolor("white")
+                ax.spines["bottom"].set_color("black")
+                ax.spines["top"].set_color("black")
+                ax.spines["right"].set_color("black")
+                ax.spines["left"].set_color("black")
+            temp_fig.savefig(filepath, facecolor=SETTINGS.export_background_colour, dpi=dpi)
+            if get_correct_qt_color_scheme() == QtCore.Qt.ColorScheme.Light:
+                matplotlib.style.use("default")
+            else:
+                matplotlib.style.use("dark_background")
+
+    def plot_temp_fig(self, temp_fig):
+        """Plot a temporary figure which is a copy of the displayed figure but in matplotlib default settings"""
+        raise NotImplementedError
 
     def changeEvent(self, event):
         if self.toolbar is not None and event.type() == QtCore.QEvent.Type.PaletteChange:
@@ -533,6 +551,20 @@ class RefSLDWidget(AbstractPlotWidget):
         )
         self.canvas.draw()
 
+    def plot_temp_fig(self, temp_fig):
+        show_legend = self.show_legend.isChecked() if self.current_plot_data.contrastNames else False
+        ratapi.plotting.plot_ref_sld_helper(
+            self.current_plot_data,
+            temp_fig,
+            delay=False,
+            linear_x=self.x_axis.currentText() == "Linear",
+            q4=self.y_axis.currentText() == "Q^4",
+            show_error_bar=self.show_error_bar.isChecked(),
+            show_grid=self.show_grid.isChecked(),
+            show_legend=show_legend,
+            shift_value=self.slider.value(),
+        )
+
     def plot_with_blit(self, data: ratapi.events.PlotEventData | None = None):
         """Update the ref and SLD plots with blitting.
 
@@ -610,6 +642,14 @@ class ShadedPlotWidget(AbstractPlotWidget):
             fig=self.figure,
         )
         self.canvas.draw()
+
+    def plot_temp_fig(self, temp_fig):
+        ratapi.plotting.plot_ref_sld(
+            self.project,
+            self.results,
+            bayes=int(self.ci_param_box.currentText().strip("%")),
+            fig=temp_fig,
+        )
 
 
 class AbstractPanelPlotWidget(AbstractPlotWidget):
