@@ -386,26 +386,30 @@ class AbstractPlotWidget(QtWidgets.QWidget):
         """Save the figure to a file."""
         filepath, accepted = QtWidgets.QFileDialog.getSaveFileName(self, "Export Plot", filter="Image File (*.png)")
         if accepted:
-            temp_fig = self.make_figure()
-            sx = temp_fig.get_figwidth() * temp_fig.dpi
-            dpi = temp_fig.dpi if sx > 1920 else 1920 // temp_fig.get_figwidth()
-            matplotlib.style.use("default")
-            self.plot_temp_fig(temp_fig)
-            axes = temp_fig.axes
-            for ax in axes:
-                ax.patch.set_facecolor("white")
-                ax.spines["bottom"].set_color("black")
-                ax.spines["top"].set_color("black")
-                ax.spines["right"].set_color("black")
-                ax.spines["left"].set_color("black")
-            temp_fig.savefig(filepath, facecolor=SETTINGS.export_background_colour, dpi=dpi)
-            if get_correct_qt_color_scheme() == QtCore.Qt.ColorScheme.Light:
-                matplotlib.style.use("default")
+            sx = self.figure.get_figwidth() * self.figure.dpi
+            dpi = self.figure.dpi if sx > 1920 else 1920 // self.figure.get_figwidth()
+            scheme = get_correct_qt_color_scheme()
+            if scheme == QtCore.Qt.ColorScheme.Light:
+                self.figure.savefig(filepath, facecolor=SETTINGS.export_background_colour, dpi=dpi)
             else:
-                matplotlib.style.use("dark_background")
+                temp_fig = self.make_figure()
+                matplotlib.style.use("default")
+                self.plot_temp_fig(temp_fig)
+                axes = temp_fig.axes
+                for ax in axes:
+                    ax.patch.set_facecolor("white")
+                    ax.spines["bottom"].set_color("black")
+                    ax.spines["top"].set_color("black")
+                    ax.spines["right"].set_color("black")
+                    ax.spines["left"].set_color("black")
+                temp_fig.savefig(filepath, facecolor=SETTINGS.export_background_colour, dpi=dpi)
+                if get_correct_qt_color_scheme() == QtCore.Qt.ColorScheme.Light:
+                    matplotlib.style.use("default")
+                else:
+                    matplotlib.style.use("dark_background")
 
     def plot_temp_fig(self, temp_fig):
-        """Plot a temporary figure which is a copy of the displayed figure but in matplotlib default settings"""
+        """Plot a temporary figure which is a copy of the displayed figure but in matplotlib default settings."""
         raise NotImplementedError
 
     def changeEvent(self, event):
