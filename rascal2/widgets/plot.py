@@ -631,9 +631,9 @@ class ShadedPlotWidget(RefSLDWidget):
         self.project = project
         self.results = results
 
-        self.handle_control_changed()
+        self.draw_plot()
 
-    def handle_control_changed(self):
+    def draw_plot(self):
         """Plot the shaded reflectivity and SLD profiles."""
         self.clear()
 
@@ -651,6 +651,9 @@ class ShadedPlotWidget(RefSLDWidget):
             shift_value=self.slider.value(),
         )
         self.canvas.draw()
+    
+    def handle_control_changed(self):
+        self.draw_plot()
 
 
 class AbstractPanelPlotWidget(AbstractPlotWidget):
