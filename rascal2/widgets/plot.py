@@ -651,7 +651,7 @@ class ShadedPlotWidget(RefSLDWidget):
             shift_value=self.slider.value(),
         )
         self.canvas.draw()
-    
+
     def handle_control_changed(self):
         self.draw_plot()
 
