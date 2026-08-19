@@ -1,10 +1,11 @@
 """The Plot MDI widget."""
-
+import copy
 from abc import abstractmethod
 from inspect import isclass
 
 import matplotlib
 import ratapi
+from cycler import cycler
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from PyQt6 import QtCore, QtGui, QtWidgets
 
@@ -392,16 +393,38 @@ class AbstractPlotWidget(QtWidgets.QWidget):
             if scheme == QtCore.Qt.ColorScheme.Light:
                 self.figure.savefig(filepath, facecolor=SETTINGS.export_background_colour, dpi=dpi)
             else:
-                temp_fig = self.make_figure()
+                old_colours = matplotlib.rcParams['axes.prop_cycle'].by_key()['color']
+                new_colours_cycle = cycler(color=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'])
+                new_colours = new_colours_cycle.by_key()['color']
+                colour_converter = dict(zip(old_colours, new_colours))
+                temp_fig = copy.deepcopy(self.figure)
                 matplotlib.style.use("default")
-                self.plot_temp_fig(temp_fig)
                 axes = temp_fig.axes
+
                 for ax in axes:
+                    if ax.containers:
+                        for container in ax.containers:
+                            _, __, (vertical_lines,) = container.lines
+                            vertical_lines.set_color(colour_converter[matplotlib.colors.rgb2hex(vertical_lines.get_color(), keep_alpha=False)])
+                    ax.set_prop_cycle(new_colours_cycle)
                     ax.patch.set_facecolor("white")
                     ax.spines["bottom"].set_color("black")
                     ax.spines["top"].set_color("black")
                     ax.spines["right"].set_color("black")
                     ax.spines["left"].set_color("black")
+                    ax.tick_params(axis='both', color='black', labelcolor='black')
+                    ax.xaxis.label.set_color('black')
+                    ax.yaxis.label.set_color('black')
+                    ax.legend(facecolor='white', labelcolor='black')
+                    legend = ax.get_legend()
+                    for line in legend.get_lines():
+                        old_line_colour = line.get_color()
+                        line.set_color(colour_converter[old_line_colour])
+                    lines = ax.get_lines()
+                    for line in lines:
+                        old_line_colour = line.get_color()
+                        line.set_color(colour_converter[old_line_colour])
+
                 temp_fig.savefig(filepath, facecolor=SETTINGS.export_background_colour, dpi=dpi)
                 if get_correct_qt_color_scheme() == QtCore.Qt.ColorScheme.Light:
                     matplotlib.style.use("default")
