@@ -1,4 +1,5 @@
 """The Plot MDI widget."""
+
 import copy
 from abc import abstractmethod
 from inspect import isclass
@@ -393,47 +394,57 @@ class AbstractPlotWidget(QtWidgets.QWidget):
             if scheme == QtCore.Qt.ColorScheme.Light:
                 self.figure.savefig(filepath, facecolor=SETTINGS.export_background_colour, dpi=dpi)
             else:
-                old_colours = matplotlib.rcParams['axes.prop_cycle'].by_key()['color']
-                new_colours_cycle = cycler(color=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'])
-                new_colours = new_colours_cycle.by_key()['color']
+                old_colours = matplotlib.rcParams["axes.prop_cycle"].by_key()["color"]
+                new_colours_cycle = cycler(
+                    color=[
+                        "#1f77b4",
+                        "#ff7f0e",
+                        "#2ca02c",
+                        "#d62728",
+                        "#9467bd",
+                        "#8c564b",
+                        "#e377c2",
+                        "#7f7f7f",
+                        "#bcbd22",
+                        "#17becf",
+                    ]
+                )
+                new_colours = new_colours_cycle.by_key()["color"]
                 colour_converter = dict(zip(old_colours, new_colours))
                 temp_fig = copy.deepcopy(self.figure)
-                matplotlib.style.use("default")
                 axes = temp_fig.axes
-
                 for ax in axes:
                     if ax.containers:
                         for container in ax.containers:
-                            _, __, (vertical_lines,) = container.lines
-                            vertical_lines.set_color(colour_converter[matplotlib.colors.rgb2hex(vertical_lines.get_color(), keep_alpha=False)])
+                            if isinstance(container, matplotlib.container.ErrorbarContainer):
+                                _, __, (vertical_lines,) = container.lines
+                                vertical_lines.set_color(
+                                    colour_converter[
+                                        matplotlib.colors.rgb2hex(vertical_lines.get_color(), keep_alpha=False)
+                                    ]
+                                )
                     ax.set_prop_cycle(new_colours_cycle)
                     ax.patch.set_facecolor("white")
                     ax.spines["bottom"].set_color("black")
                     ax.spines["top"].set_color("black")
                     ax.spines["right"].set_color("black")
                     ax.spines["left"].set_color("black")
-                    ax.tick_params(axis='both', color='black', labelcolor='black')
-                    ax.xaxis.label.set_color('black')
-                    ax.yaxis.label.set_color('black')
-                    ax.legend(facecolor='white', labelcolor='black')
-                    legend = ax.get_legend()
-                    for line in legend.get_lines():
-                        old_line_colour = line.get_color()
-                        line.set_color(colour_converter[old_line_colour])
-                    lines = ax.get_lines()
-                    for line in lines:
+                    ax.tick_params(which="both", axis="both", color="black", labelcolor="black")
+                    ax.xaxis.label.set_color("black")
+                    ax.yaxis.label.set_color("black")
+                    title_text = ax.get_title(loc="left")
+                    ax.set_title(title_text, color="black", loc="left")
+                    ax.title.set_color("black")
+                    if ax.get_legend() is not None:
+                        ax.legend(facecolor="white", labelcolor="black")
+                        for line in ax.get_legend().get_lines():
+                            old_line_colour = line.get_color()
+                            line.set_color(colour_converter[old_line_colour])
+                    for line in ax.get_lines():
                         old_line_colour = line.get_color()
                         line.set_color(colour_converter[old_line_colour])
 
                 temp_fig.savefig(filepath, facecolor=SETTINGS.export_background_colour, dpi=dpi)
-                if get_correct_qt_color_scheme() == QtCore.Qt.ColorScheme.Light:
-                    matplotlib.style.use("default")
-                else:
-                    matplotlib.style.use("dark_background")
-
-    def plot_temp_fig(self, temp_fig):
-        """Plot a temporary figure which is a copy of the displayed figure but in matplotlib default settings."""
-        raise NotImplementedError
 
     def changeEvent(self, event):
         if self.toolbar is not None and event.type() == QtCore.QEvent.Type.PaletteChange:
@@ -578,20 +589,6 @@ class RefSLDWidget(AbstractPlotWidget):
         )
         self.canvas.draw()
 
-    def plot_temp_fig(self, temp_fig):
-        show_legend = self.show_legend.isChecked() if self.current_plot_data.contrastNames else False
-        ratapi.plotting.plot_ref_sld_helper(
-            self.current_plot_data,
-            temp_fig,
-            delay=False,
-            linear_x=self.x_axis.currentText() == "Linear",
-            q4=self.y_axis.currentText() == "Q^4",
-            show_error_bar=self.show_error_bar.isChecked(),
-            show_grid=self.show_grid.isChecked(),
-            show_legend=show_legend,
-            shift_value=self.slider.value(),
-        )
-
     def plot_with_blit(self, data: ratapi.events.PlotEventData | None = None):
         """Update the ref and SLD plots with blitting.
 
@@ -669,14 +666,6 @@ class ShadedPlotWidget(AbstractPlotWidget):
             fig=self.figure,
         )
         self.canvas.draw()
-
-    def plot_temp_fig(self, temp_fig):
-        ratapi.plotting.plot_ref_sld(
-            self.project,
-            self.results,
-            bayes=int(self.ci_param_box.currentText().strip("%")),
-            fig=temp_fig,
-        )
 
 
 class AbstractPanelPlotWidget(AbstractPlotWidget):
