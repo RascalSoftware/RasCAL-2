@@ -410,7 +410,7 @@ class AbstractPlotWidget(QtWidgets.QWidget):
                     ]
                 )
                 new_colours = new_colours_cycle.by_key()["color"]
-                colour_converter = dict(zip(old_colours, new_colours))
+                colour_converter = dict(zip(old_colours, new_colours, strict=False))
                 temp_fig = copy.deepcopy(self.figure)
                 axes = temp_fig.axes
                 for ax in axes:
