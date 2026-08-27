@@ -108,9 +108,16 @@ jobs:
           export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$MATLAB_DIR
           python -m pip install --no-build-isolation $ENGINE_DIR
           python packaging/build_exe.py
-          ls ../bundle/rascal.app/Contents/Resources
-          ls ../bundle/rascal.app/Contents/Resources/matlab
-          ls ../bundle/rascal.app/Contents/Resources/matlab/engine
+          ls /Users/runner
+          ls /Users/runner/work
+          ls /Users/runner/work/RasCAL-2
+          ls /Users/runner/work/RasCAL-2/RasCAL-2
+          ls /Users/runner/work/RasCAL-2/RasCAL-2/packaging
+          ls /Users/runner/work/RasCAL-2/RasCAL-2/packaging/bundle
+          ls /Users/runner/work/RasCAL-2/RasCAL-2/packaging/bundle/rascal.app
+          ls /Users/runner/work/RasCAL-2/RasCAL-2/packaging/bundle/rascal.app/Contents
+          ls /Users/runner/work/RasCAL-2/RasCAL-2/packaging/bundle/rascal.app/Contents/Resources
+          ls /Users/runner/work/RasCAL-2/RasCAL-2/packaging/bundle/rascal.app/Contents/Resources/matlab
       - name: Build and Sign installer
         run: |
           cd packaging/macos/
