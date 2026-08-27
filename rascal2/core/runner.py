@@ -179,15 +179,19 @@ def run(queue: Queue, arg_queue: Queue, go_event, exit_event, engine_ready, engi
         A queue of arguments used to initialize the RAT process, passed from the Main Presenter
 
     """
+    print(1)
     engine_future = None
     while True:
         go_event.wait()
+        print(2)
         if exit_event.is_set():
+            print(3)
             stop_matlab_engine(engine_future)
             return
         rat_inputs, procedure, display, working_dir = arg_queue.get()
         os.chdir(working_dir)
         problem_definition, cpp_controls = rat_inputs
+        print(4)
 
         if display:
             rat.events.register(rat.events.EventTypes.Message, queue.put)
@@ -196,15 +200,22 @@ def run(queue: Queue, arg_queue: Queue, go_event, exit_event, engine_ready, engi
             queue.put(LogData(INFO, "Starting RAT"))
 
         try:
+            print(5, working_dir)
             sys.path.append(working_dir)
+            print(6)
             engine_future = init_matlab_engine(problem_definition, engine_ready, engine_output, queue)
+            print(7)
             problem_definition, output_results, bayes_results = rat.rat_core.RATMain(problem_definition, cpp_controls)
+            print(8)
             results = rat.outputs.make_results(procedure, output_results, bayes_results)
         except Exception as err:
+            print(9)
             queue.put(err)
+            print(10)
             go_event.clear()
             continue
         finally:
+            print(11)
             sys.path.remove(working_dir)
 
         if display:
