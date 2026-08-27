@@ -108,6 +108,9 @@ jobs:
           export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$MATLAB_DIR
           python -m pip install --no-build-isolation $ENGINE_DIR
           python packaging/build_exe.py
+          ls ../bundle/rascal.app/Contents/Resources
+          ls ../bundle/rascal.app/Contents/Resources/matlab
+          ls ../bundle/rascal.app/Contents/Resources/matlab/engine
       - name: Build and Sign installer
         run: |
           cd packaging/macos/
