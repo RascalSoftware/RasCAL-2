@@ -179,19 +179,15 @@ def run(queue: Queue, arg_queue: Queue, go_event, exit_event, engine_ready, engi
         A queue of arguments used to initialize the RAT process, passed from the Main Presenter
 
     """
-    queue.put(LogData(INFO, "1"))
     engine_future = None
     while True:
         go_event.wait()
-        queue.put(LogData(INFO, "2"))
         if exit_event.is_set():
-            queue.put(LogData(INFO, "3"))
             stop_matlab_engine(engine_future)
             return
         rat_inputs, procedure, display, working_dir = arg_queue.get()
         os.chdir(working_dir)
         problem_definition, cpp_controls = rat_inputs
-        queue.put(LogData(INFO, "4"))
 
         if display:
             rat.events.register(rat.events.EventTypes.Message, queue.put)
@@ -200,22 +196,15 @@ def run(queue: Queue, arg_queue: Queue, go_event, exit_event, engine_ready, engi
             queue.put(LogData(INFO, "Starting RAT"))
 
         try:
-            queue.put(LogData(INFO, "5" + working_dir))
             sys.path.append(working_dir)
-            queue.put(LogData(INFO, "6"))
             engine_future = init_matlab_engine(problem_definition, engine_ready, engine_output, queue)
-            queue.put(LogData(INFO, "7"))
             problem_definition, output_results, bayes_results = rat.rat_core.RATMain(problem_definition, cpp_controls)
-            queue.put(LogData(INFO, "8"))
             results = rat.outputs.make_results(procedure, output_results, bayes_results)
         except Exception as err:
-            queue.put(LogData(INFO, "9"))
             queue.put(err)
-            queue.put(LogData(INFO, "10"))
             go_event.clear()
             continue
         finally:
-            queue.put(LogData(INFO, "11"))
             sys.path.remove(working_dir)
 
         if display:
