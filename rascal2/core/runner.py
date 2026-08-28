@@ -196,14 +196,17 @@ def run(queue: Queue, arg_queue: Queue, go_event, exit_event, engine_ready, engi
             queue.put(LogData(INFO, "Starting RAT"))
 
         try:
-            queue.put(LogData(INFO, "Starting RAT"))
+            queue.put(LogData(INFO, "1Starting RAT"))
             sys.path.append(working_dir)
-            queue.put(LogData(INFO, "Starting RAT"))
+            queue.put(LogData(INFO, "2Starting RAT"))
             engine_future = init_matlab_engine(problem_definition, engine_ready, engine_output, queue)
+            queue.put(LogData(INFO, "3Starting RAT"))
             problem_definition, output_results, bayes_results = rat.rat_core.RATMain(problem_definition, cpp_controls)
             results = rat.outputs.make_results(procedure, output_results, bayes_results)
         except Exception as err:
-            queue.put(err)
+            import traceback
+            reverse_tb = "\n".join(reversed(traceback.format_tb(err.__traceback__)))
+            queue.put(reverse_tb)
             go_event.clear()
             continue
         finally:
