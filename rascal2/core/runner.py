@@ -196,7 +196,9 @@ def run(queue: Queue, arg_queue: Queue, go_event, exit_event, engine_ready, engi
             queue.put(LogData(INFO, "Starting RAT"))
 
         try:
+            queue.put(LogData(INFO, "Starting RAT"))
             sys.path.append(working_dir)
+            queue.put(LogData(INFO, "Starting RAT"))
             engine_future = init_matlab_engine(problem_definition, engine_ready, engine_output, queue)
             problem_definition, output_results, bayes_results = rat.rat_core.RATMain(problem_definition, cpp_controls)
             results = rat.outputs.make_results(procedure, output_results, bayes_results)
