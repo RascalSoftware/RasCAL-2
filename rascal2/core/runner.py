@@ -149,16 +149,19 @@ class RATRunner(QtCore.QObject):
 def init_matlab_engine(problem_definition, engine_ready, engine_output, queue):
     """Initialise the Matlab engine if using a Matlab custom file and returns the engine future if available."""
     engine_future = rat.wrappers.MatlabWrapper.loader
+    queue.put(LogData(INFO, "1"))
     if engine_future is None and any([file["language"] == "matlab" for file in problem_definition.customFiles.files]):
         if not engine_output:
             queue.put(LogData(INFO, "Attempting to start Matlab..."))
-
+        queue.put(LogData(INFO, "2"))
         result = get_matlab_engine(engine_ready, engine_output)
+        queue.put(LogData(INFO, "3"))
         if isinstance(result, Exception):
             raise result
         else:
             engine_future = result
             engine_future.result().cd(os.getcwd())
+    queue.put(LogData(INFO, "4"))
     return engine_future
 
 
@@ -206,7 +209,7 @@ def run(queue: Queue, arg_queue: Queue, go_event, exit_event, engine_ready, engi
         except Exception as err:
             import traceback
             reverse_tb = "\n".join(reversed(traceback.format_tb(err.__traceback__)))
-            queue.put(reverse_tb)
+            queue.put(err)
             go_event.clear()
             continue
         finally:
