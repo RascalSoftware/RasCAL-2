@@ -11,7 +11,7 @@ from PyQt6 import QtCore
 
 from rascal2.config import MatlabHelper, get_matlab_engine
 
-NUMBER_PROCESSES = 5
+NUMBER_PROCESSES = 1
 
 
 class RATRunner(QtCore.QObject):
@@ -127,7 +127,6 @@ class RATRunner(QtCore.QObject):
     def start_processes(self):
         if self.start_runners_early:
             for process in self.processes_list:
-                process.daemon = False
                 process.start()
 
     def stop_processes(self):
