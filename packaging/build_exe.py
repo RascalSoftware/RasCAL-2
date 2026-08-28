@@ -70,6 +70,7 @@ def build_exe():
         str(work_path),
         "--workpath",
         str(work_path),
+        "--windowed",
         "--noconfirm",
         "--distpath",
         str(dist_path),
