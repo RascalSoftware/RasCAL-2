@@ -209,7 +209,7 @@ def run(queue: Queue, arg_queue: Queue, go_event, exit_event, engine_ready, engi
         except Exception as err:
             import traceback
             reverse_tb = "\n".join(reversed(traceback.format_tb(err.__traceback__)))
-            queue.put(err)
+            queue.put(reverse_tb)
             go_event.clear()
             continue
         finally:
