@@ -175,7 +175,7 @@ def test_menu_element_present(test_view, submenu_name):
                 "&New Project",
                 "",
                 "&Open Project",
-                "Open &RasCAL-1 Project",
+                "&Import Project",
                 "",
                 "&Save",
                 "Save To &Folder...",
