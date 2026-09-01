@@ -36,7 +36,6 @@ def ui_execute(splash):
 
 def start_app(splash):
     """Start RasCAL app."""
-    multiprocessing.set_start_method("spawn", force=True)
     setup_logging()
     matlab_helper = MatlabHelper()
     exit_code = ui_execute(splash)
