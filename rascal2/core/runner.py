@@ -11,7 +11,11 @@ from PyQt6 import QtCore
 
 from rascal2.config import MatlabHelper, get_matlab_engine
 
-NUMBER_PROCESSES = 1
+
+def clear_queue(queue):
+    queue.put(None)
+    for _ in iter(queue.get, None):
+        pass
 
 
 class RATRunner(QtCore.QObject):
@@ -20,148 +24,155 @@ class RATRunner(QtCore.QObject):
     event_received = QtCore.pyqtSignal()
     finished = QtCore.pyqtSignal()
     stopped = QtCore.pyqtSignal()
-    go_event = Event()
-    processes_list_go_exit_events = []
 
-    def __init__(self, parent=None, start_runners_early: bool = True, num_processes: int = NUMBER_PROCESSES):
+    def __init__(self, parent=None):
         super().__init__()
         self.parent = parent
         self.timer = QtCore.QTimer()
         self.timer.setInterval(1)
         self.timer.timeout.connect(self.check_queue)
-        self.num_processes = num_processes
-        self.start_runners_early = start_runners_early
 
         # this queue handles both event data and results
         self.queue = Queue()
+        self.msg_queue = Queue()
+        self.plot_queue = Queue()
         self.arg_queue = Queue()
         self.go_event = Event()
         self.exit_event = Event()
-        self.rat_inputs = None
-        self.procedure = None
-        self.display_on = None
-        self.processes_list = []
-        self.refresh_process_list()
-        self.process = None
+        matlab_helper = MatlabHelper()
+        self.process = Process(
+            target=run,
+            args=(
+                self.queue,
+                self.arg_queue,
+                self.msg_queue,
+                self.plot_queue,
+                self.go_event,
+                self.exit_event,
+                matlab_helper.ready_event,
+                matlab_helper.engine_output,
+            ),
+        )
         self.updated_problem = None
         self.results = None
         self.error = None
         self.events = []
 
     def set_runner_args(self, rat_inputs, procedure, display_on: bool, working_dir: str):
+        self.clear_queues()
         self.arg_queue.put((rat_inputs, procedure, display_on, working_dir))
-        self.rat_inputs = rat_inputs
-        self.display_on = display_on
 
     def start(self):
         """Start the calculation."""
-        if not self.process:
-            self.process, (self.go_event, self.exit_event) = self.get_new_process()
-        self.go_event.set()
         if not self.process.is_alive():
             self.process.start()
+        self.go_event.set()
         self.timer.start()
 
-    def get_new_process(self):
-        if not self.processes_list:
-            self.refresh_process_list()
-        return self.processes_list.pop(0), self.processes_list_go_exit_events.pop(0)
+    # def write_msg(self):
+    #     self.msg_queue.put(None)
+    #     text = ''
+    #     for item in iter(self.msg_queue.get, None):
+    #         if isinstance(item, str):
+    #             text += item[:-1] if item.endswith("\n\n") else item
+    #         if isinstance(item, LogData):
+    #             if text:
+    #                 self.events.append(text)
+    #                 self.event_received.emit()
+    #                 text = ''
+    #             self.events.append(item)
+    #             self.event_received.emit()
+    #     if text:
+    #         self.events.append(text)
+    #         self.event_received.emit()
 
-    def interrupt(self):
-        """Interrupt the running process."""
-        self.timer.stop()
-        self.process.kill()
-        self.stopped.emit()
-        self.go_event.clear()
-        self.clear_process()
 
-    def clear_process(self):
-        """Clear the current process."""
-        self.process = None
+    def handle_plot(self):
+        item = None
+        while not self.plot_queue.empty():
+            item = self.plot_queue.get()
+        else:
+            if item is not None:
+                self.events.append(item)
+                self.event_received.emit()
+
+    def write_msg(self):
+        text = ''
+        while not self.msg_queue.empty():
+            item = self.msg_queue.get()
+            if isinstance(item, str):
+                text += item[:-1] if item.endswith("\n\n") else item
+            if isinstance(item, LogData):
+                if text:
+                    self.events.append(text)
+                    self.event_received.emit()
+                    text = ''
+                self.events.append(item)
+                self.event_received.emit()
+        if text:
+            self.events.append(text)
+            self.event_received.emit()
+
+
 
     def check_queue(self):
         """Check for new data in the queue."""
-        if not self.process.is_alive():
+        if self.process is None or not self.process.is_alive():
             self.timer.stop()
+
+        self.handle_plot()
+        self.write_msg()
         self.queue.put(None)
         for item in iter(self.queue.get, None):
             if isinstance(item, tuple):
                 self.updated_problem, self.results = item
                 self.go_event.clear()
-                self.finished.emit()
+                self.handle_plot()
+                self.write_msg()
+                if is_empty_bayes_result(self.results):
+                    self.stopped.emit()
+                else:
+                    self.finished.emit()
+                self.timer.stop()
             elif isinstance(item, Exception):
                 self.error = item
                 self.go_event.clear()
+                self.write_msg()
                 self.stopped.emit()
-            elif isinstance(item, list):
-                return item[0]
+                self.timer.stop()
             else:  # else, assume item is an event
                 self.events.append(item)
                 self.event_received.emit()
 
-    def refresh_process_list(self):
-        self.processes_list_go_exit_events = [(Event(), Event()) for _ in range(self.num_processes)]
-        matlab_helper = MatlabHelper()
-        self.processes_list = [
-            Process(
-                target=run,
-                args=(
-                    self.queue,
-                    self.arg_queue,
-                    self.processes_list_go_exit_events[ind][0],
-                    self.processes_list_go_exit_events[ind][1],
-                    matlab_helper.ready_event,
-                    matlab_helper.engine_output,
-                ),
-            )
-            for ind in range(self.num_processes)
-        ]
-
     def clear_queues(self):
-        self.queue.empty()
-        self.arg_queue.empty()
+        clear_queue(self.queue)
+        clear_queue(self.arg_queue)
+        clear_queue(self.msg_queue)
         self.events.clear()
         self.go_event.clear()
         self.exit_event.clear()
 
-    def start_processes(self):
-        if self.start_runners_early:
-            for process in self.processes_list:
-                process.start()
-
-    def stop_processes(self):
-        self.exit_event.set()
-        self.go_event.set()
-        for go_event, exit_event in self.processes_list_go_exit_events:
-            exit_event.set()
-            go_event.set()
-        for process in self.processes_list:
-            if process.is_alive():
-                process.kill()
+    def stop(self):
+        self.event_received.disconnect()
+        if self.process.is_alive():
+            self.process.kill()
         self.process = None
-        self.processes_list.clear()
         self.clear_queues()
-        self.processes_list_go_exit_events.clear()
-        self.queue.close()
-        self.arg_queue.close()
 
 
 def init_matlab_engine(problem_definition, engine_ready, engine_output, queue):
     """Initialise the Matlab engine if using a Matlab custom file and returns the engine future if available."""
     engine_future = rat.wrappers.MatlabWrapper.loader
-    queue.put(LogData(INFO, "1"))
     if engine_future is None and any([file["language"] == "matlab" for file in problem_definition.customFiles.files]):
         if not engine_output:
             queue.put(LogData(INFO, "Attempting to start Matlab..."))
-        queue.put(LogData(INFO, "2"))
+
         result = get_matlab_engine(engine_ready, engine_output)
-        queue.put(LogData(INFO, "3"))
         if isinstance(result, Exception):
             raise result
         else:
             engine_future = result
             engine_future.result().cd(os.getcwd())
-    queue.put(LogData(INFO, "4"))
     return engine_future
 
 
@@ -171,7 +182,11 @@ def stop_matlab_engine(engine_future):
         engine_future.result().exit()
 
 
-def run(queue: Queue, arg_queue: Queue, go_event, exit_event, engine_ready, engine_output):
+def is_empty_bayes_result(result):
+    return isinstance(result, rat.BayesResults) and result.chain.shape == (1, 2)
+
+
+def run(queue: Queue, arg_queue: Queue, msg_queue: Queue, plot_queue, go_event, exit_event, engine_ready, engine_output):
     """Run RAT and put the result into the queue.
 
     Parameters
@@ -193,55 +208,30 @@ def run(queue: Queue, arg_queue: Queue, go_event, exit_event, engine_ready, engi
         problem_definition, cpp_controls = rat_inputs
 
         if display:
-            rat.events.register(rat.events.EventTypes.Message, queue.put)
+            rat.events.register(rat.events.EventTypes.Message, msg_queue.put)
             rat.events.register(rat.events.EventTypes.Progress, queue.put)
-            rat.events.register(rat.events.EventTypes.Plot, queue.put)
-            queue.put(LogData(INFO, "Starting RAT"))
+            rat.events.register(rat.events.EventTypes.Plot, plot_queue.put)
+            msg_queue.put(LogData(INFO, "Starting RAT"))
 
         try:
-            queue.put(LogData(INFO, "1Starting RAT"))
             sys.path.append(working_dir)
-            queue.put(LogData(INFO, "2Starting RAT"))
             engine_future = init_matlab_engine(problem_definition, engine_ready, engine_output, queue)
-            queue.put(LogData(INFO, "3Starting RAT"))
             problem_definition, output_results, bayes_results = rat.rat_core.RATMain(problem_definition, cpp_controls)
             results = rat.outputs.make_results(procedure, output_results, bayes_results)
         except Exception as err:
-            import traceback
-            reverse_tb = "\n".join(reversed(traceback.format_tb(err.__traceback__)))
-            queue.put(reverse_tb)
+            queue.put(err)
             go_event.clear()
             continue
         finally:
             sys.path.remove(working_dir)
 
         if display:
-            queue.put(LogData(INFO, "Finished RAT"))
+            msg = "RAT run interrupted!" if is_empty_bayes_result(results) else "Finished RAT"
+            msg_queue.put(LogData(INFO, msg))
             rat.events.clear()
 
         queue.put((problem_definition, results))
         go_event.clear()
-
-
-def run_matlab_init_engine(queue, engine_output, engine_ready, display_on):
-    """Get the engine future from the matlab engine and put in queue if successfully."""
-    try:
-        if not engine_output and display_on:
-            queue.put(LogData(INFO, "Attempting to start Matlab..."))
-
-        result = get_matlab_engine(engine_ready, engine_output)
-        if display_on:
-            queue.put(LogData(INFO, "Got Matlab engine"))
-        if isinstance(result, Exception):
-            raise result
-        else:
-            engine_future = result
-            engine_future.result().cd(os.getcwd())
-            queue.put([engine_future])
-
-    except Exception as err:
-        queue.put(err)
-        return
 
 
 @dataclass

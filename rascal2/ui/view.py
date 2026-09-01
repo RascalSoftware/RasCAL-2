@@ -65,7 +65,8 @@ class MainWindowView(QtWidgets.QMainWindow):
             event.accept()
         else:
             event.ignore()
-        self.presenter.runner.stop_processes()
+            return
+        self.presenter.runner.stop()
         event.accept()
 
     def show_project_dialog(self, dialog: StartupDialog):

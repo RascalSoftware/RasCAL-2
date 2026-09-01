@@ -16,8 +16,6 @@ from rascal2.settings import update_recent_projects
 
 from .model import InvalidResultWarning, MainWindowModel, validate_plot_data
 
-START_PROCESSES = bool(os.getenv("START_PROCESSES", "True"))
-
 
 class MainWindowPresenter:
     """Facilitates interaction between View and Model.
@@ -32,11 +30,11 @@ class MainWindowPresenter:
         self.view = view
         self.model = MainWindowModel()
         self.worker = None
-        self.runner = RATRunner(self, start_runners_early=START_PROCESSES)
+        self.runner = RATRunner(self)
         self.runner.finished.connect(self.handle_results)
         self.runner.stopped.connect(self.handle_interrupt)
         self.runner.event_received.connect(self.handle_event)
-        self.runner.start_processes()
+        self.runner.process.start()
 
     def create_project(self, name: str, save_path: str):
         """Create a new RAT project and controls object then initialise UI.
@@ -201,13 +199,12 @@ class MainWindowPresenter:
 
     def interrupt_terminal(self):
         """Send an interrupt signal to the RAT runner."""
-        if self.model.controls.procedure in [rat.utils.enums.Procedures.Simplex, rat.utils.enums.Procedures.DE]:
-            self.model.controls.sendStopEvent()
-        else:
-            if not self.view.show_confirm_stop_calculation_dialog():
-                return
-            if self.runner.process.is_alive():
-                self.runner.interrupt()
+        if (
+            self.model.controls.procedure not in [rat.utils.enums.Procedures.Simplex, rat.utils.enums.Procedures.DE]
+            and not self.view.show_confirm_stop_calculation_dialog()
+        ):
+            return
+        self.model.controls.sendStopEvent()
 
     def quick_run(self, project=None):
         """Run rat calculation with calculate procedure on the given project.
@@ -249,7 +246,6 @@ class MainWindowPresenter:
         rat_inputs = rat.inputs.make_input(self.model.project, self.model.controls)
         display_on = self.model.controls.display != rat.utils.enums.Display.Off
         self.runner.set_runner_args(rat_inputs, self.model.controls.procedure, display_on, working_dir)
-        self.view.terminal_widget.write("Initializing RAT Process...")
         self.runner.start()
 
     def handle_results(self):
@@ -264,13 +260,10 @@ class MainWindowPresenter:
         )
         self.view.handle_results(self.runner.results)
         self.model.controls.delete_IPC()
-        self.runner.clear_queues()
 
     def handle_interrupt(self):
         """Handle a RAT run being interrupted."""
-        if self.runner.error is None:
-            LOGGER.info("RAT run interrupted!")
-        else:
+        if self.runner.error is not None:
             LOGGER.error("RAT run failed with exception.\n", exc_info=self.runner.error)
         self.view.handle_results()
         self.model.controls.delete_IPC()
@@ -282,6 +275,7 @@ class MainWindowPresenter:
             case str():
                 self.view.terminal_widget.write(event)
                 chi_squared = get_live_chi_squared(event, str(self.model.controls.procedure))
+
                 if chi_squared is not None:
                     self.view.controls_widget.update_chi_squared(chi_squared)
             case rat.events.ProgressEventData():
@@ -345,4 +339,7 @@ def get_live_chi_squared(item: str, procedure: str) -> str | None:
     if procedure not in chi_squared_patterns:
         return None
     # match returns None if no match found, so whether one is found can be checked via 'if match'
-    return match.group(1) if (match := chi_squared_patterns[procedure].search(item)) else None
+    for line in reversed(item.splitlines()):
+        if match := chi_squared_patterns[procedure].search(line):
+            return match.group(1)
+    return None

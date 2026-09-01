@@ -24,7 +24,6 @@ class SplashScreen(QSplashScreen):
 def main():
     """Entry point function for starting RasCAL."""
     multiprocessing.freeze_support()
-    multiprocessing.set_start_method("spawn", force=True)
 
     app = QApplication([])
     app.setWindowIcon(QIcon(path_for("logo.png")))
