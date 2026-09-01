@@ -224,8 +224,12 @@ class MatlabHelper:
                 ex = MatlabHelper.ConfigError(
                     "Matlab engine could not be found, ensure it is installed properly."
                 ).with_traceback(ex.__traceback__)
-            self.engine_output[:] = []
-            self.engine_output.append(ex)
+
+            self.engine_output.put(None)
+            for _ in iter(self.engine_output.get, None):
+                pass
+
+            self.engine_output.put(ex)
             LOGGER.error(f"Attempt to read MATLAB _arch file failed {MATLAB_ARCH_FILE}.\n {ex}.")
 
         self.matlab_dir = str(install_dir)
