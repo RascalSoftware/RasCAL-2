@@ -161,6 +161,10 @@ class MatlabHelper:
 
         if not self.get_matlab_path():
             return
+        
+        self.engine_output.put(None)
+        for _ in iter(self.engine_output.get, None):
+            pass
 
         self.process = mp.Process(
             target=run_matlab,
