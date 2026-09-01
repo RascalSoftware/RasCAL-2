@@ -75,9 +75,9 @@ def run_matlab(ready_event, close_event, engine_output):
         eng = matlab.engine.start_matlab()
         eng.matlab.engine.shareEngine(nargout=0)
         if not close_event.is_set():
-            engine_output.append(eng.matlab.engine.engineName(nargout=1).encode("utf-8"))
+            engine_output.put(eng.matlab.engine.engineName(nargout=1).encode("utf-8"))
     except Exception as ex:
-        engine_output.append(ex)
+        engine_output.put(ex)
         raise ex
 
     ready_event.set()
@@ -86,6 +86,16 @@ def run_matlab(ready_event, close_event, engine_output):
     eng.fclose("all", nargout=0)
     eng.close("all", nargout=0)
     eng.quit()
+
+
+def get_output(g_queue):
+    import queue
+    try:
+        output = g_queue.get_nowait()
+        g_queue.put_nowait(output)
+        return output
+    except queue.Empty:
+        return None
 
 
 def get_matlab_engine(engine_ready, engine_output):
@@ -103,12 +113,13 @@ def get_matlab_engine(engine_ready, engine_output):
     output : Union[matlab.engine.futureresult.FutureResult, Exception]
         MATLAB engine future or Exception from MatlabHelper
     """
-    if not engine_output:
+    if engine_output.empty():
         engine_ready.wait(timeout=40)
 
-    if engine_output:
-        if isinstance(engine_output[0], bytes):
-            engine_name = engine_output[0].decode("utf-8")
+    output = get_output(engine_output)
+    if output is not None:
+        if isinstance(output, bytes):
+            engine_name = output.decode("utf-8")
 
             import ratapi
 
@@ -118,8 +129,8 @@ def get_matlab_engine(engine_ready, engine_output):
             )
 
             return engine_future
-        elif isinstance(engine_output[0], Exception):
-            return engine_output[0]
+        elif isinstance(output, Exception):
+            return output
     else:
         return Exception("Matlab could not be started!")
 
@@ -146,8 +157,7 @@ class MatlabHelper:
 
     def async_start(self):
         """Start MATLAB on a new process."""
-        self.manager = mp.Manager()
-        self.engine_output = self.manager.list()
+        self.engine_output = mp.Queue()
 
         if not self.get_matlab_path():
             return
