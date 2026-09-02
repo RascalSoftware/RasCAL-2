@@ -75,9 +75,9 @@ def run_matlab(ready_event, close_event, engine_output):
         eng = matlab.engine.start_matlab()
         eng.matlab.engine.shareEngine(nargout=0)
         if not close_event.is_set():
-            engine_output.put(eng.matlab.engine.engineName(nargout=1).encode("utf-8"))
+            engine_output.append(eng.matlab.engine.engineName(nargout=1).encode("utf-8"))
     except Exception as ex:
-        engine_output.put(ex)
+        engine_output.append(ex)
         raise ex
 
     ready_event.set()
@@ -86,16 +86,6 @@ def run_matlab(ready_event, close_event, engine_output):
     eng.fclose("all", nargout=0)
     eng.close("all", nargout=0)
     eng.quit()
-
-
-def get_output(g_queue):
-    import queue
-    try:
-        output = g_queue.get()
-        g_queue.put(output)
-        return output
-    except queue.Empty:
-        return None
 
 
 def get_matlab_engine(engine_ready, engine_output):
@@ -113,17 +103,12 @@ def get_matlab_engine(engine_ready, engine_output):
     output : Union[matlab.engine.futureresult.FutureResult, Exception]
         MATLAB engine future or Exception from MatlabHelper
     """
-    print(31)
-    if engine_output.empty():
-        print(32)
+    if not engine_output:
         engine_ready.wait(timeout=40)
 
-    output = get_output(engine_output)
-    print(33, output)
-    if output is not None:
-        if isinstance(output, bytes):
-            print(34)
-            engine_name = output.decode("utf-8")
+    if engine_output:
+        if isinstance(engine_output[0], bytes):
+            engine_name = engine_output[0].decode("utf-8")
 
             import ratapi
 
@@ -131,11 +116,10 @@ def get_matlab_engine(engine_ready, engine_output):
                 engine_name,
                 "Error occurred when connecting to MATLAB, please ensure MATLAB is installed and set up properly.",
             )
-            print(35)
+
             return engine_future
-        elif isinstance(output, Exception):
-            print(36)
-            return output
+        elif isinstance(engine_output[0], Exception):
+            return engine_output[0]
     else:
         return Exception("Matlab could not be started!")
 
@@ -153,7 +137,8 @@ class MatlabHelper:
             cls._instance = super().__new__(cls)
             cls._instance.ready_event = mp.Event()
             cls._instance.close_event = mp.Event()
-            cls._instance.engine_output = mp.Queue()
+            cls._instance.manager = mp.Manager()
+            cls._instance.engine_output = cls._instance.manager.list()
             cls._instance.matlab_dir = ""
             cls._instance.__engine = None
             cls._instance.async_start()
@@ -162,15 +147,9 @@ class MatlabHelper:
 
     def async_start(self):
         """Start MATLAB on a new process."""
-        print(21)
         if not self.get_matlab_path():
             return
-        print(22)
-        self.engine_output.put(None)
-        print(23)
-        for _ in iter(self.engine_output.get, None):
-            pass
-        print(24)
+
         self.process = mp.Process(
             target=run_matlab,
             args=(
@@ -179,7 +158,6 @@ class MatlabHelper:
                 self.engine_output,
             ),
         )
-        print(25)
         self.process.daemon = False
         self.process.start()
 
@@ -234,12 +212,8 @@ class MatlabHelper:
                 ex = MatlabHelper.ConfigError(
                     "Matlab engine could not be found, ensure it is installed properly."
                 ).with_traceback(ex.__traceback__)
-
-            self.engine_output.put(None)
-            for _ in iter(self.engine_output.get, None):
-                pass
-
-            self.engine_output.put(ex)
+            self.engine_output[:] = []
+            self.engine_output.append(ex)
             LOGGER.error(f"Attempt to read MATLAB _arch file failed {MATLAB_ARCH_FILE}.\n {ex}.")
 
         self.matlab_dir = str(install_dir)
