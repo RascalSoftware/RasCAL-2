@@ -153,7 +153,7 @@ class MatlabHelper:
             cls._instance = super().__new__(cls)
             cls._instance.ready_event = mp.Event()
             cls._instance.close_event = mp.Event()
-            cls._instance.engine_output = None
+            cls._instance.engine_output = mp.Queue()
             cls._instance.matlab_dir = ""
             cls._instance.__engine = None
             cls._instance.async_start()
@@ -162,7 +162,6 @@ class MatlabHelper:
 
     def async_start(self):
         """Start MATLAB on a new process."""
-        self.engine_output = mp.Queue()
         print(21)
         if not self.get_matlab_path():
             return
