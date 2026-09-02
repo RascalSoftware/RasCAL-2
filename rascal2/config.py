@@ -91,8 +91,8 @@ def run_matlab(ready_event, close_event, engine_output):
 def get_output(g_queue):
     import queue
     try:
-        output = g_queue.get_nowait()
-        g_queue.put_nowait(output)
+        output = g_queue.get()
+        g_queue.put(output)
         return output
     except queue.Empty:
         return None
