@@ -149,7 +149,8 @@ class MatlabHelper:
         """Start MATLAB on a new process."""
         if not self.get_matlab_path():
             return
-
+        self.engine_output[:] = []
+        
         self.process = mp.Process(
             target=run_matlab,
             args=(
