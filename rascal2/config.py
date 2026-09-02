@@ -113,12 +113,16 @@ def get_matlab_engine(engine_ready, engine_output):
     output : Union[matlab.engine.futureresult.FutureResult, Exception]
         MATLAB engine future or Exception from MatlabHelper
     """
+    print(31)
     if engine_output.empty():
+        print(32)
         engine_ready.wait(timeout=40)
 
     output = get_output(engine_output)
+    print(33, output)
     if output is not None:
         if isinstance(output, bytes):
+            print(34)
             engine_name = output.decode("utf-8")
 
             import ratapi
@@ -127,9 +131,10 @@ def get_matlab_engine(engine_ready, engine_output):
                 engine_name,
                 "Error occurred when connecting to MATLAB, please ensure MATLAB is installed and set up properly.",
             )
-
+            print(35)
             return engine_future
         elif isinstance(output, Exception):
+            print(36)
             return output
     else:
         return Exception("Matlab could not be started!")
@@ -158,14 +163,15 @@ class MatlabHelper:
     def async_start(self):
         """Start MATLAB on a new process."""
         self.engine_output = mp.Queue()
-
+        print(21)
         if not self.get_matlab_path():
             return
-        
+        print(22)
         self.engine_output.put(None)
+        print(23)
         for _ in iter(self.engine_output.get, None):
             pass
-
+        print(24)
         self.process = mp.Process(
             target=run_matlab,
             args=(
@@ -174,6 +180,7 @@ class MatlabHelper:
                 self.engine_output,
             ),
         )
+        print(25)
         self.process.daemon = False
         self.process.start()
 

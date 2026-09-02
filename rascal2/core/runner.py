@@ -167,12 +167,17 @@ def init_matlab_engine(problem_definition, engine_ready, engine_output, queue):
     engine_future = rat.wrappers.MatlabWrapper.loader
     if engine_future is None and any([file["language"] == "matlab" for file in problem_definition.customFiles.files]):
         if engine_output.empty():
+            print(11)
             queue.put(LogData(INFO, "Attempting to start Matlab..."))
 
+        print(12)
         result = get_matlab_engine(engine_ready, engine_output)
+
         if isinstance(result, Exception):
+            print(13)
             raise result
         else:
+            print(14)
             engine_future = result
             engine_future.result().cd(os.getcwd())
     return engine_future
