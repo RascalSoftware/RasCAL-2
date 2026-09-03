@@ -11,3 +11,6 @@ runs:
   - name: Run Pytest
     shell: bash -l {0}
     run:  pytest -s tests/ ${{ inputs.pytest-options }} --cov=rascal2 --cov-report=term
+  - name: Run Pytest System Tests
+    shell: bash -l {0}
+    run:  pytest -s tests/system/ ${{ inputs.pytest-options }} --cov=rascal2 --cov-report=term --run-system-tests

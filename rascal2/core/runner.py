@@ -41,6 +41,7 @@ class RATRunner(QtCore.QObject):
         self.procedure = None
         self.display_on = None
         self.processes_list = []
+        self.matlab_helper = MatlabHelper()
         self.refresh_process_list()
         self.process = None
         self.updated_problem = None
@@ -101,7 +102,6 @@ class RATRunner(QtCore.QObject):
 
     def refresh_process_list(self):
         self.processes_list_go_exit_events = [(Event(), Event()) for _ in range(self.num_processes)]
-        matlab_helper = MatlabHelper()
         self.processes_list = [
             Process(
                 target=run,
@@ -110,8 +110,8 @@ class RATRunner(QtCore.QObject):
                     self.arg_queue,
                     self.processes_list_go_exit_events[ind][0],
                     self.processes_list_go_exit_events[ind][1],
-                    matlab_helper.ready_event,
-                    matlab_helper.engine_output,
+                    self.matlab_helper.ready_event,
+                    self.matlab_helper.engine_output,
                 ),
             )
             for ind in range(self.num_processes)
@@ -130,8 +130,10 @@ class RATRunner(QtCore.QObject):
                 process.start()
 
     def stop_processes(self):
+        self.timer.stop()
         self.exit_event.set()
         self.go_event.set()
+        self.matlab_helper.close_event.set()
         for go_event, exit_event in self.processes_list_go_exit_events:
             exit_event.set()
             go_event.set()
