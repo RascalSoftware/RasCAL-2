@@ -16,7 +16,7 @@ from rascal2.settings import update_recent_projects
 
 from .model import InvalidResultWarning, MainWindowModel, validate_plot_data
 
-START_PROCESSES = bool(os.getenv("START_PROCESSES", "True"))
+START_PROCESSES = os.getenv("START_PROCESSES", "True") == "True"
 
 
 class MainWindowPresenter:
