@@ -6,7 +6,6 @@ from inspect import isclass
 
 import matplotlib
 import ratapi
-from cycler import cycler
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from PyQt6 import QtCore, QtGui, QtWidgets
 
@@ -395,56 +394,42 @@ class AbstractPlotWidget(QtWidgets.QWidget):
                 self.figure.savefig(filepath, facecolor=SETTINGS.export_background_colour, dpi=dpi)
             else:
                 old_colours = matplotlib.rcParams["axes.prop_cycle"].by_key()["color"]
-                new_colours_cycle = cycler(
-                    color=[
-                        "#1f77b4",
-                        "#ff7f0e",
-                        "#2ca02c",
-                        "#d62728",
-                        "#9467bd",
-                        "#8c564b",
-                        "#e377c2",
-                        "#7f7f7f",
-                        "#bcbd22",
-                        "#17becf",
-                    ]
-                )
-                new_colours = new_colours_cycle.by_key()["color"]
-                colour_converter = dict(zip(old_colours, new_colours, strict=False))
-                temp_fig = copy.deepcopy(self.figure)
-                axes = temp_fig.axes
-                for ax in axes:
-                    if ax.containers:
-                        for container in ax.containers:
-                            if isinstance(container, matplotlib.container.ErrorbarContainer):
-                                _, __, (vertical_lines,) = container.lines
-                                vertical_lines.set_color(
-                                    colour_converter[
-                                        matplotlib.colors.rgb2hex(vertical_lines.get_color(), keep_alpha=False)
-                                    ]
-                                )
-                    ax.set_prop_cycle(new_colours_cycle)
-                    ax.patch.set_facecolor("white")
-                    ax.spines["bottom"].set_color("black")
-                    ax.spines["top"].set_color("black")
-                    ax.spines["right"].set_color("black")
-                    ax.spines["left"].set_color("black")
-                    ax.tick_params(which="both", axis="both", color="black", labelcolor="black")
-                    ax.xaxis.label.set_color("black")
-                    ax.yaxis.label.set_color("black")
-                    title_text = ax.get_title(loc="left")
-                    ax.set_title(title_text, color="black", loc="left")
-                    ax.title.set_color("black")
-                    if ax.get_legend() is not None:
-                        ax.legend(facecolor="white", labelcolor="black")
-                        for line in ax.get_legend().get_lines():
+                with matplotlib.style.context("default"):
+                    edge_colour = matplotlib.rcParams["axes.edgecolor"]
+                    face_colour = matplotlib.rcParams["axes.facecolor"]
+                    new_colours = matplotlib.rcParams["axes.prop_cycle"].by_key()["color"]
+                    colour_converter = dict(zip(old_colours, new_colours, strict=False))
+                    temp_fig = copy.deepcopy(self.figure)
+                    axes = temp_fig.axes
+                    for ax in axes:
+                        if not ax.get_visible():
+                            continue
+                        if ax.containers:
+                            for container in ax.containers:
+                                if isinstance(container, matplotlib.container.ErrorbarContainer):
+                                    _, __, (vertical_lines,) = container.lines
+                                    vertical_lines.set_color(
+                                        colour_converter[
+                                            matplotlib.colors.rgb2hex(vertical_lines.get_color(), keep_alpha=False)
+                                        ]
+                                    )
+                        ax.patch.set_facecolor(face_colour)
+                        for spine in ax.spines.values():
+                            spine.set_edgecolor(edge_colour)
+                        ax.tick_params(which="both", axis="both", color="black", labelcolor=edge_colour)
+                        ax.xaxis.label.set_color(edge_colour)
+                        ax.yaxis.label.set_color(edge_colour)
+                        ax.set_title(ax.get_title(loc="left"), color=edge_colour, loc="left")
+                        if ax.get_legend() is not None:
+                            ax.legend(facecolor="white", labelcolor=edge_colour)
+                            for line in ax.get_legend().get_lines():
+                                old_line_colour = line.get_color()
+                                line.set_color(colour_converter[old_line_colour])
+                        for line in ax.get_lines():
                             old_line_colour = line.get_color()
                             line.set_color(colour_converter[old_line_colour])
-                    for line in ax.get_lines():
-                        old_line_colour = line.get_color()
-                        line.set_color(colour_converter[old_line_colour])
 
-                temp_fig.savefig(filepath, facecolor=SETTINGS.export_background_colour, dpi=dpi)
+                    temp_fig.savefig(filepath, facecolor=SETTINGS.export_background_colour, dpi=dpi)
 
     def changeEvent(self, event):
         if self.toolbar is not None and event.type() == QtCore.QEvent.Type.PaletteChange:
