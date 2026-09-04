@@ -19,13 +19,6 @@ def global_setting():
     return GLOBAL_SETTING
 
 
-@pytest.fixture(autouse=True)
-@patch("rascal2.core.runner.NUMBER_PROCESSES")
-def fix_num_processes(num_processes):
-    num_processes.return_value = 1
-    yield
-
-
 @pytest.fixture(scope="function", autouse=True)
 def mock_start_processes_setting(monkeypatch):
     monkeypatch.setenv("START_PROCESSES", "False")

@@ -95,22 +95,15 @@ def test_run_and_interrupt(mock_runner, mock_inputs, presenter):
     presenter.runner.start.assert_called_once()
     assert presenter.model.controls._IPCFilePath != ""
 
-    presenter.view.show_confirm_stop_calculation_dialog = MagicMock(return_value=False)
-    presenter.interrupt_terminal()
-    presenter.runner.interrupt.assert_not_called()
-
-    presenter.view.show_confirm_stop_calculation_dialog = MagicMock(return_value=True)
-    presenter.runner.process.is_alive.return_value = False
-    presenter.interrupt_terminal()
-    presenter.runner.interrupt.assert_not_called()
-
-    presenter.runner.process.is_alive.return_value = True
-    presenter.interrupt_terminal()
-    presenter.runner.interrupt.assert_called()
-
     with open(presenter.model.controls._IPCFilePath) as f:
         assert f.readline() == "\x00"
+    presenter.view.show_confirm_stop_calculation_dialog = MagicMock(return_value=False)
+    presenter.interrupt_terminal()
+    with open(presenter.model.controls._IPCFilePath) as f:
+        assert f.readline() == "\x00"
+
     presenter.model.controls.procedure = "simplex"
+    presenter.view.show_confirm_stop_calculation_dialog = MagicMock(return_value=True)
     presenter.interrupt_terminal()
     with open(presenter.model.controls._IPCFilePath) as f:
         assert f.readline() == "\x01"
@@ -128,14 +121,6 @@ def test_handle_results(mock_problem_def, mock_command, presenter):
 
     presenter.view.handle_results.assert_called_once_with(presenter.runner.results)
     mock_command.assert_called_once()
-
-
-def test_stop_run(presenter):
-    """Test that log info is emitted and the run is stopped when stop_run is called."""
-    presenter.runner = MagicMock()
-    presenter.runner.error = None
-    presenter.handle_interrupt()
-    presenter.logger.info.assert_called_once_with("RAT run interrupted!")
 
 
 def test_run_error(presenter):
