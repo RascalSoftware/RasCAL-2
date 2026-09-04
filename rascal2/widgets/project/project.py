@@ -117,7 +117,7 @@ class ProjectWidget(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout()
         main_layout.setSpacing(20)
 
-        show_sliders_button = QtWidgets.QPushButton("Show sliders")
+        show_sliders_button = QtWidgets.QPushButton("Show Sliders")
         show_sliders_button.clicked.connect(self.parent.toggle_sliders)
 
         self.edit_project_button = QtWidgets.QPushButton("Edit Project", icon=QtGui.QIcon(IconEngine("edit-light.png")))

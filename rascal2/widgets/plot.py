@@ -41,7 +41,7 @@ class PlotWidget(QtWidgets.QWidget):
         layout.setContentsMargins(0, 5, 0, 5)
         self.setLayout(layout)
 
-        self.bayes_plots_button = QtWidgets.QPushButton("View Bayes plots", objectName="InteractButton")
+        self.bayes_plots_button = QtWidgets.QPushButton("View Bayes Plots", objectName="InteractButton")
         self.bayes_plots_button.setVisible(False)
         self.bayes_plots_button.pressed.connect(self.show_bayes_plots)
         self.reflectivity_plot.interaction_layout.addWidget(self.bayes_plots_button)
@@ -85,7 +85,7 @@ class BayesPlotsDialog(QtWidgets.QDialog):
         self.plot_tabs = QtWidgets.QTabWidget()
 
         plots = {
-            "Shaded plot": ShadedPlotWidget,
+            "Shaded Plot": ShadedPlotWidget,
             "Posteriors": HistPlotWidget,
             "Diagnostics": ChainPlotWidget,
             "Corner Plot": CornerPlotWidget,
