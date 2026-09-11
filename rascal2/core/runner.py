@@ -3,6 +3,7 @@
 import os
 import sys
 from dataclasses import dataclass
+from io import StringIO
 from logging import INFO
 from multiprocessing import Event, Process, Queue
 
@@ -23,6 +24,32 @@ def clear_queue(queue):
     queue.put(None)
     for _ in iter(queue.get, None):
         pass
+
+
+def is_matlab_required(project):
+    """Check if the project requires MATLAB to run.
+
+    Parameters
+    ----------
+    project: ratapi.Project
+        A project to check for MATLAB dependency.
+
+    Returns
+    -------
+    bool
+        indicates project needs MATLAB to run.
+    """
+    files = {file.name: file.language for file in project.custom_files}
+    if project.model != "standard layers":
+        for contrast in project.contrasts:
+            if contrast.model and files.get(contrast.model[0]) == "matlab":
+                return True
+
+    for background in project.backgrounds:
+        if background.type == "function" and files.get(background.source) == "matlab":
+            return True
+
+    return False
 
 
 class RATRunner(QtCore.QObject):
@@ -69,22 +96,22 @@ class RATRunner(QtCore.QObject):
             ),
         )
 
-    def set_runner_args(self, rat_inputs, procedure, display_on: bool, working_dir: str):
+    def set_runner_args(self, rat_inputs, display_on: bool, working_dir: str, need_matlab: bool):
         """Send arguments to the running process.
 
         Parameters
         ----------
         rat_inputs: tuple
             Problem and controls for the run.
-        procedure: Procedures
-            Procedure to run.
         display_on: bool
             Indicates if displaying is allowed.
         working_dir: str
             working directory of the project.
+        need_matlab: bool
+            indicates MATLAB is needed for run.
         """
         self.clear_queues_and_events()
-        self.arg_queue.put((rat_inputs, procedure, display_on, working_dir))
+        self.arg_queue.put((rat_inputs, display_on, working_dir, need_matlab))
 
     def start(self):
         """Start the calculation."""
@@ -174,13 +201,11 @@ class RATRunner(QtCore.QObject):
         self.clear_queues_and_events()
 
 
-def init_matlab_engine(problem_definition, engine_ready, engine_output, msg_queue):
+def init_matlab_engine(engine_ready, engine_output, msg_queue):
     """Initialise the Matlab engine if using a Matlab custom file and returns the engine future if available.
 
     Parameters
     ----------
-    problem_definition : RAT.rat_core.ProblemDefinition
-        The problem input used in the compiled RAT code.
     engine_ready : multiprocessing.Event
         An event to inform listeners that MATLAB is ready.
     engine_output : multiprocessing.Manager.list
@@ -194,7 +219,7 @@ def init_matlab_engine(problem_definition, engine_ready, engine_output, msg_queu
         MATLAB engine future or Exception from MatlabHelper.
     """
     engine_future = rat.wrappers.MatlabWrapper.loader
-    if engine_future is None and any([file["language"] == "matlab" for file in problem_definition.customFiles.files]):
+    if engine_future is None:
         if not engine_output:
             msg_queue.put(LogData(INFO, "Attempting to start Matlab..."))
 
@@ -226,8 +251,13 @@ def is_empty_bayes_result(result):
     ----------
     result : Union[ratapi.outputs.Results, ratapi.outputs.BayesResults]
         The calculation results.
+
+    Returns
+    -------
+    bool
+        indicates result is an empty BayesResults.
     """
-    return isinstance(result, rat.BayesResults) and result.chain.shape == (1, 2)
+    return isinstance(result, rat.BayesResults) and result.chain.size == 2
 
 
 def run(
@@ -260,7 +290,7 @@ def run(
         if exit_event.is_set():
             stop_matlab_engine(engine_future)
             return
-        rat_inputs, procedure, display, working_dir = arg_queue.get()
+        rat_inputs, display, working_dir, need_matlab = arg_queue.get()
         os.chdir(working_dir)
         problem_definition, cpp_controls = rat_inputs
 
@@ -272,9 +302,21 @@ def run(
 
         try:
             sys.path.append(working_dir)
-            engine_future = init_matlab_engine(problem_definition, engine_ready, engine_output, msg_queue)
-            problem_definition, output_results, bayes_results = rat.rat_core.RATMain(problem_definition, cpp_controls)
-            results = rat.outputs.make_results(procedure, output_results, bayes_results)
+            if need_matlab:
+                engine_future = init_matlab_engine(engine_ready, engine_output, queue)
+
+            if isinstance(cpp_controls, dict):
+                ipc_path = cpp_controls.pop("ipc_path")
+                matlab_rat_path = cpp_controls.pop("matlab_rat_path")
+                problem, results = rat.matlab.run_matlab_directly(
+                    problem_definition, cpp_controls, matlab_rat_path, ipc_path, stderr=StringIO(), stdout=StringIO()
+                )
+                problem_definition = rat.inputs.make_problem(problem)
+            else:
+                problem_definition, output_results, bayes_results = rat.rat_core.RATMain(
+                    problem_definition, cpp_controls
+                )
+                results = rat.outputs.make_results(cpp_controls.procedure, output_results, bayes_results)
         except Exception as err:
             queue.put(err)
             go_event.clear()
