@@ -47,3 +47,34 @@ def mock_setting(request):
             target.stop()
 
     request.addfinalizer(teardown_mock_setting)
+
+
+def pytest_addoption(parser):
+    parser.addoption("--skip_system_tests", action="store_true", default=False, help="Skip GUI system tests")
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "system: GUI system tests")
+    config.addinivalue_line("markers", "unit: unit tests")
+
+
+allowed_markers = []
+skipped_tests = []
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--skip_system_tests"):
+        allowed_markers.append(pytest.mark.unit.mark)
+    if len(allowed_markers) == 0:
+        allowed_markers.append(pytest.mark.unit.mark)
+        allowed_markers.append(pytest.mark.system.mark)
+    for item in items:
+        if "gui_system" in item.nodeid:
+            item.add_marker(pytest.mark.system)
+        else:
+            item.add_marker(pytest.mark.unit)
+        if any(mark in allowed_markers for mark in item.own_markers):
+            pass
+        else:
+            item.add_marker(pytest.mark.skip(reason="Test not selected"))
+            skipped_tests.append(item.nodeid)
