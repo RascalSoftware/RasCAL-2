@@ -16,6 +16,7 @@ It is a graphical user interface (GUI) for the `Python RAT API <https://github.c
 
    install
    guide
+   Tutorial <tutorial/index>
    example
    dev
 

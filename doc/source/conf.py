@@ -52,3 +52,11 @@ html_theme_options = {
         },
     ],
 }
+
+
+rst_epilog = """
+.. |Angstrom| replace:: :math:`\mathring{A}`
+.. |tutorial data| raw:: html
+
+   <a href="https://indico.stfc.ac.uk/event/792/contributions/4939/attachments/1739/7049/Virtual%20Reflectometry%20School%202026.zip" target="_blank">tutorial data</a>
+"""
