@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>General Overview &#8212; RasCAL-2</title>
+    <title>1. The Silicon-Water Interface &#8212; RasCAL-2</title>
   
   
   
@@ -42,13 +42,14 @@
     <script src="../_static/documentation_options.js?v=3e6ca1ad"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'user/overview';</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorial/silicon_water_interface';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="icon" href="../_static/logo.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="User Interface" href="interface.html" />
-    <link rel="prev" title="User Guide" href="../guide.html" />
+    <link rel="next" title="2. Custom Model Fitting" href="custom_model_fitting.html" />
+    <link rel="prev" title="Advanced Neutron Reflectometry Data Analysis for Soft Matter Systems" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="0.0.0" />
@@ -155,15 +156,15 @@
 </li>
 
 
-<li class="nav-item current active">
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../guide.html">
     User Guide
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../tutorial/index.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
     Tutorial
   </a>
 </li>
@@ -287,15 +288,15 @@
 </li>
 
 
-<li class="nav-item current active">
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../guide.html">
     User Guide
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../tutorial/index.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
     Tutorial
   </a>
 </li>
@@ -371,13 +372,15 @@
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
-  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">General Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="interface.html">User Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="control.html">Controls Window</a></li>
-<li class="toctree-l1"><a class="reference internal" href="plot.html">Plot Window</a></li>
-<li class="toctree-l1"><a class="reference internal" href="project.html">Project Window</a></li>
-<li class="toctree-l1"><a class="reference internal" href="terminal.html">Terminal Window</a></li>
+  <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
+</ul>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">1. The Silicon-Water Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_model_fitting.html">2. Custom Model Fitting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_fitting_by_volume_fraction.html">3. Fitting a Custom Model of the Bilayer by Volume Fraction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_fitting_by_area_per_molecule.html">4. Fitting a Custom Model of the Bilayer by Area per Molecule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fitting_complex_membrane_structure.html">5. Fitting a Complex Protein-Bound Membrane Structure</a></li>
 </ul>
 </div>
 </nav></div>
@@ -419,9 +422,9 @@
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="../guide.html" class="nav-link">User Guide</a></li>
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Advanced Neutron Reflectometry Data Analysis for Soft Matter Systems</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">General Overview</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis"><span class="section-number">1. </span>The Silicon-Water Interface</span></li>
   </ul>
 </nav>
 </div>
@@ -438,8 +441,105 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="general-overview">
-<h1>General Overview<a class="headerlink" href="#general-overview" title="Link to this heading">#</a></h1>
+  <section id="the-silicon-water-interface">
+<span id="silicon-water-interface"></span><h1><span class="section-number">1. </span>The Silicon-Water Interface<a class="headerlink" href="#the-silicon-water-interface" title="Link to this heading">#</a></h1>
+<p>The silicon water interface is a common surface used in NR studies. For these experiments, the reflection occurs
+within a silicon substrate.</p>
+<figure class="align-default" id="id1">
+<img alt="Neutron Reflectometry in a solid-liquid flow cell" src="../_images/solid_liquid_flow_cell.png" />
+<figcaption>
+<p><span class="caption-text">Neutron Reflectometry in a solid-liquid flow cell. Note: the neutron beam is reflected inside of the substrate.</span><a class="headerlink" href="#id1" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Remember to download and extract the <a href="https://indico.stfc.ac.uk/event/792/contributions/4939/attachments/1739/7049/Virtual%20Reflectometry%20School%202026.zip" target="_blank">tutorial data</a> to follow along in this section.</p>
+</div>
+<p>You will begin the tutorial by fitting a bare SiO2 coated silicon-D2O interface using RasCAL-2.</p>
+<p><strong>Starting the Software</strong></p>
+<p>Start RasCAL-2, the software will load and show the following screen:</p>
+<figure class="align-default">
+<img alt="RasCAL-2 Startup Screen" src="../_images/rascal_startup.png" />
+</figure>
+<p>Click on <strong>Import Existing Project</strong> and browse to the tutorial data folder named <strong>Rascal 2 Practical Student</strong> and
+select the folder named <strong>Part 1 Si_D2O Interface</strong> and select open, then click the Load button (see below)</p>
+<figure class="align-default">
+<img alt="Loading Project in RasCAL-2" src="../_images/loading_rascal_project.png" />
+</figure>
+<p><strong>Setting up the model to fit</strong></p>
+<p>After the RasCAL-2 project has loaded you will see the following:</p>
+<figure class="align-default">
+<img alt="Project loaded in RasCAL-2" src="../_images/rascal_project_opened.png" />
+</figure>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>Rearrange the different windows in the software as you see fit</p>
+</div>
+<p>The first thing you will notice is that the real and model reflectivity data is not on the same scale, i.e. the scale
+factor is incorrect. There are similarities and differences between the model data (line) and the experimental
+reflectivity data (error bars). Specifically, the critical edge of the reflection is in the same position in both
+and while the general decay of the model data intensity against momentum transfer (<span class="math notranslate nohighlight">\(Q_z\)</span>) and the background
+do not match the experimental data.</p>
+<p>Therefore, we begin fitting by setting the correct experimental parameters.</p>
+<ol class="arabic simple">
+<li><p>On the model building window click on the tab labelled <strong>Experimental Parameters</strong>.</p></li>
+<li><p>Next correctly scale the data using the <strong>scale factor</strong> (do this so the model and data critical edges meet) and
+then set the <strong>Background</strong> for the sample (the flat region in the high <span class="math notranslate nohighlight">\(Q_z\)</span> regime). If you want you can
+fit these parameters by ticking the fit box against each parameter, selecting simplex in Fittings Controls and
+clicking on the <strong>Run</strong> button.</p></li>
+<li><p>Once these are set fit the substrate roughness (the roughness between the bulk interfaces) to gain an approximate
+fit of the data. You will notice you get a good fit to the experimental reflectivity data producing a reflectivity
+profile with a defined step function.</p></li>
+<li><p>However, the roughness will be artificially high as the model does not accurately portray the interfacial structure.
+The silicon substrate will have a thin (~10 <span class="math notranslate nohighlight">\(\mathring{A}\)</span>) silicon dioxide layer on the surface. We will now
+add this layer by editing the model.</p></li>
+</ol>
+<p><strong>Adding an interfacial layer</strong></p>
+<ol class="arabic">
+<li><p>Click <strong>Edit Project</strong> on the Project window and you will now be able to edit the model window:</p>
+<figure class="align-default">
+<img alt="Editing the tutorial project" src="../_images/edit_rascal_project.png" />
+</figure>
+</li>
+<li><p>Click on the parameters tab and add the following four parameters with the following bounds:</p>
+<figure class="align-default">
+<img alt="Add parameters to the tutorial project" src="../_images/add_parameters_to_project.png" />
+</figure>
+<p>Set the value, lower and upper bounds for each parameter as shown below. These parameters will be fitted except
+for <strong>SiO2 SLD</strong> so un-tick the fit box for this.</p>
+<div class="line-block">
+<div class="line"><strong>SiO2 Thickness</strong>: lower = 0 <span class="math notranslate nohighlight">\(\mathring{A}\)</span>, value = 10 <span class="math notranslate nohighlight">\(\mathring{A}\)</span>, upper = 25 <span class="math notranslate nohighlight">\(\mathring{A}\)</span></div>
+<div class="line"><strong>SiO2 Roughness</strong>: lower = 0 <span class="math notranslate nohighlight">\(\mathring{A}\)</span>, value = 3 <span class="math notranslate nohighlight">\(\mathring{A}\)</span>, upper = 7 <span class="math notranslate nohighlight">\(\mathring{A}\)</span></div>
+<div class="line"><strong>SiO2 SLD</strong>: lower = 3.41e-6 <span class="math notranslate nohighlight">\(\mathring{A}\)</span>, value = 3.41e-6 <span class="math notranslate nohighlight">\(\mathring{A}\)</span>, upper = 3.5e-6 <span class="math notranslate nohighlight">\(\mathring{A}\)</span> and do not fit (untick the fit checkbox)</div>
+<div class="line"><strong>SiO2 Hydration</strong>: lower = 0%, value = 20%, upper = 30%</div>
+</div>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>The value must be set between these bounds before you start the fit.</p>
+</div>
+</li>
+<li><p>Next on the <strong>Layers</strong> tab <strong>Add New Layer</strong> and then populate the layer with each parameter in the correct place
+and naming the layer appropriately:</p>
+<figure class="align-default">
+<img alt="Add layer to the tutorial project" src="../_images/add_layer_to_project.png" />
+</figure>
+</li>
+<li><p>In the <strong>Contrasts</strong> tab select the only contrast (labelled <strong>Si D2O</strong>) and at the bottom of the tab add your layer
+to the model section between the <strong>Bulk in</strong> and <strong>Bulk out</strong>:</p>
+<figure class="align-default">
+<img alt="Update contrast in the tutorial project" src="../_images/update_contrast_in_project.png" />
+</figure>
+<p>Now click <strong>Accept Changes</strong> and the model should be updated with your new layer. Now rerun the fit.</p>
+</li>
+<li><p>You should now see that you have a new layer between the bulk phases which is rather ambiguous i.e. poorly described
+by the experimental data.</p>
+<div class="admonition-activity admonition">
+<p class="admonition-title">Activity</p>
+<p>Think about why this is ambiguous and what might help to better resolve this layer?</p>
+</div>
+</li>
+<li><p>Save the project to another folder <strong>File &gt; Save To Folder</strong> so it can be used in the next section.</p></li>
+</ol>
 </section>
 
 

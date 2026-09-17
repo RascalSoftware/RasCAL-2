@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>General Overview &#8212; RasCAL-2</title>
+    <title>3. Fitting a Custom Model of the Bilayer by Volume Fraction &#8212; RasCAL-2</title>
   
   
   
@@ -42,13 +42,14 @@
     <script src="../_static/documentation_options.js?v=3e6ca1ad"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'user/overview';</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorial/model_fitting_by_volume_fraction';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="icon" href="../_static/logo.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="User Interface" href="interface.html" />
-    <link rel="prev" title="User Guide" href="../guide.html" />
+    <link rel="next" title="4. Fitting a Custom Model of the Bilayer by Area per Molecule" href="model_fitting_by_area_per_molecule.html" />
+    <link rel="prev" title="2. Custom Model Fitting" href="custom_model_fitting.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="0.0.0" />
@@ -155,15 +156,15 @@
 </li>
 
 
-<li class="nav-item current active">
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../guide.html">
     User Guide
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../tutorial/index.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
     Tutorial
   </a>
 </li>
@@ -287,15 +288,15 @@
 </li>
 
 
-<li class="nav-item current active">
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../guide.html">
     User Guide
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../tutorial/index.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
     Tutorial
   </a>
 </li>
@@ -371,13 +372,15 @@
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
-  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">General Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="interface.html">User Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="control.html">Controls Window</a></li>
-<li class="toctree-l1"><a class="reference internal" href="plot.html">Plot Window</a></li>
-<li class="toctree-l1"><a class="reference internal" href="project.html">Project Window</a></li>
-<li class="toctree-l1"><a class="reference internal" href="terminal.html">Terminal Window</a></li>
+  <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
+</ul>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="silicon_water_interface.html">1. The Silicon-Water Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_model_fitting.html">2. Custom Model Fitting</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">3. Fitting a Custom Model of the Bilayer by Volume Fraction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_fitting_by_area_per_molecule.html">4. Fitting a Custom Model of the Bilayer by Area per Molecule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fitting_complex_membrane_structure.html">5. Fitting a Complex Protein-Bound Membrane Structure</a></li>
 </ul>
 </div>
 </nav></div>
@@ -419,9 +422,9 @@
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="../guide.html" class="nav-link">User Guide</a></li>
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Advanced Neutron Reflectometry Data Analysis for Soft Matter Systems</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">General Overview</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis"><span class="section-number">3. </span>Fitting a Custom Model of the Bilayer by Volume Fraction</span></li>
   </ul>
 </nav>
 </div>
@@ -438,8 +441,108 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="general-overview">
-<h1>General Overview<a class="headerlink" href="#general-overview" title="Link to this heading">#</a></h1>
+  <section id="fitting-a-custom-model-of-the-bilayer-by-volume-fraction">
+<h1><span class="section-number">3. </span>Fitting a Custom Model of the Bilayer by Volume Fraction<a class="headerlink" href="#fitting-a-custom-model-of-the-bilayer-by-volume-fraction" title="Link to this heading">#</a></h1>
+<p>We will now create a custom model of the interfacial structure coated with a
+1,2-dimyristoyl-sn-glycero-3-phosphocholine (DMPC) bilayer and fit the experimental reflectometry data. Starting with
+the project you have created in part two, using the skills you’ve learned you will create a custom model to resolve
+the structure of the supported lipid bilayer.</p>
+<p>Below is an example of the encoding and decoding of the structure of a DMPC bilayer at the solid-liquid interface by
+neutron reflectometry. Two solution isotopic contrasts (D<sub>2</sub>O; red, and H<sub>2</sub>O; blue, C) are used to resolve the
+scattering length density (SLD) profiles (D) across the surface. The resolved structural parameters are ultimately
+used to resolve the component volume fraction vs. distance profile across the surface:</p>
+<figure class="align-default">
+<img alt="Illustration of structure of DMPC bilayer" src="../_images/dmpc_bilayer.png" />
+</figure>
+<p>The simultaneous fitting of these same two solution isotopic contrast data sets (H<sub>2</sub>O and D<sub>2</sub>O) was used to resolve the
+interfacial lipid bilayer structure here, which will be constrained against the data for the Si Interface only. You
+will be doing the same thing in RasCal 2 but with more data!
+To test your fitting skills</p>
+<ol class="arabic">
+<li><p>Let’s start by setting up the DMPC contrasts and fitting parameters.</p></li>
+<li><p>Edit the project and in the Data tab add for the DMPC supported lipid bilayer. This is found in the
+<strong>RasCal 2 Practical Student/DMPC data named</strong> folder as <strong>Si_DMPC_D2O.dat</strong>, <strong>Si_DMPC_SMW.dat</strong>,
+and <strong>Si_DMPC_H2O.dat</strong>.</p></li>
+<li><p>You will note that there are three data sets here under three solution isotopic contrast conditions. D<sub>2</sub>O and H<sub>2</sub>O
+are the same as for our previously fitted Si surface contrasts but we have an additional contrast called SMW. This
+is silicon matched water (38% D<sub>2</sub>O and 62% H<sub>2</sub>O). This additional contrast provides additional constraint for our
+model fitting.</p></li>
+<li><p>Add a background for the SMW contrast (like you did previously for the H<sub>2</sub>O contrast).</p></li>
+<li><p>Add a new bulk out for the SMW contrast with a value of <span class="math notranslate nohighlight">\(2.07\text{e-6}\mathring{A}^{-2}\)</span>. Set a min and a max
+around this.</p></li>
+<li><p>Next we want to start building a model of the DMPC interfacial structure.</p></li>
+<li><p>In do this we identify our “knowns” and “unknowns”. We know the scattering length densities of the DMPC headgroups
+and tails:</p>
+<div class="math notranslate nohighlight">
+\[Tails = -0.39 \times 10^{-6}\mathring{A}^{-2}\]</div>
+<div class="math notranslate nohighlight">
+\[\text{Head groups} = 1.98 \times 10^{-6}\mathring{A}^{-2}\]</div>
+<p>But this only takes into account a situation where the layer is composed of a single component only. The DMPC
+bilayer, like the SiO<sub>2</sub> layer is immersed in solution and therefore hydrating water is present in the head groups
+and potentially in the tails if the bilayer has defects, therefore we should fit two hydration parameters (heads and
+tails) to experimentally resolve these unknowns.
+Additionally we should fit the tails thickness, headgroup thickness, and a single bilayer roughness parameter (to
+account for undulations across the bilayer). Add these to the <strong>Parameters</strong> tab using the bounds shown below.</p>
+<figure class="align-default">
+<img alt="DMPC bilayer project parameters" src="../_images/dmpc_bilayer_project_parameters.png" />
+</figure>
+</li>
+<li><p>Now we need to edit the custom model to add the DMPC bilayer structure. Go to the General tab and click Edit. Now
+edit the custom model script to add the new unknown parameters and the known parameters. Define layers for the
+headgroups and tails of the bilayer and create two new contrast cases both with silicon oxide layers but
+additionally with a bilayer layers across the interface as well (Headgroup; Tails; Headgroup).</p></li>
+</ol>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>How to construct your bilayer parameters.</p>
+<p>To complete this assignment you need to describe a structure across the interface for three data sets from a DMPC
+coated silicon surface which is composed of the following layers:</p>
+<p>([oxide, Head, Tail, Head])</p>
+</div>
+<p>Below is an example of this done with one Headgroup and SiO<sub>2</sub> layers only as a guide:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">custom_model</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">bulk_in</span><span class="p">,</span> <span class="n">bulk_out</span><span class="p">,</span> <span class="n">contrast</span><span class="p">):</span>
+
+    <span class="c1"># Fitted parameters i.e. unknowns</span>
+    <span class="n">sub_rough</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">oxide_thick</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">oxide_roughness</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">oxide_hydration</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">Bilayer_roughness</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+    <span class="n">Headgroup_thickness</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+    <span class="n">Headgroup_hydration</span> <span class="o">=</span> <span class="n">params</span> <span class="p">[</span><span class="mi">6</span><span class="p">]</span>
+    <span class="n">Tails_thickness</span> <span class="o">=</span> <span class="n">params</span> <span class="p">[</span><span class="mi">7</span><span class="p">]</span>
+    <span class="n">Tails_hydration</span> <span class="o">=</span> <span class="n">params</span> <span class="p">[</span><span class="mi">8</span><span class="p">]</span>
+
+    <span class="c1"># knowns</span>
+    <span class="n">oxide_SLD</span> <span class="o">=</span> <span class="mf">3.41e-6</span>
+    <span class="n">DMPC_Heads_SLD</span> <span class="o">=</span> <span class="mf">1.98e-6</span>
+
+    <span class="c1"># Make the layers</span>
+    <span class="n">oxide</span> <span class="o">=</span> <span class="p">[</span><span class="n">oxide_thick</span><span class="p">,</span> <span class="n">oxide_SLD</span><span class="p">,</span> <span class="n">oxide_roughness</span><span class="p">,</span> <span class="n">oxide_hydration</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">Heads</span> <span class="o">=</span> <span class="p">[</span><span class="n">Headgroup_thickness</span><span class="p">,</span> <span class="n">DMPC_Heads_SLD</span><span class="p">,</span> <span class="n">Bilayer_roughness</span><span class="p">,</span> <span class="n">Headgroup_hydration</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+
+    <span class="c1"># Match the layer stack to the contrast list in RasCal 2</span>
+    <span class="k">match</span> <span class="n">contrast</span><span class="p">:</span>
+        <span class="k">case</span> <span class="mi">1</span> <span class="o">|</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">oxide</span><span class="p">])</span>
+        <span class="k">case</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">oxide</span><span class="p">,</span> <span class="n">Heads</span><span class="p">])</span>
+        <span class="k">case</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">oxide</span><span class="p">,</span> <span class="n">Heads</span><span class="p">])</span>
+        <span class="k">case</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">oxide</span><span class="p">,</span> <span class="n">Heads</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">sub_rough</span>
+</pre></div>
+</div>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>Parameter names in the RasCal custom model cannot have spaces between words while in the RasCal GUI
+parameter list they can.</p>
+</div>
+<p>Once you have added the new data sets and updated the custom model compile your new script by saving the script and
+clicking <strong>Accept changes</strong> in the project window. It will not compile if there are errors. You should now see three
+additional NR data sets appear in the Plots window. Run a simplex fit to resolve the structure of the DMPC coated
+silicon surface.</p>
 </section>
 
 

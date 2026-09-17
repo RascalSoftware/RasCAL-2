@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>General Overview &#8212; RasCAL-2</title>
+    <title>2. Custom Model Fitting &#8212; RasCAL-2</title>
   
   
   
@@ -42,13 +42,13 @@
     <script src="../_static/documentation_options.js?v=3e6ca1ad"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'user/overview';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorial/custom_model_fitting';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="icon" href="../_static/logo.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="User Interface" href="interface.html" />
-    <link rel="prev" title="User Guide" href="../guide.html" />
+    <link rel="next" title="3. Fitting a Custom Model of the Bilayer by Volume Fraction" href="model_fitting_by_volume_fraction.html" />
+    <link rel="prev" title="1. The Silicon-Water Interface" href="silicon_water_interface.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="0.0.0" />
@@ -155,15 +155,15 @@
 </li>
 
 
-<li class="nav-item current active">
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../guide.html">
     User Guide
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../tutorial/index.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
     Tutorial
   </a>
 </li>
@@ -287,15 +287,15 @@
 </li>
 
 
-<li class="nav-item current active">
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../guide.html">
     User Guide
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../tutorial/index.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
     Tutorial
   </a>
 </li>
@@ -371,13 +371,15 @@
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
-  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">General Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="interface.html">User Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="control.html">Controls Window</a></li>
-<li class="toctree-l1"><a class="reference internal" href="plot.html">Plot Window</a></li>
-<li class="toctree-l1"><a class="reference internal" href="project.html">Project Window</a></li>
-<li class="toctree-l1"><a class="reference internal" href="terminal.html">Terminal Window</a></li>
+  <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
+</ul>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="silicon_water_interface.html">1. The Silicon-Water Interface</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">2. Custom Model Fitting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_fitting_by_volume_fraction.html">3. Fitting a Custom Model of the Bilayer by Volume Fraction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_fitting_by_area_per_molecule.html">4. Fitting a Custom Model of the Bilayer by Area per Molecule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fitting_complex_membrane_structure.html">5. Fitting a Complex Protein-Bound Membrane Structure</a></li>
 </ul>
 </div>
 </nav></div>
@@ -419,9 +421,9 @@
       </a>
     </li>
     
-    <li class="breadcrumb-item"><a href="../guide.html" class="nav-link">User Guide</a></li>
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Advanced Neutron Reflectometry Data Analysis for Soft Matter Systems</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">General Overview</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis"><span class="section-number">2. </span>Custom Model Fitting</span></li>
   </ul>
 </nav>
 </div>
@@ -438,8 +440,106 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="general-overview">
-<h1>General Overview<a class="headerlink" href="#general-overview" title="Link to this heading">#</a></h1>
+  <section id="custom-model-fitting">
+<h1><span class="section-number">2. </span>Custom Model Fitting<a class="headerlink" href="#custom-model-fitting" title="Link to this heading">#</a></h1>
+<p>Using RasCals GUI is an easy way to begin fitting NR data but the real flexibility in the software comes from using the
+custom model approach where the fit is defined using a script (i.e. a short piece of code).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This tutorial uses the RasCAL-2 project saved at the end of the
+<a class="reference internal" href="silicon_water_interface.html#silicon-water-interface"><span class="std std-ref">Silicon-Water Interface</span></a> tutorial.</p>
+</div>
+<p>We will start our journey into scripted modelling by fitting a predefined Custom model of the Silicon-D2O interface we
+have already fitted.</p>
+<ol class="arabic">
+<li><p>Edit the project and delete the parameter for the <strong>SiO2 SLD</strong> from the parameters table.</p></li>
+<li><p>On the <strong>Model Type</strong>: change from <strong>standard layers</strong> to <strong>custom layers</strong>.</p></li>
+<li><p>You will note a new tab in the model called <strong>Custom Files</strong> has appeared. Navigate to this tab.</p>
+<figure class="align-default">
+<img alt="RasCAL-2 Custom Files Tab" src="../_images/custom_files_tab.png" />
+</figure>
+</li>
+<li><p>Click on <strong>Add new Custom File</strong>. A new entry will be added to the Custom File table. Change the
+filename of that entry by double clicking on the cell, then navigate to the <strong>RasCal 2 Practical Student/DMPC data named/Custom models</strong>
+folder and select the python script called custom_model.py.</p></li>
+<li><p>Change the entry name in the Custom Files list to <strong>Custom_model</strong>.</p></li>
+<li><p>Click on <strong>Edit File</strong>.
+A script editor window will appear showing you the code which makes up the custom model. The script is a sequential
+description of individual parameters, how these parameters relate to the interfacial layers and how those layers are
+structured between the bulk phases. The simple script for the silicon water interface is given below with an
+explanation of its structure:</p>
+<figure class="align-default">
+<img alt="Structure of Custom Function" src="../_images/custom_function_structure.png" />
+</figure>
+</li>
+<li><p>Click <strong>Save</strong> on the script editor and go back into RasCAL.</p></li>
+<li><p>On the <strong>Contrasts</strong> Tab select your only contrast (<strong>Si D2O</strong>) and for the Model, select <strong>Custom_model</strong>.</p></li>
+<li><p>In the <strong>Parameters</strong> Tab, delete the parameters which do not appear in the model script.</p></li>
+<li><p>Click <strong>Accept Changes</strong> in the project window.</p></li>
+<li><p>Refit the data. You will note that the fit should be fairly identical to what we have found previously.</p></li>
+<li><p>We will now add an additional contrast to enable a more precise resolution of the surface structure.</p></li>
+<li><p>Click <strong>Edit Project</strong>: in the <strong>Experimental Parameters</strong> Tab, navigate to the bottom and click
+<strong>Add new Bulk Out</strong>.</p></li>
+</ol>
+<blockquote>
+<div><figure class="align-default">
+<img alt="Adding Bulk Out in the Experimental Parameters Tab" src="../_images/adding_bulk_out.png" />
+</figure>
+</div></blockquote>
+<ol class="arabic simple" start="14">
+<li><p>Name this new solvent <strong>SLD H2O</strong> and set a <strong>Min</strong> value to <strong>-0.6e-6</strong>, a <strong>Value</strong> to <strong>-0.56e-6</strong> and
+a <strong>Max</strong> to <strong>-0.4e-6</strong>.</p></li>
+<li><p>Click on the <strong>Data</strong> tab and add (+) an additional data set. In the file dialog, navigate to the
+<strong>RasCal 2 Practical Student/DMPC data named</strong> folder and select the data set “Si_H2O.dat” and select open.</p></li>
+</ol>
+<blockquote>
+<div><figure class="align-default">
+<img alt="Adding a Dataset in the Data Tab" src="../_images/adding_dataset.png" />
+</figure>
+</div></blockquote>
+<ol class="arabic simple" start="16">
+<li><p>Now navigate to the <strong>Contrasts</strong> tab and add a new contrast (+).</p></li>
+<li><p>Name that contrast <strong>Si H2O</strong>. You will now need to select the experimental parameters for this background. The
+incoherent scattering of H2O is significant higher than that of D2O due to the high incoherent scattering length
+of protium compared to deuterium. Therefore we expect the background in H2O to be higher than in D2O and therefore
+need a dedicated parameter for this for the H2O contrast.</p></li>
+<li><p>Go to the <strong>Backgrounds</strong> tab. Add a new Background Parameter called <strong>Background Param 2</strong> then Add a new
+Background called <strong>Background 2</strong>, select <strong>Background Param 2</strong> as the Source for this.</p></li>
+</ol>
+<blockquote>
+<div><figure class="align-default">
+<img alt="Adding a Background Parameter in the Background Tab" src="../_images/adding_background_parameter.png" />
+</figure>
+</div></blockquote>
+<ol class="arabic simple" start="19">
+<li><p>Go back to the <strong>Contrasts</strong> Tab and select the experimental parameters for the <strong>Si H2O</strong> contrast.</p></li>
+</ol>
+<blockquote>
+<div><div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>These will be the same as for the <strong>Si D2O</strong> contrast except the Data and the Background.</p>
+</div>
+<figure class="align-default">
+<img alt="Edit a Contrast in the Contrast Tab" src="../_images/editing_contrast.png" />
+</figure>
+</div></blockquote>
+<ol class="arabic simple" start="20">
+<li><p>Set the <strong>Bulk in</strong> to be <strong>SLD Si</strong> and the <strong>Bulk out</strong> to be the SLD of H2O. The model is the custom model as
+with the <strong>Si D2O</strong> contrast, then <strong>Accept changes</strong> to the project.</p></li>
+<li><p>You should now see two contrasts in Plots windows, D2O and H2O solution contrasts, constrained to have the same
+structure across the Si/Solution interface. Run a fit to see if how the constraint of a second contrast changes
+in the fitted parameters:</p></li>
+</ol>
+<blockquote>
+<div><figure class="align-default">
+<img alt="Plot showing two contrasts" src="../_images/plot_with_two_contrasts.png" />
+</figure>
+<p>You have now set up a custom model and simultaneously fitted multiple reflectivity data sets under differing solution
+isotopic contrasts to accurately resolve an interfacial structure.</p>
+</div></blockquote>
+<ol class="arabic simple" start="22">
+<li><p>Save the project to another folder <strong>File &gt; Save To Folder</strong> so it can be used in the next section.</p></li>
+</ol>
 </section>
 
 

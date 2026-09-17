@@ -1,0 +1,676 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>4. Fitting a Custom Model of the Bilayer by Area per Molecule &#8212; RasCAL-2</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=cea94281" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=cb8930eaaf36d9849b67"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
+
+    <script src="../_static/documentation_options.js?v=3e6ca1ad"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorial/model_fitting_by_area_per_molecule';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="icon" href="../_static/logo.png"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="5. Fitting a Complex Protein-Bound Membrane Structure" href="fitting_complex_membrane_structure.html" />
+    <link rel="prev" title="3. Fitting a Custom Model of the Bilayer by Volume Fraction" href="model_fitting_by_volume_fraction.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.0.0" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo.png" class="logo__image only-light" alt=""/>
+    <img src="../_static/logo.png" class="logo__image only-dark pst-js-only" alt=""/>
+  
+  
+    <p class="title logo__title">RasCAL-2</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../index.html">
+    Home
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guide.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorial
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../example.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../dev.html">
+    Developer Guide
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/RascalSoftware/RasCAL-2" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../index.html">
+    Home
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../install.html">
+    Installation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../guide.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorial
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../example.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../dev.html">
+    Developer Guide
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/RascalSoftware/RasCAL-2" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Introduction</a></li>
+</ul>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="silicon_water_interface.html">1. The Silicon-Water Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_model_fitting.html">2. Custom Model Fitting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_fitting_by_volume_fraction.html">3. Fitting a Custom Model of the Bilayer by Volume Fraction</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">4. Fitting a Custom Model of the Bilayer by Area per Molecule</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fitting_complex_membrane_structure.html">5. Fitting a Complex Protein-Bound Membrane Structure</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Advanced Neutron Reflectometry Data Analysis for Soft Matter Systems</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis"><span class="section-number">4. </span>Fitting a Custom Model of the Bilayer by Area per Molecule</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="fitting-a-custom-model-of-the-bilayer-by-area-per-molecule">
+<h1><span class="section-number">4. </span>Fitting a Custom Model of the Bilayer by Area per Molecule<a class="headerlink" href="#fitting-a-custom-model-of-the-bilayer-by-area-per-molecule" title="Link to this heading">#</a></h1>
+<p>In the previous section different layers arising from the same molecular species are fitted in an unconstrained manner.
+This can cause some ambiguity in the analysis as there can be differing total molar amounts of head and tail components
+in the resolved structural data.</p>
+<p>A better approach is to couple these parameters together using a known shared parameter. In most cases this will be
+area of the surface occupied by the molecule (i.e. Area Per Molecule). As each lipid head and tail, being a part of the
+same molecule, will occupy the same 2-dimensional area of the sample surface. This area will be related to the
+thickness of the sample by:</p>
+<div class="math notranslate nohighlight">
+\[\text{Occupied Surface Area} = \frac{\text{Component Volume}}{\text{Layer Thickness}}\]</div>
+<p>The volume of the tail and head groups are linked to the sum of the atomic volumes which make up the molecule and
+therefore will not change (within a given phase). The thickness is inversely correlated to the area per molecule and
+therefore only a single parameter for both the head and tail groups needs to be fitted, that is the area per molecule
+at the surface. Below is a diagrammatic representation of this concept:</p>
+<figure class="align-default">
+<img alt="Illustration of area per molecule change" src="../_images/area_per_molecule.png" />
+</figure>
+<p>In the example we will use the molecular volumes of the head and tail components of DMPC to construct a model which
+fits the bilayer at the silicon water interface by four parameters only. That is, the area per molecule, the total
+bilayer hydration (i.e. presence of defects across the surface) and the headgroup hydration (i.e. water bound to the
+hydrophilic headgroups) and bilayer roughness.</p>
+<p>For this section of the practical you will edit a custom area per molecule model, completing parts of the code which
+are missing.</p>
+<p><strong>Starting the project</strong></p>
+<p>In RasCAL-2, click on <strong>Import Existing Project</strong> and browse to the tutorial data folder named
+<strong>Rascal 2 Practical Student</strong> and select the folder named <strong>Part 4 Scripted APM bilayer</strong> and select open,
+then click the Load button</p>
+<p>You will see five sets of data, Contrasts 1, 2 describe the SiO2 layer at the interface only, while 3, 4 and 5 describe
+the same surface coated with a DMPC supported lipid bilayer in D2O, SMW and H2O solution respectively. Currently
+however, the model does not describe the DMPC bilayer structure. You will need to add this!</p>
+<p>The relationship between layer thickness, component volume and area per molecule is:</p>
+<div class="math notranslate nohighlight">
+\[Thickness = \frac{Volume}{\text{Area Per Molecule}}\]</div>
+<p>And component volume, scattering length and scattering length density is:</p>
+<div class="math notranslate nohighlight">
+\[SLD (\rho) = \frac{\sum b}{Volume}\]</div>
+<p>The volume and the scattering lengths (<span class="math notranslate nohighlight">\(\sum b\)</span>) of each of the interfacial components are known. By fitting the experimental
+reflectivity data we can determine the interfacial lipid area per molecule and layer thicknesses.</p>
+<p>The SLD of the lipid headgroups and tails can be calculated using priori information, using this, the solution is
+present in each of the headgroup and tail regions of the bilayer can be determined.</p>
+<p>There is a differential in solution content within the headgroups and tails. As the tails will only have water content
+through defects while the headgroups have hydration waters as well as water present due to defects. The model built
+during this part of the exercise will discriminate between these hydration types.</p>
+<p>Edit the model and then edit the custom model i.e. Click <strong>Edit Project</strong>, navigate to the <strong>Custom Files</strong> tab and click Edit File.
+You will find the following incomplete code to describe the interfacial layer structure:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="k">def</span> <span class="nf">custom_bilayer_DMPC</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">bulk_in</span><span class="p">,</span> <span class="n">bulk_out</span><span class="p">,</span> <span class="n">contrast</span><span class="p">):</span>
+
+    <span class="c1">## Parameters to Fit</span>
+    <span class="n">sub_rough</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">oxide_thick</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">oxide_hydration</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">HG_bound_waters</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+    <span class="c1">#DMPC_APM = params[4]</span>
+    <span class="c1">#Bilayer_roughness = params[5]</span>
+    <span class="c1">#Bilayer_hydration = params[6]</span>
+
+    <span class="c1">## We have a constant SLD for the bilayer</span>
+    <span class="n">oxide_SLD</span> <span class="o">=</span> <span class="mf">3.41e-6</span>
+
+    <span class="c1">## Known Volume in Angstrom cubed</span>
+    <span class="n">DMPC_HG_Volume</span> <span class="o">=</span> <span class="mf">320.9</span>
+    <span class="n">DMPC_Tails_Volume</span> <span class="o">=</span> <span class="mf">783.3</span>
+    <span class="n">Water_Volume</span> <span class="o">=</span> <span class="mf">30.4</span>
+
+    <span class="c1">##Known Scattering Lengths</span>
+    <span class="n">DMPC_HG_SL</span> <span class="o">=</span> <span class="mf">6.41e-4</span>
+    <span class="n">DMPC_Tails_SL</span> <span class="o">=</span> <span class="o">-</span><span class="mf">3.08e-4</span>
+    <span class="n">H2O_SL</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.4e-5</span>
+    <span class="n">D2O_SL</span> <span class="o">=</span> <span class="mf">2e-4</span>
+
+    <span class="c1">## Relate HG Bound Waters to SL and Volume</span>
+    <span class="n">HG_Waters_D2O_SL</span> <span class="o">=</span> <span class="n">HG_bound_waters</span> <span class="o">*</span> <span class="n">D2O_SL</span>
+    <span class="n">HG_Waters_H2O_SL</span> <span class="o">=</span> <span class="n">HG_bound_waters</span> <span class="o">*</span> <span class="n">H2O_SL</span>
+
+    <span class="n">Headgroup_water_volume</span> <span class="o">=</span> <span class="n">HG_bound_waters</span> <span class="o">*</span> <span class="n">Water_Volume</span>
+
+    <span class="c1">## Add to HG volumes, SLs and Calculate nSLD</span>
+
+    <span class="c1">#Volume_HG = ? + ? ##The headgroup volume plus the water volume</span>
+
+    <span class="c1">#DMPC_HG_SL_D2O = ? + ? ##Clue it’s the same as before but with the water added</span>
+    <span class="c1">#DMPC_HG_SL_H2O = ? + ?</span>
+
+    <span class="c1">#SLD_HG_D2O = DMPC_HG_SL_D2O/Volume_HG</span>
+    <span class="c1">#SLD_HG_H2O = DMPC_HG_SL_H2O/Volume_HG</span>
+    <span class="c1">#SLD_HG_SMW = (0.38 * SLD_HG_D2O) + (0.62 * SLD_HG_H2O)</span>
+
+    <span class="c1">#Tails_SLD = DMPC_Tails_SL/DMPC_Tails_Volume</span>
+
+    <span class="c1">## Thicknesses</span>
+    <span class="c1">## Calculate the thickness from the HG volume over the lipid Area per</span>
+    <span class="c1">## molecule</span>
+
+    <span class="c1">#Headgroup_thickness = Volume_HG/DMPC_APM</span>
+    <span class="c1">#Tails_thickness = DMPC_Tails_Volume/DMPC_APM</span>
+
+    <span class="c1">## Now construct your layers adding in a single roughness parameter and a</span>
+    <span class="c1">## parameter for defects (hydration)</span>
+
+    <span class="n">oxide</span> <span class="o">=</span> <span class="p">[</span><span class="n">oxide_thick</span><span class="p">,</span> <span class="n">oxide_SLD</span><span class="p">,</span> <span class="n">sub_rough</span><span class="p">,</span> <span class="n">oxide_hydration</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="c1">#Head_D2O = [?, ?, ?, ?, 2]</span>
+    <span class="c1">#Head_H2O = [?, ?, ?, ?, 2]</span>
+    <span class="c1">#Head_SMW = [?, ?, ?, ?, 2]</span>
+    <span class="c1">#Tail = [?, ?, ?, ?, 2]</span>
+
+    <span class="c1">## Add your layer defined above to the layer stack</span>
+    <span class="k">match</span> <span class="n">contrast</span><span class="p">:</span>
+        <span class="k">case</span> <span class="mi">1</span> <span class="o">|</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">oxide</span><span class="p">])</span>
+        <span class="k">case</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">oxide</span><span class="p">])</span>
+        <span class="k">case</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">oxide</span><span class="p">])</span>
+        <span class="k">case</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">oxide</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">sub_rough</span>
+</pre></div>
+</div>
+<p>In this code you will notice there are single commented lines (#) and double commented (##) lines. The double commented
+lines are notes and hints while the single commented lines are the lines of code you must complete by the replacing the
+questions marks (?) with the correct information.</p>
+<p>The parameters you wish to fit are commented out in the parameters section of the code. These are:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">HG_bound_waters</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+<span class="n">DMPC_APM</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+<span class="n">Bilayer_roughness</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+<span class="n">Bilayer_hydration</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>These also need to be added to the parameter list in RasCal. Suitable parameter ranges for these are:</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line"><strong>HG_bound_waters</strong>: lower = 0 waters, upper = 10 waters.</div>
+<div class="line"><strong>DMPC_AreaPerMolecule</strong>: lower = 0 <span class="math notranslate nohighlight">\(\mathring{A}`2, Upper = 100 :math:\)</span>mathring{A}`2.</div>
+<div class="line"><strong>Bilayer_roughness</strong>: lower = 2 <span class="math notranslate nohighlight">\(\mathring{A}\)</span>, upper = 10 <span class="math notranslate nohighlight">\(\mathring{A}\)</span>.</div>
+<div class="line"><strong>Bilayer_hydration</strong>: lower = 0%, upper = 100%.</div>
+</div>
+</div></blockquote>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>Add these parameters to the list in RasCal</p>
+</div>
+<p>The code below the fitted parameters details the relationship between these parameters and the parameters which define
+the layers i.e. the layer parameters SLD, thickness, roughness and hydration.</p>
+<p>Once you have uncommented and placed the correct info in all the lines of code you must add the bilayer structure to
+cases 3, 4 and 5.</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>Input the following layer structure in contrast (Case) 2 and 3 once you have determined the relationship
+between area per molecule, thickness and SLD and defined your layers:</p>
+</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">Case</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="p">([</span><span class="n">Oxide</span><span class="p">,</span> <span class="n">HEADFGROUP_D2O</span><span class="p">,</span> <span class="n">TAIL</span><span class="p">,</span> <span class="n">TAIL</span><span class="p">,</span> <span class="n">HEADGROUP_D2O</span><span class="p">])</span>
+<span class="n">Case</span> <span class="mi">4</span><span class="p">:</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="p">([</span><span class="n">Oxide</span><span class="p">,</span> <span class="n">HEADFGROUP_SMW</span><span class="p">,</span> <span class="n">TAIL</span><span class="p">,</span> <span class="n">TAIL</span><span class="p">,</span> <span class="n">HEADGROUP_SMW</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Here we define the tails as two layers rather than a single layer (as was done previously).</p>
+</div>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024-2026, ISIS Neutron and Muon Source.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.21.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
