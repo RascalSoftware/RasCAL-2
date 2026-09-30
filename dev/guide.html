@@ -30,7 +30,7 @@
 <link href="_static/styles/pydata-sphinx-theme.css?digest=64cc4de3f052d77215f0" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=65d8cd31" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=e2ca4c1b" />
   
   <!-- So that users can add custom icons -->
   <script defer src="_static/scripts/fontawesome.js?digest=64cc4de3f052d77215f0"></script>
@@ -46,7 +46,7 @@
     <link rel="icon" href="_static/logo.png"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="General Overview" href="user/overview.html" />
+    <link rel="next" title="User Interface" href="user/interface.html" />
     <link rel="prev" title="Installation" href="install.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -371,8 +371,8 @@
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="user/overview.html">General Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user/interface.html">User Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/structure.html">Project Structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user/control.html">Controls Window</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user/plot.html">Plot Window</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="user/project.html">Project Window</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -388,6 +388,8 @@
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="user/terminal.html">Terminal Window</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/features.html">Other Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/settings.html">Settings</a></li>
 </ul>
 </div>
 </nav></div>
@@ -447,16 +449,54 @@
                   
   <section id="user-guide">
 <h1>User Guide<a class="headerlink" href="#user-guide" title="Link to this heading">#</a></h1>
+<p>RasCAL-2 is available for windows, linux, and macOS. Follow the instructions on the <a class="reference internal" href="install.html"><span class="doc">Installation</span></a> page to install and
+start the software on your system. The following pages describe the user interface and features of RasCAL-2.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="user/overview.html">General Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user/interface.html">User Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/structure.html">Project Structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user/control.html">Controls Window</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user/plot.html">Plot Window</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user/project.html">Project Window</a></li>
 <li class="toctree-l1"><a class="reference internal" href="user/terminal.html">Terminal Window</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/features.html">Other Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/settings.html">Settings</a></li>
 </ul>
 </div>
+<section id="check-for-rascal-2-updates">
+<h2>Check for RasCAL-2 Updates<a class="headerlink" href="#check-for-rascal-2-updates" title="Link to this heading">#</a></h2>
+<p>RasCAL-2 automatically checks for updates when the software is opened. You can manually check for update by clicking
+<strong>Help &gt; Check for Update</strong> in the main menu</p>
+<p>After an update check, the software will notify the user if a new release is available and provide a hyperlink to
+download the installer for the new version.</p>
+<a class="reference internal image-reference" href="_images/update_dialog.png"><img alt="Update Dialog showing Successful Check" class="align-center" height="230" src="_images/update_dialog.png" width="402" />
+</a>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You can also stop the automatic update checks by unchecking the <strong>Check for updates on startup</strong> checkbox.</p>
+</div>
+</section>
+<section id="report-issues">
+<h2>Report Issues<a class="headerlink" href="#report-issues" title="Link to this heading">#</a></h2>
+<p>When reporting a bug or crash, it is important to report the version of RasCAL-2 and provide the software logs so it is
+easier to replicate and fix the issue. These information are present in the about dialog which can be opened by clicking
+<strong>Help &gt; About</strong> in the main menu.</p>
+<a class="reference internal image-reference" href="_images/about_dialog.png"><img alt="About Dialog" class="align-center" height="410" src="_images/about_dialog.png" width="752" />
+</a>
+</section>
+<section id="exiting-rascal-2">
+<h2>Exiting RasCAL-2<a class="headerlink" href="#exiting-rascal-2" title="Link to this heading">#</a></h2>
+<p>RasCAL-2 can be closed by clicking the <strong>File &gt; Exit</strong> on the main menu in the software. If the current rasCAL-2 project
+has been modified or has unsaved results, a message will pop up to prompt saving the Project. Press the <strong>Save</strong> button
+to specify saving the project, the <strong>Discard</strong> button to specify not saving the project, or Cancel to abort the
+operation and return to the software.</p>
+<a class="reference internal image-reference" href="_images/unsaved_changes_dialog.png"><img alt="Unsaved Changes Dialog" class="align-center" height="142" src="_images/unsaved_changes_dialog.png" width="418" />
+</a>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This dialog could look slightly different on linux or macOS.</p>
+</div>
+</section>
 </section>
 
 

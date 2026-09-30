@@ -30,7 +30,7 @@
 <link href="../_static/styles/pydata-sphinx-theme.css?digest=64cc4de3f052d77215f0" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=65d8cd31" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e2ca4c1b" />
   
   <!-- So that users can add custom icons -->
   <script defer src="../_static/scripts/fontawesome.js?digest=64cc4de3f052d77215f0"></script>
@@ -46,8 +46,8 @@
     <link rel="icon" href="../_static/logo.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Controls Window" href="control.html" />
-    <link rel="prev" title="General Overview" href="overview.html" />
+    <link rel="next" title="Project Structure" href="structure.html" />
+    <link rel="prev" title="User Guide" href="../guide.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="0.0.0" />
@@ -371,8 +371,8 @@
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="overview.html">General Overview</a></li>
 <li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">User Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">Project Structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="control.html">Controls Window</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot.html">Plot Window</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="project.html">Project Window</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -388,6 +388,8 @@
 </ul>
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="terminal.html">Terminal Window</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Other Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
 </ul>
 </div>
 </nav></div>
@@ -450,6 +452,106 @@
                   
   <section id="user-interface">
 <h1>User Interface<a class="headerlink" href="#user-interface" title="Link to this heading">#</a></h1>
+<p>Starting the RasCAL-2 software would show a splash screen while the software is loading. When loading is complete,
+the startup screen will be shown.</p>
+<a class="reference internal image-reference" href="../_images/startup_screen.png"><img alt="RasCAL Startup Screen" class="align-center" height="510" src="../_images/startup_screen.png" width="800" />
+</a>
+<p>At the top of the startup screen is the title bar which will show the name of the software and the project name and
+path if a project is opened. Below the title bar is the menu bar and toolbar, which provides access to a number of
+operations. At the center of the screen are options for creating or loading a RasCAL project.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Some operating systems can change the location and look of title and menu bar.</p>
+</div>
+<section id="menus-and-toolbar">
+<h2>Menus and Toolbar<a class="headerlink" href="#menus-and-toolbar" title="Link to this heading">#</a></h2>
+<p>RasCAL-2 provides access to some actions in a menu bar under the tile bar. These actions are grouped into 5
+groups explained below. Clicking on a menu item will perform its associated action.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>On startup, some menu items like the <strong>Windows</strong> menu will be disabled. These menu items will be enabled
+after a project is created or loaded.</p>
+</div>
+<ol class="arabic simple">
+<li><dl class="simple">
+<dt><strong>File</strong></dt><dd><ul class="simple">
+<li><p><strong>New Project</strong>: Create a new project.</p></li>
+<li><p><strong>Open Project</strong>: Open a existing project or example project</p></li>
+<li><p><strong>Open RasCAL-1 Project</strong>: Open a RasCAL-1 project.</p></li>
+<li><p><strong>Save</strong>: Save changes to the current project.</p></li>
+<li><p><strong>Save To Folder</strong>: Save current project to another folder.</p></li>
+<li><p><strong>Export as Script</strong>: Export the project as a python script.</p></li>
+<li><p><strong>Export Fits</strong>: Export the results as CSV files.</p></li>
+<li><p><strong>Settings</strong>: Open the settings dialog.</p></li>
+<li><p><strong>Exit</strong>: Close the RasCAL application.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Edit</strong></dt><dd><ul class="simple">
+<li><p><strong>Undo</strong>: Undo the last action.</p></li>
+<li><p><strong>Redo</strong>: Redo the last undone action.</p></li>
+<li><p><strong>Undo History</strong>: View the action history.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Windows</strong></dt><dd><ul class="simple">
+<li><p><strong>Tile Windows</strong>: Arrange windows in a tile formation.</p></li>
+<li><p><strong>Reset to Default</strong>: Reset the windows locations and sizes to the user saved defaults.</p></li>
+<li><p><strong>Save Current Window Positions</strong>: Save the current positions and sizes of the windows as the user default.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Tools</strong></dt><dd><ul class="simple">
+<li><p><strong>Show Sliders/Hide Sliders</strong>: Show or hide slider view in the project window. see <a class="reference internal" href="project.html#about-sliders"><span class="std std-ref">Changing Fitted Parameter Values</span></a>.</p></li>
+<li><p><strong>Clear Terminal</strong>: Clears the text in the terminal window.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Help</strong></dt><dd><ul class="simple">
+<li><p><strong>Help</strong>: Open the documentation website in the browser.</p></li>
+<li><p><strong>Check for Update</strong>: Check online for new RasCAL-2 version.</p></li>
+<li><p><strong>About</strong>: Show information about RasCAL-2.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ol>
+<p>RasCAL-2 also provides access to some actions in a toolbar below the menu bar. The toolbar actions are <strong>New Project</strong>,
+<strong>Open Project</strong>, <strong>Save</strong>, <strong>Undo</strong>, <strong>Redo</strong>, <strong>Settings</strong>, and <strong>Help</strong>. Clicking on the appropriate icon in the
+toolbar will perform its associated action.</p>
+</section>
+<section id="window-management">
+<h2>Window Management<a class="headerlink" href="#window-management" title="Link to this heading">#</a></h2>
+<p>After creating or loading a project, the interface will display 4 sub-windows arranged by default in 2x2 irregular
+grid. The sub-windows are</p>
+<ul class="simple">
+<li><p>Plot window (top left)</p></li>
+<li><p>Project window (top right)</p></li>
+<li><p>Terminal window (bottom left)</p></li>
+<li><p>Controls window (bottom right)</p></li>
+</ul>
+<p>These sub-windows can be rearranged by clicking on the title bar of the sub-window and dragging the sub-window. The
+sub-window can also be resized, minimised and maximized similar to the main window. It can be useful to make a
+sub-window bigger or smaller to suit a workflow, after which the arrangement can be saved by clicking
+<strong>Windows &gt; Save Current Window Positions</strong> in the menu, this will make that arrangement the default and RasCAL will
+use that saved arrangement whenever the software is started.</p>
+<p>If you move a sub-window and want to revert back to you saved arrangement, click <strong>Windows &gt; Reset to Default</strong> in the
+menu. If you want to revert to the original arrangement, click <strong>Windows &gt; Tile Windows</strong> then click
+<strong>Windows &gt; Save Current Window Positions</strong> in the menu to save the arrangement.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The sub-windows cannot be dragged outside the boundary of the main software window but only within the
+centre area of the main window.</p>
+</div>
+</section>
 </section>
 
 

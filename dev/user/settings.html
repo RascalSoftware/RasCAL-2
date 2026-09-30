@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Terminal Window &#8212; RasCAL-2</title>
+    <title>Settings &#8212; RasCAL-2</title>
   
   
   
@@ -41,13 +41,13 @@
     <script src="../_static/documentation_options.js?v=3e6ca1ad"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'user/terminal';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user/settings';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="icon" href="../_static/logo.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Other Features" href="features.html" />
-    <link rel="prev" title="Contrasts" href="project/contrasts.html" />
+    <link rel="next" title="Advanced Neutron Reflectometry Data Analysis for Soft Matter Systems" href="../tutorial/index.html" />
+    <link rel="prev" title="Other Features" href="features.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="0.0.0" />
@@ -387,9 +387,9 @@
 <li class="toctree-l2"><a class="reference internal" href="project/contrasts.html">Contrasts</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Terminal Window</a></li>
+<li class="toctree-l1"><a class="reference internal" href="terminal.html">Terminal Window</a></li>
 <li class="toctree-l1"><a class="reference internal" href="features.html">Other Features</a></li>
-<li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
+<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Settings</a></li>
 </ul>
 </div>
 </nav></div>
@@ -433,7 +433,7 @@
     
     <li class="breadcrumb-item"><a href="../guide.html" class="nav-link">User Guide</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Terminal Window</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Settings</span></li>
   </ul>
 </nav>
 </div>
@@ -450,30 +450,49 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="terminal-window">
-<h1>Terminal Window<a class="headerlink" href="#terminal-window" title="Link to this heading">#</a></h1>
-<p>The terminal window displays fit status, error messages and other information to the user. Messages could
-be displayed when modifying a project, running a fit, or when an unexpected issue is encountered. The text
-in the terminal cannot be modified but can be selected and copied, the text will be cleared automatically when a
-new fit is started but can be cleared manually by clicking <em>Tools &gt; Clear Terminal</em> in the menu.</p>
-<a class="reference internal image-reference" href="../_images/terminal_window.png"><img alt="Terminal Window" class="align-center" height="258" src="../_images/terminal_window.png" width="800" />
+  <section id="settings">
+<h1>Settings<a class="headerlink" href="#settings" title="Link to this heading">#</a></h1>
+<p>The settings for RasCAL-2 can be configured by clicking <a class="reference internal" href="../_images/settings.png"><img alt="options" height="20" src="../_images/settings.png" width="20" /></a> in the toolbar or clicking File &gt; Settings in the
+main menu. The settings dialog has 3 tabs:</p>
+<ol class="arabic">
+<li><p><strong>General</strong>:</p>
+<a class="reference internal image-reference" href="../_images/settings_general.png"><img alt="General Settings" class="align-center" height="430" src="../_images/settings_general.png" width="602" />
 </a>
-<p>During a fit, the window will inform the user when the run is started, finished, or stopped by user. It will
-also show the progress of the fit, the format of the progress information will vary with the procedure e.g. Most
-procedures will print a new line of information text as the fit is progressing, but the DREAM procedure will print
-a setting summary and show the progress of the fit in a progress bar at the bottom of the window.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The amount of information printed during a fit can be customised using the  <cite>display</cite> or <cite>updateFreq</cite> options
-in the controls window.</p>
-</div>
-<a class="reference internal image-reference" href="../_images/terminal_window_run_info.png"><img alt="Terminal Window showing Run Information" class="align-center" height="403" src="../_images/terminal_window_run_info.png" width="800" />
+<ul>
+<li><p><strong>Style</strong>: This sets the active theme of RasCAL-2. The software can use the default <strong>system</strong> theme, a <strong>light</strong>
+or a <strong>dark</strong> theme.</p></li>
+<li><p><strong>Editor Fontsize</strong>: This is the font size of the internal custom file editor.</p></li>
+<li><p><strong>Matlab As Default Editor</strong>: This indicates that should if Matlab should be used to open both Python and Matlab
+custom files.</p></li>
+<li><p><strong>Live Recalculate</strong>: This indicates the results should be recalculated and plotted whenever the user changes values
+outside edit mode. This can be disabled if running the calculation is expensive.</p></li>
+<li><p><strong>Show Stop Calculation Warning</strong>: This indicates a warning should be shown to user when stopping a run will lead
+to result being lost.</p>
+<a class="reference internal image-reference" href="../_images/confirm_stop_dialog.png"><img alt="Confirm Calculation Stop Dialog" class="align-center" height="150" src="../_images/confirm_stop_dialog.png" width="464" />
 </a>
-<p>If an error occurs during project validation or a fit, an error message would be displayed with red text,
-sometimes the message could contain extra debug information which shows the line of code where the error occurred,
-this debug information is useful for finding problems with custom files.</p>
-<a class="reference internal image-reference" href="../_images/terminal_window_error.png"><img alt="Terminal Window showing Error Message" class="align-center" height="277" src="../_images/terminal_window_error.png" width="800" />
+</li>
+</ul>
+</li>
+<li><p><strong>Plotting</strong>: Setting related to plots.</p>
+<a class="reference internal image-reference" href="../_images/settings_plot.png"><img alt="Plot Settings" class="align-center" height="430" src="../_images/settings_plot.png" width="602" />
 </a>
+<ul class="simple">
+<li><p><strong>Export Background Colour</strong>: indicates if exported plot background should be white or transparent.</p></li>
+</ul>
+</li>
+<li><p><strong>Matlab</strong>: Setting related to running Matlab custom files.</p>
+<a class="reference internal image-reference" href="../_images/settings_matlab.png"><img alt="Matlab Settings" class="align-center" height="430" src="../_images/settings_matlab.png" width="602" />
+</a>
+<ul class="simple">
+<li><p><strong>Current Matlab Directory</strong>: This tells RasCAL-2 where the Matlab installation for custom files is located. On
+Windows and Linux, this should be the folder path e.g <em>C:\Program Files\MATLAB\R2023a</em> while on MacOS should be
+the app e.g <em>/Applications/MATLAB_R2023b.app</em>. The minimum supported MATLAB is 2023b.</p></li>
+<li><p><strong>Matlab RAT directory</strong>: This tells RasCAL-2 to use the provided Matlab RAT files when running a Matlab custom
+file. This could provide improved performance by avoiding switching in and out of Matlab code. Download and use
+the latest version of RAT, set this to the path of the RAT folder e.g <em>C:\RAT</em>.</p></li>
+</ul>
+</li>
+</ol>
 </section>
 
 

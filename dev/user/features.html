@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Terminal Window &#8212; RasCAL-2</title>
+    <title>Other Features &#8212; RasCAL-2</title>
   
   
   
@@ -41,13 +41,13 @@
     <script src="../_static/documentation_options.js?v=3e6ca1ad"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'user/terminal';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user/features';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="icon" href="../_static/logo.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Other Features" href="features.html" />
-    <link rel="prev" title="Contrasts" href="project/contrasts.html" />
+    <link rel="next" title="Settings" href="settings.html" />
+    <link rel="prev" title="Terminal Window" href="terminal.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="0.0.0" />
@@ -387,8 +387,8 @@
 <li class="toctree-l2"><a class="reference internal" href="project/contrasts.html">Contrasts</a></li>
 </ul>
 </details></li>
-<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Terminal Window</a></li>
-<li class="toctree-l1"><a class="reference internal" href="features.html">Other Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="terminal.html">Terminal Window</a></li>
+<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Other Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
 </ul>
 </div>
@@ -433,7 +433,7 @@
     
     <li class="breadcrumb-item"><a href="../guide.html" class="nav-link">User Guide</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Terminal Window</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Other Features</span></li>
   </ul>
 </nav>
 </div>
@@ -450,30 +450,25 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="terminal-window">
-<h1>Terminal Window<a class="headerlink" href="#terminal-window" title="Link to this heading">#</a></h1>
-<p>The terminal window displays fit status, error messages and other information to the user. Messages could
-be displayed when modifying a project, running a fit, or when an unexpected issue is encountered. The text
-in the terminal cannot be modified but can be selected and copied, the text will be cleared automatically when a
-new fit is started but can be cleared manually by clicking <em>Tools &gt; Clear Terminal</em> in the menu.</p>
-<a class="reference internal image-reference" href="../_images/terminal_window.png"><img alt="Terminal Window" class="align-center" height="258" src="../_images/terminal_window.png" width="800" />
+  <section id="other-features">
+<h1>Other Features<a class="headerlink" href="#other-features" title="Link to this heading">#</a></h1>
+<p>This page describes other useful features available in RasCAL-2</p>
+<section id="undo-and-redo">
+<h2>Undo and Redo<a class="headerlink" href="#undo-and-redo" title="Link to this heading">#</a></h2>
+<p>RasCAL-2 is designed so that changes made to the project, controls and results can be undone. You can undo
+and redo an action by clicking the <a class="reference internal" href="../_images/undo.png"><img alt="undo" height="20" src="../_images/undo.png" width="20" /></a> or redo <a class="reference internal" href="../_images/redo.png"><img alt="redo" height="20" src="../_images/redo.png" width="20" /></a> buttons from the toolbar respectively. The history of
+reversible actions can be viewed by clicking <strong>Edit &gt; Undo History</strong>. This will open the undo history dialog which
+shows a list of actions performed and the current action will be highlighted. Clicking on any entry in the list will
+make that entry the current action by undoing or redoing until that action is reached.</p>
+<a class="reference internal image-reference" href="../_images/undo_history.png"><img alt="Undo History Dialog" class="align-center" height="222" src="../_images/undo_history.png" width="258" />
 </a>
-<p>During a fit, the window will inform the user when the run is started, finished, or stopped by user. It will
-also show the progress of the fit, the format of the progress information will vary with the procedure e.g. Most
-procedures will print a new line of information text as the fit is progressing, but the DREAM procedure will print
-a setting summary and show the progress of the fit in a progress bar at the bottom of the window.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The amount of information printed during a fit can be customised using the  <cite>display</cite> or <cite>updateFreq</cite> options
-in the controls window.</p>
-</div>
-<a class="reference internal image-reference" href="../_images/terminal_window_run_info.png"><img alt="Terminal Window showing Run Information" class="align-center" height="403" src="../_images/terminal_window_run_info.png" width="800" />
-</a>
-<p>If an error occurs during project validation or a fit, an error message would be displayed with red text,
-sometimes the message could contain extra debug information which shows the line of code where the error occurred,
-this debug information is useful for finding problems with custom files.</p>
-<a class="reference internal image-reference" href="../_images/terminal_window_error.png"><img alt="Terminal Window showing Error Message" class="align-center" height="277" src="../_images/terminal_window_error.png" width="800" />
-</a>
+<p>The following operations cannot be undone:</p>
+<ul class="simple">
+<li><p>Visualization actions (e.g. changing the plot zoom, or arrangement of windows),</p></li>
+<li><p>Changes to the settings,</p></li>
+<li><p>Exporting plot, project or fits.</p></li>
+</ul>
+</section>
 </section>
 
 
