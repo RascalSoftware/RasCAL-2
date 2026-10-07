@@ -288,7 +288,7 @@ class MainWindowView(QtWidgets.QMainWindow):
 
     def open_docs(self):
         """Open the documentation."""
-        url = QtCore.QUrl("https://rascalsoftware.github.io/RAT-Docs/dev/index.html")
+        url = QtCore.QUrl("https://rascalsoftware.github.io/RasCAL-2/index.html")
         QtGui.QDesktopServices.openUrl(url)
 
     def create_toolbar(self):
