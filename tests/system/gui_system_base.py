@@ -31,8 +31,6 @@ class GuiSystemBase(unittest.TestCase):
 
     def setUp(self) -> None:
         setup_logging()
-        self.start_processes_old = os.getenv("START_PROCESSES")
-        os.environ["START_PROCESSES"] = "False"
         self.no_exceptions = True
 
         sys.excepthook = self.exception_hook
@@ -46,7 +44,9 @@ class GuiSystemBase(unittest.TestCase):
         sys.excepthook = sys.__excepthook__
         logger = logging.getLogger("rascal2")
         logger.handlers.clear()
-        QTimer.singleShot(SHORT_DELAY, lambda: self._click_messagebox(["Discard", "Don't Save"]))
+        if not self.main_window.presenter.runner.matlab_helper.close_event.is_set():
+            self.main_window.presenter.runner.matlab_helper.close_event.set()
+        QTimer.singleShot(SHORT_DELAY, lambda: self._click_messagebox())
         self.main_window.close()
         wait_until(
             lambda: not self.main_window.isVisible(),
@@ -55,27 +55,25 @@ class GuiSystemBase(unittest.TestCase):
             message="Main window did not close within 10 seconds",
         )
         del self.main_window
-        os.environ["START_PROCESSES"] = self.start_processes_old
 
     def exception_hook(self, exc_type, exc_value, exc_traceback):
         self.no_exceptions = False
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
     @classmethod
-    def _click_messagebox(cls, button_text_list: list[str]):
+    def _click_messagebox(cls):
         """Needs to be queued with QTimer.singleShot before triggering the message box."""
         no_buttons_found = True
         button_texts = []
         for widget in cls.app.topLevelWidgets():
             if isinstance(widget, QMessageBox) and widget.isVisible():
-                for button_text in button_text_list:
-                    for button in widget.buttons():
-                        if button.text().replace("&", "") == button_text:
-                            QTest.mouseClick(button, Qt.MouseButton.LeftButton)
-                            no_buttons_found = False
+                for button in widget.buttons():
+                    if widget.buttonRole(button) == widget.ButtonRole.DestructiveRole:
+                        QTest.mouseClick(button, Qt.MouseButton.LeftButton)
+                        no_buttons_found = False
                     button_texts = [button.text() for button in widget.buttons()]
                 if no_buttons_found:
                     raise ValueError(
-                        f"Could not find buttons '{button_text_list} in {button_texts}'.\n"
+                        f"Could not find buttons in {button_texts}'.\n"
                         f"Message box: {widget.windowTitle()} {widget.text()}"
                     )

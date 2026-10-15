@@ -199,7 +199,6 @@ class RATRunner(QtCore.QObject):
             self.process.kill()
         self.process = None
         self.clear_queues_and_events()
-        self.matlab_helper.close_event.set()
 
 
 def init_matlab_engine(engine_ready, engine_output, msg_queue):
