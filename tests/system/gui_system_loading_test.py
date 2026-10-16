@@ -24,7 +24,7 @@ class TestGuiSystemLoading(GuiSystemBase):
         load_dialog = self.main_window.findChild(LoadDialog)
         load_dialog.tabs.setCurrentIndex(2)
         load_dialog.example_list_widget.itemClicked.emit(load_dialog.example_list_widget.item(0))
-        QTest.qWait(SHORT_DELAY)
+        wait_until(lambda: self.main_window.controls_widget.chi_squared.text() != "")
         assert self.main_window.presenter.model.project.name == "DSPC Standard Layers"
 
     @parameterized.expand(
