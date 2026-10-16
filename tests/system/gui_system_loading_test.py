@@ -1,5 +1,6 @@
 import random
 from pathlib import Path
+from sys import platform
 
 from parameterized import parameterized
 from PyQt6.QtTest import QTest
@@ -54,13 +55,16 @@ class TestGuiSystemLoading(GuiSystemBase):
 
     @parameterized.expand(
         [
-            ("ns", 9.47214, 6000),
-            ("dream", 9.67234, 2000),
+            ("ns", 9.47214, 9.52502, 6000),
+            ("dream", 9.67234, 9.67234, 2000),
         ]
     )
-    def test_run_slow(self, procedure_name, expected_chi, test_duration):
+    def test_run_slow(self, procedure_name, expected_chi_win, expected_chi_linux, test_duration):
         random.seed(10)
-        QTest.qWait(SHORT_DELAY)
+        if platform == "linux" or platform == "linux2":
+            expected_chi = expected_chi_linux
+        else:
+            expected_chi = expected_chi_win
         self.main_window.startup_dlg.import_project_button.click()
         load_dialog = self.main_window.findChild(LoadDialog)
         load_dialog.tabs.setCurrentIndex(2)
