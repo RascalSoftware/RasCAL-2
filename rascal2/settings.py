@@ -141,6 +141,7 @@ class Settings(BaseModel, validate_assignment=True, arbitrary_types_allowed=True
     )
 
     def model_post_init(self, __context: Any):
+        """Update setting properties which are unset with the global setting values."""
         global_settings = get_global_settings()
         unset_settings = [s for s in self.model_fields if s not in self.model_fields_set]
         for setting in unset_settings:

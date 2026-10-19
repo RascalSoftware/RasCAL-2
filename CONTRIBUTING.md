@@ -43,8 +43,13 @@ For information on other coverage report formats, see https://pytest-cov.readthe
 
 Documentation
 -------------
-* The documentation will be hosted on GitHub pages.
-* It will be written in reStructuredText format and built via Sphinx.
+The documentation is hosted using GitHub pages at [https://rascalsoftware.github.io/RasCAL-2/](https://rascalsoftware.github.io/RasCAL-2/).
+The documentation should be built using the provided Sphinx make file. The reStructuredText source is in the **doc** 
+folder while the build will be placed in the **doc/build** folder. 
+
+    cd doc
+    make clean
+    make html
 
 Style guidelines
 ----------------
@@ -55,7 +60,7 @@ Style guidelines
 
 How to build the executable
 ---------------------------
-This script will create the executable for the software in the **packaging/bundle** folder.
+The script below will create the executable for the software in the **packaging/bundle** folder.
 
     cd packaging
     python build_exe.py

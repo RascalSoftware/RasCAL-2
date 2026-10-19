@@ -96,6 +96,7 @@ class MainWindowPresenter:
         self.view.enable_elements()
 
     def update_title(self):
+        """Update the window tile with the project save path."""
         suffix = " [Example]" if self.model.is_project_example() else f"[{self.model.save_path}]"
         self.view.setWindowTitle(
             self.view.windowTitle().split(" - ")[0] + " - " + self.model.project.name + suffix,
