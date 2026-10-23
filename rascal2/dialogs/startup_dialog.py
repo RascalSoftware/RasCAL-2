@@ -433,22 +433,27 @@ class LoadDialog(StartupDialog):
         self.loading_bar.setVisible(disabled)
 
 
-class LoadR1Dialog(StartupDialog):
-    """Dialog to load a RasCAL-1 project."""
+class ImportProjectDialog(StartupDialog):
+    """Dialog to load a RasCAL-1 project or an ORSO project."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, file_extension="*.mat"):
+        if file_extension == "*.mat":
+            self.project_type = "RasCAL-1"
+        elif file_extension == "*.ort":
+            self.project_type = "ORSO"
+
         # our 'folder selector' is actually a .mat file selector in this case
         self.folder_selector = lambda p, _: QtWidgets.QFileDialog.getOpenFileName(
-            p, "Select RasCAL-1 File", filter="*.mat"
+            p, "Select Project File", filter=file_extension
         )[0]
         super().__init__(parent)
 
     def create_form(self, form_layout):
-        self.setWindowTitle("Load RasCAL-1 Project")
+        self.setWindowTitle(f"Import {self.project_type} Project")
 
         super().create_form(form_layout)
-        self.project_folder_label.setText("RasCAL-1 file:")
-        self.project_folder.setPlaceholderText("Select RasCAL-1 file")
+        self.project_folder_label.setText(f"{self.project_type} file:")
+        self.project_folder.setPlaceholderText(f"Select {self.project_type} file")
 
     def create_buttons(self):
         load_button = QtWidgets.QPushButton(QtGui.QIcon(IconEngine("load-light.png")), "Load")
@@ -459,17 +464,42 @@ class LoadR1Dialog(StartupDialog):
     @staticmethod
     def verify_folder(file_path: str):
         if not os.access(file_path, os.R_OK):
-            raise ValueError("You do not have permission to read this RasCAL-1 project.")
+            raise ValueError("You do not have permission to read this project.")
         if not os.access(Path(file_path).parent, os.W_OK):
             raise ValueError("You do not have permission to create a project in this folder.")
 
     def load_project(self):
+        print("\n=================load project====================")
+        print(f"\n {self.project_folder.text()=}")
+        print(f"\n {self.project_type=}")
         """Load the project if inputs are valid."""
+        if self.project_type == "ORSO":
+            self.load_orso_project()
+        elif self.project_type == "RasCAL-1":
+            self.load_r1_project()
+
+    def load_r1_project(self):
+        """Load the RasCAL-1 project if inputs are valid."""
         if self.project_folder.text() == "":
             self.set_folder_error("Please specify a project file.")
         if self.project_folder_error.isHidden():
             self.worker = Worker.call(
                 self.parent().presenter.load_r1_project,
+                [self.project_folder.text()],
+                self.project_start_success,
+                self.project_start_failed,
+                self.loading_bar.hide,
+            )
+            self.loading_bar.setVisible(True)
+
+    def load_orso_project(self):
+        print("\n=================load_orso_project====================")
+        """Load the ORSO project if inputs are valid."""
+        if self.project_folder.text() == "":
+            self.set_folder_error("Please specify a project file.")
+        if self.project_folder_error.isHidden():
+            self.worker = Worker.call(
+                self.parent().presenter.import_ort_project,
                 [self.project_folder.text()],
                 self.project_start_success,
                 self.project_start_failed,
