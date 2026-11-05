@@ -362,7 +362,7 @@ class LoadDialog(StartupDialog):
             item_widget = DisplayWidget(name.replace("_", " "), desc)
             self.example_list_widget.setItemWidget(item, item_widget)
 
-            item.setData(QtCore.Qt.ItemDataRole.UserRole, str(EXAMPLES_PATH / name))
+            item.setData(QtCore.Qt.ItemDataRole.UserRole, (EXAMPLES_PATH / name).as_posix())
             item.setSizeHint(item_widget.sizeHint())
 
     def create_recent_tab(self):

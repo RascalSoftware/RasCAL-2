@@ -9,6 +9,7 @@ from rascal2.settings import Settings, get_global_settings
 
 LOGGER = logging.getLogger("rascal2")
 SETTINGS = Settings()
+MAX_DATA_DECIMAL = 15
 
 
 def handle_scaling():
