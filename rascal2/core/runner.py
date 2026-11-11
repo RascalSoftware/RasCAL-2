@@ -10,7 +10,7 @@ from multiprocessing import Event, Process, Queue
 import ratapi as rat
 from PyQt6 import QtCore
 
-from rascal2.config import MatlabHelper, get_matlab_engine
+from rascal2.config import MatlabHelper, get_matlab_engine, get_process_manager
 
 
 def clear_queue(queue):
@@ -69,7 +69,7 @@ class RATRunner(QtCore.QObject):
         # this queue handles both progress event data and results
         self.queue = Queue()
         self.msg_queue = Queue()
-        self.plot_queue = Queue()
+        self.plot_list = get_process_manager().list()
         self.arg_queue = Queue()
         self.create_process()
         self.updated_problem = None
@@ -88,7 +88,7 @@ class RATRunner(QtCore.QObject):
                 self.queue,
                 self.arg_queue,
                 self.msg_queue,
-                self.plot_queue,
+                self.plot_list,
                 self.go_event,
                 self.exit_event,
                 matlab_helper.ready_event,
@@ -122,15 +122,25 @@ class RATRunner(QtCore.QObject):
         self.go_event.set()
         self.timer.start()
 
-    def _handle_plot_event(self):
-        """Handle for plot events."""
+    def _handle_plot_event(self, clear=False):
+        """Handle for plot events.
+
+        Parameters
+        ----------
+        clear: bool, False
+            Indicates if the plot list should be cleared.
+        """
         item = None
-        while not self.plot_queue.empty():
-            item = self.plot_queue.get()
-        else:
-            if item is not None:
-                self.events.append(item)
-                self.event_received.emit()
+
+        if self.plot_list:
+            item = self.plot_list[-1]
+
+        if item is not None and item.modelType:
+            self.events.append(item)
+            self.event_received.emit()
+
+        if clear:
+            self.plot_list[:] = []
 
     def _handle_msg_event(self):
         """Handle for message events."""
@@ -150,9 +160,15 @@ class RATRunner(QtCore.QObject):
             self.events.append(text)
             self.event_received.emit()
 
-    def handle_msg_and_plot_event(self):
-        """Handle for message and plot events."""
-        self._handle_plot_event()
+    def handle_msg_and_plot_event(self, clear_plot_list=False):
+        """Handle for message and plot events.
+
+        Parameters
+        ----------
+        clear_plot_list: bool, False
+            Indicates if the plot list should be cleared.
+        """
+        self._handle_plot_event(clear=clear_plot_list)
         self._handle_msg_event()
 
     def check_queue(self):
@@ -166,7 +182,7 @@ class RATRunner(QtCore.QObject):
             if isinstance(item, tuple):
                 self.updated_problem, self.results = item
                 self.go_event.clear()
-                self.handle_msg_and_plot_event()
+                self.handle_msg_and_plot_event(clear_plot_list=True)
                 if is_empty_bayes_result(self.results):
                     self.stopped.emit()
                 else:
@@ -187,7 +203,7 @@ class RATRunner(QtCore.QObject):
         clear_queue(self.queue)
         clear_queue(self.arg_queue)
         clear_queue(self.msg_queue)
-        clear_queue(self.plot_queue)
+        self.plot_list[:] = []
         self.events.clear()
         self.go_event.clear()
         self.exit_event.clear()
@@ -260,9 +276,7 @@ def is_empty_bayes_result(result):
     return isinstance(result, rat.BayesResults) and result.chain.size == 2
 
 
-def run(
-    queue: Queue, arg_queue: Queue, msg_queue: Queue, plot_queue, go_event, exit_event, engine_ready, engine_output
-):
+def run(queue: Queue, arg_queue: Queue, msg_queue: Queue, plot_list, go_event, exit_event, engine_ready, engine_output):
     """Run RAT and put the result into the queue.
 
     Parameters
@@ -273,8 +287,8 @@ def run(
         A queue of arguments used to initialize the RAT process, passed from the Main Presenter
     msg_queue : multiprocessing.Queue
         A queue for messages.
-    plot_queue : multiprocessing.Queue
-        A queue for messages.
+    plot_list : multiprocessing.ListProxy
+        A shared list for messages.
     go_event : multiprocessing.Event
         An event to inform run function to proceed.
     exit_event : multiprocessing.Event
@@ -285,6 +299,8 @@ def run(
         A list with the name of MATLAB engine instance or an exception from the MatlabHelper.
     """
     engine_future = None
+    # This hack somehow makes the subsequent plot events append quicker.
+    plot_list.append(rat.rat_core.PlotEventData())
     while True:
         go_event.wait()
         if exit_event.is_set():
@@ -297,7 +313,7 @@ def run(
         if display:
             rat.events.register(rat.events.EventTypes.Message, msg_queue.put)
             rat.events.register(rat.events.EventTypes.Progress, queue.put)
-            rat.events.register(rat.events.EventTypes.Plot, plot_queue.put)
+            rat.events.register(rat.events.EventTypes.Plot, plot_list.append)
             msg_queue.put(LogData(INFO, "Starting RAT"))
 
         try:

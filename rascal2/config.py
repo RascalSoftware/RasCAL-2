@@ -9,6 +9,7 @@ from rascal2.settings import Settings, get_global_settings
 
 LOGGER = logging.getLogger("rascal2")
 SETTINGS = Settings()
+PROCESS_MANAGER = None
 
 
 def handle_scaling():
@@ -17,6 +18,24 @@ def handle_scaling():
         from ctypes import windll
 
         windll.user32.SetProcessDPIAware()
+
+
+def get_process_manager():
+    """Get global multiprocessing manager.
+
+    A global manager is used to avoid multiple server processes.
+
+    Returns
+    -------
+    manager : multiprocessing.Manager | None
+        global multiprocessing manager
+    """
+    global PROCESS_MANAGER
+
+    if PROCESS_MANAGER is None:
+        PROCESS_MANAGER = mp.Manager()
+
+    return PROCESS_MANAGER
 
 
 def log_uncaught_exceptions(exc_type, exc_value, exc_traceback):
@@ -137,8 +156,7 @@ class MatlabHelper:
             cls._instance = super().__new__(cls)
             cls._instance.ready_event = mp.Event()
             cls._instance.close_event = mp.Event()
-            cls._instance.manager = mp.Manager()
-            cls._instance.engine_output = cls._instance.manager.list()
+            cls._instance.engine_output = get_process_manager().list()
             cls._instance.matlab_dir = ""
             cls._instance.__engine = None
             cls._instance.async_start()
