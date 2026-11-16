@@ -71,13 +71,13 @@ project from the list by clicking on the entry.
 
 Load RasCAL-1 Project
 ---------------------
-In the startup screen, click the **Import RasCAL-1 Project** button to open the load RasCAL-1 project dialog. The new
-project dialog can also be opened by clicking **File > Open RasCAL-1 Project** in the main menu.
+In the startup screen, click the **Import RasCAL-1 Project** button to open the load RasCAL-1 project dialog. The load
+RasCAL-1 project dialog can also be opened by clicking **File > Open RasCAL-1 Project** in the main menu.
 
 To load a RasCAL-1 project:
 
 1. Click the **Browse** button, navigate to the folder with the RasCAL-1 project, and select the \*.mat file.
-2. Click the **Load** button
+2. Click the **Load** button.
 
 The load RasCAL-1 project dialog will close as soon as the project is created.
 
