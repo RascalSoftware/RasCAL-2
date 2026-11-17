@@ -1,3 +1,4 @@
+import sys
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -47,3 +48,45 @@ def mock_setting(request):
             target.stop()
 
     request.addfinalizer(teardown_mock_setting)
+
+
+def pytest_addoption(parser):
+    parser.addoption("--skip_system_tests", action="store_true", default=False, help="Skip GUI system tests")
+    parser.addoption("--run_slow_tests", action="store_true", default=False, help="Run slow tests")
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "system: GUI system tests")
+    config.addinivalue_line("markers", "unit: unit tests")
+    config.addinivalue_line("markers", "slow: marks slow tests which only run on review")
+    config.addinivalue_line("markers", "linux: marks tests that should only run on Linux")
+    config.addinivalue_line("markers", "windows: marks tests that should only run on Windows")
+
+
+allowed_markers = []
+skipped_tests = []
+
+
+def pytest_collection_modifyitems(config, items):
+    allowed_markers.append(pytest.mark.unit.mark)
+    if not config.getoption("--skip_system_tests"):
+        allowed_markers.append(pytest.mark.system.mark)
+    if config.getoption("--run_slow_tests"):
+        allowed_markers.append(pytest.mark.slow.mark)
+    for item in items:
+        if "gui_system" in item.nodeid:
+            item.add_marker(pytest.mark.system)
+        if "slow" in item.nodeid:
+            item.add_marker(pytest.mark.slow)
+        else:
+            item.add_marker(pytest.mark.unit)
+        if "linux" in item.nodeid and sys.platform != "linux" or "windows" in item.nodeid and sys.platform != "win32":
+            skipped_tests.append(item.nodeid)
+            item.add_marker(pytest.mark.skip(reason="Test not selected"))
+        for mark in item.own_markers:
+            if "parametrize" in mark.name:
+                continue
+            if mark not in allowed_markers:
+                item.add_marker(pytest.mark.skip(reason="Test not selected"))
+                skipped_tests.append(item.nodeid)
+                break
