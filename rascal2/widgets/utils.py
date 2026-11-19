@@ -68,6 +68,20 @@ class FlowLayout(QtWidgets.QLayout):
         return size
 
     def do_layout(self, rect, test_only):
+        """Compute the height of layout and set geometry if needed.
+
+        Parameters
+        ----------
+        rect : QRect
+            Rect with position and width of layout used to compute height.
+        test_only : bool
+            Indicates if geometry should not be set.
+
+        Returns
+        -------
+        int
+            height for the layout.
+        """
         x = rect.x()
         y = rect.y()
         space_x = space_y = self.spacing()

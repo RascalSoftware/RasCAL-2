@@ -853,6 +853,19 @@ class DataWidget(AbstractProjectListWidget):
         return widget
 
     def create_data_table(self, current_data):
+        """Create data table widget for an item.
+
+        Parameters
+        ----------
+        current_data : np.array
+            Data Array
+
+        Returns
+        -------
+        QtWidgets.QTableView
+            The table view widget for the item.
+
+        """
         model = ArrayTableModel(current_data)
         widget = QtWidgets.QTableView()
         widget.setMinimumSize(450, 150)

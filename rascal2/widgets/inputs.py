@@ -646,8 +646,17 @@ class ProgressButton(QtWidgets.QPushButton):
         self.setEnabled(False)
         self.setText(f"{self.progress_text} ...")
 
-    def update_progress(self, current, total):
-        self.setText(f"{self.progress_text} - {current} of {total}")
+    def update_progress(self, completed, total):
+        """Update the progress text.
+
+        Parameters
+        ----------
+        completed : int
+            The number of completed steps.
+        total : int
+            The total number of steps.
+        """
+        self.setText(f"{self.progress_text} - {completed} of {total}")
 
     def hide_progress(self):
         """Hides busy indicator."""

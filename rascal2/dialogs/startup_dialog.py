@@ -176,6 +176,13 @@ class StartupDialog(QtWidgets.QDialog):
             self.parent().startup_dlg.setVisible(True)
 
     def project_start_success(self, warning):
+        """Update UI after successful project creation succeeds.
+
+        Parameters
+        ----------
+        warning : Warning | None
+            A warning to display to user.
+        """
         self.parent().presenter.initialise_ui()
 
         if not self.parent().toolbar.isEnabled():
@@ -197,6 +204,16 @@ class StartupDialog(QtWidgets.QDialog):
             message_box.exec()
 
     def project_start_failed(self, exception, args):
+        """Log and report exception if project creation fails.
+
+        Parameters
+        ----------
+        exception : Exception
+            The raised exception.
+        args : Tuple
+            The arguments passed into function that threw exception.
+
+        """
         folder_name = args[0]
         error = str(exception).strip().replace("\n", "")
         message = f"The Project ({folder_name}) could not be opened because:\n\n{error}"
@@ -251,6 +268,7 @@ class NewProjectDialog(StartupDialog):
             raise ValueError("Folder already contains a project.")
 
     def verify_name(self) -> None:
+        """Verify a valid project name is given and show error to user."""
         if self.project_name.text() == "":
             self.project_name_error.show()
             self.project_name.setProperty("error", True)
@@ -399,7 +417,7 @@ class LoadDialog(StartupDialog):
 
         Parameters
         ----------
-        item : Optional[QtWidgets.QListWidgetItem]
+        item : QtWidgets.QListWidgetItem | None
             item if load project was called from list widget.
         """
         if isinstance(item, QtWidgets.QListWidgetItem):

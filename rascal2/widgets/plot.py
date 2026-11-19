@@ -63,7 +63,17 @@ class PlotWidget(QtWidgets.QWidget):
         self.reflectivity_plot.plot_with_blit(event)
 
     def show_bayes_plots(self):
-        bayes_plots = BayesPlotsDialog(self.parent, self.reflectivity_plot.get_current_plot_settings())
+        """Show modal dialog with Bayesian plots."""
+        plot_settings = {
+            "x_axis": self.reflectivity_plot.x_axis.currentText(),
+            "y_axis": self.reflectivity_plot.y_axis.currentText(),
+            "show_error_bar": self.reflectivity_plot.show_error_bar.checkState(),
+            "show_grid": self.reflectivity_plot.show_grid.checkState(),
+            "show_legend": self.reflectivity_plot.show_legend.checkState(),
+            "slider": self.reflectivity_plot.slider.value(),
+        }
+
+        bayes_plots = BayesPlotsDialog(self.parent, plot_settings)
         bayes_plots.exec()
 
     def clear(self):
@@ -74,7 +84,7 @@ class PlotWidget(QtWidgets.QWidget):
 class BayesPlotsDialog(QtWidgets.QDialog):
     """The modal dialog for the Bayes plots."""
 
-    def __init__(self, parent, initial_plot_settings: list):
+    def __init__(self, parent, initial_plot_settings: dict):
         super().__init__(parent)
         self.parent = parent
         self.resize_timer = 0
@@ -497,19 +507,8 @@ class RefSLDWidget(AbstractPlotWidget):
 
         return figure
 
-    def get_current_plot_settings(self):
-        plot_settings = [
-            self.x_axis.currentText(),
-            self.y_axis.currentText(),
-            self.show_error_bar.checkState(),
-            self.show_grid.checkState(),
-            self.show_legend.checkState(),
-            self.slider.value(),
-        ]
-
-        return plot_settings
-
     def handle_control_changed(self):
+        """Replot when the controls are updated."""
         if self.blit_plot is None:
             self.plot_event()
         else:
@@ -658,13 +657,20 @@ class ShadedPlotWidget(RefSLDWidget):
 
         return self.slider
 
-    def set_plot_settings(self, plot_settings: list):
-        self.x_axis.setCurrentText(plot_settings[0])
-        self.y_axis.setCurrentText(plot_settings[1])
-        self.show_error_bar.setCheckState(plot_settings[2])
-        self.show_grid.setCheckState(plot_settings[3])
-        self.show_legend.setCheckState(plot_settings[4])
-        self.slider.setValue(plot_settings[5])
+    def set_plot_settings(self, plot_settings: dict):
+        """Change plot settings to values in the given dictionary.
+
+        Parameters
+        ----------
+        plot_settings : dict
+            A dict of plot settings.
+        """
+        self.x_axis.setCurrentText(plot_settings["x_axis"])
+        self.y_axis.setCurrentText(plot_settings["y_axis"])
+        self.show_error_bar.setCheckState(plot_settings["show_error_bar"])
+        self.show_grid.setCheckState(plot_settings["show_grid"])
+        self.show_legend.setCheckState(plot_settings["show_legend"])
+        self.slider.setValue(plot_settings["slider"])
 
     def plot(self, project, results: ratapi.outputs.BayesResults):
         """Plot the shaded plot."""
@@ -761,6 +767,15 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
         self.draw_plot()
 
     def update_ui(self, current, total):
+        """Update the progress of plotting.
+
+        Parameters
+        ----------
+        current : int
+            The index of plot being drawn.
+        total: int
+            the total number of plots.
+        """
         if current + 1 == total:
             self.update_label.setText("")
         else:
@@ -771,6 +786,10 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
         raise NotImplementedError
 
     def resize_canvas(self):
+        """Resize the canvas and update figure size.
+
+        This was used as a hack to ensure plots are not squashed.
+        """
         self.canvas.setMinimumSize(900, 600)
         self.update_figure_size()
 
@@ -808,6 +827,7 @@ class CornerPlotWidget(AbstractPanelPlotWidget):
         return layout
 
     def toggle_plot_button(self):
+        """Show plot button when parameters are selected."""
         self.plot_button.setEnabled(len(self.param_combobox.selected_items()) != 0)
 
     def update_ui(self, current, total):
