@@ -9,6 +9,7 @@ from pathlib import Path
 from pydantic.fields import FieldInfo
 from PyQt6 import QtCore, QtGui, QtWidgets
 
+from rascal2.config import MAX_DATA_DECIMAL
 from rascal2.paths import path_for
 
 
@@ -235,7 +236,7 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
         self.setStepType(self.StepType.AdaptiveDecimalStepType)
         self.setKeyboardTracking(False)
 
-        self.setDecimals(12)
+        self.setDecimals(MAX_DATA_DECIMAL)
 
     def textFromValue(self, value):
         """Set the display text for the spinbox from the value stored in the widget.
@@ -257,7 +258,7 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
             return "inf"
         if value == -float("inf"):
             return "-inf"
-        return f"{round(value, 12):.12g}"
+        return f"{round(value, MAX_DATA_DECIMAL):.{MAX_DATA_DECIMAL}g}"
 
     def valueFromText(self, text: str) -> float:
         """Set the underlying value of the spinbox from the text input."""
@@ -327,11 +328,6 @@ class AdaptiveDoubleSpinBox(QtWidgets.QDoubleSpinBox):
                 return (QtGui.QValidator.State.Acceptable, input_text, pos)
             except ValueError:
                 return (QtGui.QValidator.State.Intermediate, input_text, pos)
-        elif "." in input_text:
-            # don't accept multiple decimal points
-            if len(input_text.split(".")) > 2:
-                return (QtGui.QValidator.State.Intermediate, input_text, pos)
-            return (QtGui.QValidator.State.Acceptable, input_text, pos)
         else:
             try:
                 _ = float(input_text)  # ensure we have a number

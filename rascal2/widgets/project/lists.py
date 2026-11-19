@@ -5,11 +5,12 @@ from itertools import count
 from pathlib import Path
 from typing import Any, Generic, TypeVar
 
+import numpy as np
 import ratapi
 from PyQt6 import QtCore, QtGui, QtWidgets
 from ratapi.utils.enums import BackgroundActions, LayerModels
 
-from rascal2.config import SETTINGS
+from rascal2.config import MAX_DATA_DECIMAL, SETTINGS
 from rascal2.core.readers import readers
 from rascal2.theme import IconEngine
 from rascal2.widgets.delegates import ProjectFieldDelegate
@@ -778,7 +779,7 @@ class DataWidget(AbstractProjectListWidget):
     def append_item(self):
         file_paths = self.file_dialog.getOpenFileNames(self, "Select data files to open")[0]
         for path in file_paths:
-            data = readers[Path(path).suffix]().read(path)
+            data = np.round(readers[Path(path).suffix]().read(path), MAX_DATA_DECIMAL)
             try:
                 for dataset in data:
                     # handle repeated dataset names by appending a copy number to ensure uniqueness

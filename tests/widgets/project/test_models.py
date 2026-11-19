@@ -481,7 +481,7 @@ def test_file_model_set_filename(filename, expected_lang, expected_filenames):
         assert model.classlist[0].language == expected_lang
 
         if expected_lang == Languages.Python:
-            assert model.func_names[filepath] == expected_filenames
+            assert CustomFileModel.get_function_names(filepath) == expected_filenames
             assert model.classlist[0].function_name == "func1"
 
 

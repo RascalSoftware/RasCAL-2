@@ -5,10 +5,12 @@ import warnings
 from json import JSONDecodeError
 from pathlib import Path
 
+import numpy as np
 import ratapi as rat
 import ratapi.outputs
 from PyQt6 import QtCore
 
+from rascal2.config import MAX_DATA_DECIMAL
 from rascal2.paths import EXAMPLES_PATH, EXAMPLES_TEMP_PATH
 
 
@@ -41,7 +43,7 @@ def copy_example_project(load_path):
             temp_dir = EXAMPLES_TEMP_PATH / load_path.name
             shutil.copytree(load_path, temp_dir, dirs_exist_ok=True)
             load_path = temp_dir
-    return str(load_path)
+    return load_path.as_posix()
 
 
 def validate_plot_data(project, results):
@@ -310,6 +312,14 @@ class MainWindowModel(QtCore.QObject):
             for file in project.custom_files:
                 if file.path.is_relative_to(load_path):
                     file.path = file.path.relative_to(load_path)
+
+            for data in project.data:
+                np.round(data.data, MAX_DATA_DECIMAL, out=data.data)
+                if data.data_range:
+                    data.data_range[:] = np.round(data.data_range, MAX_DATA_DECIMAL).tolist()
+                if data.simulation_range:
+                    data.simulation_range[:] = np.round(data.simulation_range, MAX_DATA_DECIMAL).tolist()
+
         except JSONDecodeError as err:
             raise ValueError("The project.json file for this project contains invalid JSON.") from err
         except (KeyError, ValueError) as err:
@@ -332,7 +342,7 @@ class MainWindowModel(QtCore.QObject):
         load_path = copy_example_project(load_path)
         self.project = rat.utils.convert.r1_to_project(load_path)
         self.controls = rat.Controls()
-        self.save_path = str(Path(load_path).parent)
+        self.save_path = Path(load_path).parent.as_posix()
 
     def update_controls(self, new_values: dict):
         """Update the control attributes.
