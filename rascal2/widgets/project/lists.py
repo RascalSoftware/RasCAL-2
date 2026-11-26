@@ -858,7 +858,7 @@ class DataWidget(AbstractProjectListWidget):
         Parameters
         ----------
         current_data : np.array
-            Data Array
+            The 3 or 4 column data for the selected dataset in the widget.
 
         Returns
         -------

@@ -176,7 +176,7 @@ class StartupDialog(QtWidgets.QDialog):
             self.parent().startup_dlg.setVisible(True)
 
     def project_start_success(self, warning):
-        """Update UI after successful project creation succeeds.
+        """Update UI after project creation succeeds.
 
         Parameters
         ----------
@@ -268,7 +268,7 @@ class NewProjectDialog(StartupDialog):
             raise ValueError("Folder already contains a project.")
 
     def verify_name(self) -> None:
-        """Verify a valid project name is given and show error to user."""
+        """Verify a valid project name is given and show error to user if name is invalid."""
         if self.project_name.text() == "":
             self.project_name_error.show()
             self.project_name.setProperty("error", True)

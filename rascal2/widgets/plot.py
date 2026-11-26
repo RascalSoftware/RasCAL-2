@@ -774,7 +774,7 @@ class AbstractPanelPlotWidget(AbstractPlotWidget):
         current : int
             The index of plot being drawn.
         total: int
-            the total number of plots.
+            The total number of plots.
         """
         if current + 1 == total:
             self.update_label.setText("")

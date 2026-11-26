@@ -80,7 +80,7 @@ class FlowLayout(QtWidgets.QLayout):
         Returns
         -------
         int
-            height for the layout.
+            Height for the layout.
         """
         x = rect.x()
         y = rect.y()
