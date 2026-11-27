@@ -41,5 +41,6 @@ def start_app(splash):
     matlab_helper = MatlabHelper()
     exit_code = ui_execute(splash)
     matlab_helper.close_event.set()
+
     logging.shutdown()
     return exit_code

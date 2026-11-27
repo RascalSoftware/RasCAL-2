@@ -118,7 +118,7 @@ def test_run(display):
     engine_output = Queue()
     args_queue = Queue()
     msg_queue = Queue()
-    plot_queue = Queue()
+    plot_queue = []
     args_queue.put((make_rat_input(), display, os.getcwd(), False))
     go_event, exit_event = (Event(), Event())
     go_event.set()
@@ -170,7 +170,7 @@ def test_run_error():
         engine_output = Queue()
         args_queue = Queue()
         msg_queue = Queue()
-        plot_queue = Queue()
+        plot_queue = []
         args_queue.put((make_rat_input(), True, os.getcwd(), False))
         go_event, exit_event = (Event(), Event())
         go_event.set()
@@ -205,7 +205,7 @@ def test_run_examples(example):
     queue = Queue()
     args_queue = Queue()
     args_queue.put((rat_inputs, False, os.getcwd(), False))
-    plot_queue = Queue()
+    plot_queue = []
     msg_queue = Queue()
     engine_ready = Queue()
     engine_output = Queue()
