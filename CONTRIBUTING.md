@@ -10,7 +10,7 @@ First begin by creating a fork of the RasCAL-2 repo, then clone the fork
     git clone https://github.com/<username>/RasCAL-2.git
     cd RasCAL-2
 
-We recommend using anaconda python distribution  for development, a new virtual environment should be 
+We recommend using a conda python distribution  for development, a new virtual environment should be 
 created to isolate dependencies. For Windows, first download and install [Microsoft Visual C++](https://aka.ms/vs/16/release/vc_redist.x64.exe). Then run the following
 
     conda env create -f environment.yaml

@@ -1,6 +1,7 @@
 """Delegates for items in Qt tables."""
 
 from enum import Enum
+from pathlib import Path
 from typing import Literal
 
 from PyQt6 import QtCore, QtGui, QtWidgets
@@ -67,9 +68,10 @@ class CustomFileFunctionDelegate(QtWidgets.QStyledItemDelegate):
         self.widget = parent
 
     def createEditor(self, parent, option, index):
-        func_names = self.widget.model.func_names.get(
-            index.siblingAtColumn(index.column() - 1).data(QtCore.Qt.ItemDataRole.DisplayRole)
-        )
+        entry = index.siblingAtColumn(index.column() - 1)
+        filename = entry.data(QtCore.Qt.ItemDataRole.DisplayRole)
+        file_path = Path(entry.data(QtCore.Qt.ItemDataRole.UserRole)) / filename
+        func_names = self.widget.model.get_function_names(file_path)
         # we define the methods set_data and get_data
         # so that setEditorData and setModelData don't need
         # to know what kind of widget the editor is

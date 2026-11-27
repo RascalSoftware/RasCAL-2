@@ -74,7 +74,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ macos-15-intel, macos-14 ]
+        platform: [ macos-15-intel, macos-15 ]
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v5
@@ -92,7 +92,7 @@ jobs:
         run: |
           conda init bash
           conda activate rascal2
-          if [ ${{ matrix.platform }} == "macos-14" ]; then
+          if [ ${{ matrix.platform }} == "macos-15" ]; then
             ARCH="arm64"
             MATLAB_DIR="/Users/runner/hostedtoolcache/MATLAB/2023.2.999/arm64/MATLAB.app/bin/maca64"
             ENGINE_DIR="/Users/runner/hostedtoolcache/MATLAB/2023.2.999/arm64/MATLAB.app/extern/engines/python"
@@ -126,7 +126,7 @@ jobs:
           security import ./dev_id_install_certificate.p12 -A -t cert -f pkcs12 -k $KEYCHAIN_PATH -P "$PKG_SIGNING_PASSWORD" -T /usr/bin/codesign
           security list-keychain -d user -s $KEYCHAIN_PATH
           
-          if [ ${{ matrix.platform }} == "macos-14" ]; then
+          if [ ${{ matrix.platform }} == "macos-15" ]; then
             ARCH="arm64"
           else
             ARCH="x64"

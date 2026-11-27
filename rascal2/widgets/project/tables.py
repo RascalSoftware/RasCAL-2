@@ -696,7 +696,6 @@ class CustomFileModel(ClassListTableModel):
 
     def __init__(self, classlist: ratapi.ClassList, parent: QtWidgets.QWidget):
         super().__init__(classlist, parent)
-        self.func_names = {}
         self.headers.remove("path")
         self.col_offset = 2
         self.always_copy = True
@@ -731,7 +730,7 @@ class CustomFileModel(ClassListTableModel):
 
             row = index.row()
             self.classlist[row].path = file_path.parent
-            self.classlist[row].filename = str(file_path.name)
+            self.classlist[row].filename = file_path.name
 
             # auto-set language from file extension if possible
             # & get file names for dropdown on Python
@@ -739,13 +738,7 @@ class CustomFileModel(ClassListTableModel):
             match extension:
                 case ".py":
                     language = Languages.Python
-                    # the regex:
-                    # (?:^|\n) means 'match start of the string (i.e. the file) or a newline'
-                    # (\S+) means 'capture one or more non-whitespace characters'
-                    # so the regex captures a word between 'def ' and '(', i.e. a function name
-                    func_names = re.findall(
-                        r"(?:^|\n)def (\S+)\(", file_path.read_text(encoding="utf-8", errors="backslashreplace")
-                    )
+                    func_names = self.get_function_names(file_path)
                 case ".m":
                     language = Languages.Matlab
                     func_names = None
@@ -755,7 +748,7 @@ class CustomFileModel(ClassListTableModel):
                 case _:
                     language = None
                     func_names = None
-            self.func_names[value] = func_names
+
             if func_names:
                 self.classlist[row].function_name = func_names[0]
             if language is not None:
@@ -767,12 +760,29 @@ class CustomFileModel(ClassListTableModel):
         return super().setData(index, value, role)
 
     @staticmethod
+    def get_function_names(file_path):
+        # the regex:
+        # (?:^|\n) means 'match start of the string (i.e. the file) or a newline'
+        # (\S+) means 'capture one or more non-whitespace characters'
+        # so the regex captures a word between 'def ' and '(', i.e. a function name
+        func_names = None
+        if file_path.suffix == ".py":
+            try:
+                func_names = re.findall(
+                    r"(?:^|\n)def (\S+)\(", file_path.read_text(encoding="utf-8", errors="backslashreplace")
+                )
+            except OSError as ex:
+                LOGGER.error("Attempt to get function name(s) from custom file failed.", exc_info=ex)
+
+        return func_names
+
+    @staticmethod
     def copy_custom_file(file_path):
         """Copy given custom file to the project directory.
 
         Parameters
         ----------
-        file_path : str
+        file_path : str | Path
             The custom file to copy.
         """
         file_path = Path(file_path)
