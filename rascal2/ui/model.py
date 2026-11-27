@@ -265,6 +265,13 @@ class MainWindowModel(QtCore.QObject):
         self.project.write_script(script=save_path)
 
     def is_project_example(self):
+        """Check if the project is an example.
+
+        Returns
+        -------
+        bool
+            Indicates the project is an example.
+        """
         return Path(self.save_path).is_relative_to(EXAMPLES_TEMP_PATH)
 
     def load_project(self, load_path: str):

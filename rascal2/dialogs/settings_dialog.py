@@ -72,6 +72,7 @@ class SettingsDialog(QtWidgets.QDialog):
         self.accept()
 
     def cancel_settings(self):
+        """Revert changes and close dialog."""
         if SETTINGS.style != self.settings.style:
             change_ui_style(SETTINGS.style)
         self.reject()
@@ -200,6 +201,13 @@ class MatlabSetupTab(QtWidgets.QWidget):
             self.changed = True
 
     def set_matlab_rat_dir(self, clear=False):
+        """Set the path of the MATLAB RAT directory.
+
+        Parameters
+        ----------
+        clear : bool, default: False
+            Indicates current path of the RAT directory should be cleared.
+        """
         if clear:
             self.rat_path.setText("")
             get_global_settings().remove("matlab_rat_path")

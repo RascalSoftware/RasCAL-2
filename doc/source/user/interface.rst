@@ -24,7 +24,7 @@ groups explained below. Clicking on a menu item will perform its associated acti
 
 1. **File**
     * **New Project**: Create a new project.
-    * **Open Project**: Open a existing project or example project
+    * **Open Project**: Open an existing project or example project
     * **Open RasCAL-1 Project**: Open a RasCAL-1 project.
     * **Save**: Save changes to the current project.
     * **Save To Folder**: Save current project to another folder.

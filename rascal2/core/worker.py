@@ -33,6 +33,7 @@ class Worker(QtCore.QThread):
             self.job_failed.emit(e, self._args)
 
     def stop(self):
+        """Stop the worker thread."""
         self.stopped = True
         self.quit()
         self.wait()
